@@ -111,7 +111,7 @@ export default function AdminLayout({ children, title = "Dashboard", description
           }`}
         >
           <div className="h-16 flex items-center px-6 border-b border-secondary-light">
-            <span className="font-semibold">Admin Dashboard</span>
+            <span className="font-semibold text-white">Admin Dashboard</span>
           </div>
           <nav className="py-4 overflow-y-auto h-[calc(100%-4rem)]">
             <ul>
@@ -122,7 +122,7 @@ export default function AdminLayout({ children, title = "Dashboard", description
                       className={`flex items-center px-4 py-2 rounded ${
                         location === item.href
                           ? "text-white bg-primary bg-opacity-20"
-                          : "text-neutral-300 hover:bg-primary hover:bg-opacity-10"
+                          : "text-white hover:bg-primary hover:bg-opacity-10"
                       }`}
                     >
                       {item.icon}
@@ -134,7 +134,7 @@ export default function AdminLayout({ children, title = "Dashboard", description
               <li className="px-2 py-1 mt-auto">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-2 text-neutral-300 hover:bg-primary hover:bg-opacity-10 rounded"
+                  className="w-full flex items-center px-4 py-2 text-white hover:bg-primary hover:bg-opacity-10 rounded"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span>Logout</span>

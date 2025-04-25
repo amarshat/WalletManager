@@ -1,0 +1,29 @@
+<svg width="200" height="60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#06B6D4" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Brain circuit representing AI -->
+  <g transform="translate(15, 12)">
+    <circle cx="20" cy="20" r="14" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <path d="M12,20 C12,15 18,15 18,20 C18,25 24,25 24,20" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <path d="M14,13 L20,20 L26,13" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <path d="M14,27 L20,20 L26,27" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <circle cx="20" cy="20" r="3" fill="url(#logoGradient)"/>
+  </g>
+  
+  <!-- Sage leaf symbol -->
+  <g transform="translate(45, 8)">
+    <path d="M5,30 C10,10 25,5 35,15 C45,25 25,45 5,30 Z" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <path d="M12,28 C17,18 25,15 32,22" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+    <path d="M16,24 C20,18 24,17 28,21" fill="none" stroke="url(#logoGradient)" stroke-width="2"/>
+  </g>
+  
+  <!-- PaySage text -->
+  <text x="90" y="35" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#333">
+    <tspan fill="url(#logoGradient)">Pay</tspan><tspan fill="#333">Sage</tspan>
+  </text>
+</svg>

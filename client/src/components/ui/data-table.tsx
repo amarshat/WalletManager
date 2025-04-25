@@ -68,15 +68,15 @@ export function DataTable<T>({
 
       <div className="border rounded-md overflow-hidden">
         <Table>
-          <TableHeader>
-            <TableRow className="bg-neutral-100">
+          <TableHeader className="bg-neutral-100">
+            <TableRow>
               {columns.map((column) => (
-                <TableHeader
+                <TableHead
                   key={column.key.toString()}
-                  className="px-6 py-3 text-left text-xs font-medium text-neutral-600 uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider"
                 >
                   {column.header}
-                </TableHeader>
+                </TableHead>
               ))}
             </TableRow>
           </TableHeader>

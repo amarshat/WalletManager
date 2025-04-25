@@ -1,4 +1,5 @@
 import { useBrand } from "@/hooks/use-brand";
+import defaultLogo from "@/assets/default-logo.svg";
 
 interface BrandLogoProps {
   className?: string;
@@ -12,10 +13,10 @@ export default function BrandLogo({ className = "h-8" }: BrandLogoProps) {
     return <img src={brand.logo} alt={brand.name || "Brand Logo"} className={className} />;
   }
   
-  // Otherwise use the default Paysafe logo
+  // Otherwise use our custom AI Sage themed logo
   return (
     <img 
-      src="https://www.paysafe.com/fileadmin/templates/img/layout/ps-logo.svg" 
+      src={defaultLogo} 
       alt={brand?.name || "PaySage"} 
       className={className} 
     />

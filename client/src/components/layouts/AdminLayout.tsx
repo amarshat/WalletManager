@@ -78,8 +78,8 @@ export default function AdminLayout({ children, title = "Dashboard", description
               <Menu className="text-neutral-700" />
             </button>
             <BrandLogo className="h-8" />
-            <span className="ml-2 text-lg font-semibold text-secondary">
-              {brand?.name || "PaySage"} Admin
+            <span className="ml-2 text-lg font-semibold text-gray-800">
+              {brand?.name || "PaySage Wallet"} Admin
             </span>
           </div>
           <div className="flex items-center">
@@ -147,7 +147,7 @@ export default function AdminLayout({ children, title = "Dashboard", description
         {/* Main Content */}
         <main className="flex-1 overflow-y-auto bg-neutral-100 p-4 md:p-6">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold text-secondary">{title}</h1>
+            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
             <p className="text-neutral-600">{description}</p>
           </div>
           
@@ -156,7 +156,7 @@ export default function AdminLayout({ children, title = "Dashboard", description
       </div>
       
       <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-        Paysafe GenAI Showcase — powered by PaySage
+        Paysafe GenAI Showcase — powered by PaySage Wallet
       </footer>
     </div>
   );

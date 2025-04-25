@@ -117,7 +117,7 @@ export default function CustomerLayout({
           }`}
         >
           <div className="h-16 flex items-center justify-center border-b border-secondary-light">
-            <span className="font-semibold">{brand?.name || "PaySage"}</span>
+            <span className="font-semibold">{brand?.name || "PaySage Wallet"}</span>
           </div>
           <div className="p-4 border-b border-secondary-light">
             <div className="flex items-center">
@@ -167,7 +167,7 @@ export default function CustomerLayout({
         <main className="flex-1 overflow-y-auto bg-neutral-100 p-4 md:p-6">
           <div className="mb-6 flex justify-between items-start">
             <div>
-              <h1 className="text-2xl font-bold text-secondary">
+              <h1 className="text-2xl font-bold text-gray-800">
                 {title || `Welcome back, ${user?.fullName?.split(' ')[0] || 'User'}!`}
               </h1>
               <p className="text-neutral-600">
@@ -187,7 +187,7 @@ export default function CustomerLayout({
       </div>
       
       <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-        Paysafe GenAI Showcase — powered by PaySage
+        Paysafe GenAI Showcase — powered by PaySage Wallet
       </footer>
     </div>
   );

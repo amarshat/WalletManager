@@ -9,7 +9,7 @@ export class PaysafeClient {
   private tokenExpiry: number = 0;
   
   constructor() {
-    this.baseUrl = process.env.PAYSAFE_BASE_URL || 'https://sandbox.paysafe.com';
+    this.baseUrl = process.env.PAYSAFE_BASE_URL || 'https://sandbox.paysafe.com/digitalwallets';
     this.clientId = process.env.PAYSAFE_CLIENT_ID || 'b4d58fc7-382c-45dc-8547-79eb86d91176';
     this.clientSecret = process.env.PAYSAFE_CLIENT_SECRET || 'z75P72m3nhpG55DOPfPOkpOar9ynIZ87';
     this.brand = process.env.PAYSAFE_BRAND || 'dummy-us';
@@ -18,7 +18,7 @@ export class PaysafeClient {
   private async getToken(): Promise<string> {
     // If we have a valid token, return it
     if (this.accessToken && Date.now() < this.tokenExpiry - 60000) { // 1 minute buffer
-      return this.accessToken;
+      return this.accessToken as string;
     }
     
     // Otherwise, get a new token
@@ -27,7 +27,7 @@ export class PaysafeClient {
       
       const response = await axios({
         method: 'post',
-        url: `${this.baseUrl}/digitalwallets/v1/auth/brands/${this.brand}/token`,
+        url: `${this.baseUrl}/v1/auth/brands/${this.brand}/token`,
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Authorization': `Basic ${authString}`
@@ -41,7 +41,7 @@ export class PaysafeClient {
       // Token expires in 900 seconds (15 minutes)
       this.tokenExpiry = Date.now() + (response.data.expires_in * 1000);
       
-      return this.accessToken;
+      return this.accessToken as string;
     } catch (error) {
       console.error('Error obtaining access token:', error);
       throw new Error('Failed to get access token');

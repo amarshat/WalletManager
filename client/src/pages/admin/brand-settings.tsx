@@ -53,7 +53,7 @@ export default function BrandSettingsPage() {
     }
   }, [brand, form]);
   
-  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -67,15 +67,45 @@ export default function BrandSettingsPage() {
       return;
     }
     
-    // Convert to base64 for preview and storage
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        setLogo(event.target.result as string);
-        form.setValue("logoFile", event.target.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      // Show loading toast
+      toast({
+        title: "Processing image",
+        description: "Optimizing image size...",
+      });
+      
+      // Compress the image before uploading
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 800,
+        useWebWorker: true
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      
+      // Convert to base64 for preview and storage
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setLogo(event.target.result as string);
+          form.setValue("logoFile", event.target.result);
+          
+          // Success toast
+          toast({
+            title: "Image ready",
+            description: `Image optimized: ${(compressedFile.size / 1024).toFixed(2)}KB`,
+          });
+        }
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      toast({
+        title: "Image processing failed",
+        description: "Failed to optimize image. Please try a smaller file.",
+        variant: "destructive",
+      });
+      console.error("Error compressing image:", error);
+    }
   };
   
   const onSubmit = async (data: FormData) => {
@@ -270,7 +300,8 @@ export default function BrandSettingsPage() {
                           </div>
                         </FormControl>
                         <FormDescription>
-                          Recommended size: 300x100 pixels, PNG or SVG format
+                          Recommended size: 300x100 pixels, PNG or SVG format. 
+                          Larger images will be automatically optimized.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

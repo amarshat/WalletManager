@@ -1,0 +1,482 @@
+import type { Express, Request, Response } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { setupAuth } from "./auth";
+import { z } from "zod";
+import { insertBrandSettingsSchema, insertCardSchema } from "@shared/schema";
+import { PaysafeClient } from "./paysafe";
+
+// Middleware to ensure user is authenticated
+const ensureAuth = (req: Request, res: Response, next: any) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: "Unauthorized" });
+};
+
+// Middleware to ensure user is an admin
+const ensureAdmin = (req: Request, res: Response, next: any) => {
+  if (req.isAuthenticated() && req.user.isAdmin) {
+    return next();
+  }
+  res.status(403).json({ error: "Forbidden: Admin access required" });
+};
+
+// Helper to log API calls
+const logApiCall = async (req: Request, action: string, statusCode: number, responseData: any = null) => {
+  if (!req.user) return;
+  
+  try {
+    await storage.addSystemLog({
+      userId: req.user.id,
+      action,
+      statusCode,
+      requestData: req.body,
+      responseData
+    });
+  } catch (error) {
+    console.error("Failed to log API call:", error);
+  }
+};
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Setup authentication routes
+  setupAuth(app);
+  
+  // Paysafe client
+  const paysafeClient = new PaysafeClient();
+
+  // Brand Settings Routes
+  app.get("/api/brand", async (req, res) => {
+    try {
+      const settings = await storage.getBrandSettings();
+      res.json(settings || { name: "PaySage", tagline: "Your Digital Wallet Solution" });
+    } catch (error) {
+      console.error("Error fetching brand settings:", error);
+      res.status(500).json({ error: "Failed to fetch brand settings" });
+    }
+  });
+  
+  app.put("/api/brand", ensureAdmin, async (req, res) => {
+    try {
+      const validatedData = insertBrandSettingsSchema.parse(req.body);
+      const updated = await storage.updateBrandSettings(validatedData);
+      
+      await logApiCall(req, "Update brand settings", 200, updated);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating brand settings:", error);
+      res.status(400).json({ error: "Invalid brand settings data" });
+    }
+  });
+  
+  // User Management Routes (Admin only)
+  app.get("/api/users", ensureAdmin, async (req, res) => {
+    try {
+      const users = await storage.listUsers(false); // Get non-admin users
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+  
+  app.post("/api/users", ensureAdmin, async (req, res) => {
+    try {
+      // Create user
+      const userData = {
+        username: req.body.username,
+        password: req.body.password, // Will be hashed in auth.ts createUser
+        fullName: req.body.fullName,
+        email: req.body.email,
+        country: req.body.country,
+        defaultCurrency: req.body.defaultCurrency || "USD",
+        isAdmin: false
+      };
+      
+      // Check if user exists
+      const existingUser = await storage.getUserByUsername(userData.username);
+      if (existingUser) {
+        return res.status(400).json({ error: "Username already exists" });
+      }
+      
+      // Create wallet in Paysafe
+      const walletResponse = await paysafeClient.createWallet({
+        accounts: [{
+          currencyCode: userData.defaultCurrency,
+          externalId: userData.username
+        }],
+        profile: {
+          firstName: userData.fullName.split(' ')[0],
+          lastName: userData.fullName.split(' ').slice(1).join(' ') || '',
+          email: userData.email,
+          dateOfBirth: null,
+          gender: null,
+          nationality: userData.country,
+          cell: null
+        }
+      });
+      
+      if (!walletResponse || !walletResponse.accounts?.[0]?.customerId) {
+        return res.status(500).json({ error: "Failed to create wallet" });
+      }
+      
+      // Create user in our system
+      const user = await storage.createUser(userData);
+      
+      // Create wallet record
+      const wallet = await storage.createWallet({
+        userId: user.id,
+        customerId: walletResponse.accounts[0].customerId,
+        externalReference: user.username
+      });
+      
+      // Create wallet account record
+      await storage.addWalletAccount({
+        walletId: wallet.id,
+        accountId: walletResponse.accounts[0].id,
+        currencyCode: walletResponse.accounts[0].currencyCode,
+        externalId: walletResponse.accounts[0].externalId,
+        hasVirtualInstrument: !!walletResponse.accounts[0].virtualInstrument
+      });
+      
+      await logApiCall(req, "Create user with wallet", 201, { user, wallet });
+      res.status(201).json({ user, wallet });
+    } catch (error) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ error: "Failed to create user" });
+    }
+  });
+  
+  app.put("/api/users/:id", ensureAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updatedUser = await storage.updateUser(userId, req.body);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      await logApiCall(req, `Update user ${userId}`, 200, updatedUser);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+  
+  app.delete("/api/users/:id", ensureAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const success = await storage.deleteUser(userId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      await logApiCall(req, `Delete user ${userId}`, 200, { success });
+      res.json({ success });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ error: "Failed to delete user" });
+    }
+  });
+  
+  // Wallet Routes
+  app.get("/api/wallet", ensureAuth, async (req, res) => {
+    try {
+      // Get wallet
+      const wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+      
+      // Get wallet accounts
+      const accounts = await storage.getWalletAccounts(wallet.id);
+      
+      // Get balances from Paysafe
+      const balances = await paysafeClient.getBalances(wallet.customerId);
+      
+      await logApiCall(req, "Get wallet balances", 200, balances);
+      res.json({ wallet, accounts, balances });
+    } catch (error) {
+      console.error("Error fetching wallet:", error);
+      res.status(500).json({ error: "Failed to fetch wallet" });
+    }
+  });
+  
+  // Transaction Routes
+  app.post("/api/transactions/deposit", ensureAuth, async (req, res) => {
+    try {
+      const { amount, currencyCode, description } = req.body;
+      
+      if (!amount || !currencyCode) {
+        return res.status(400).json({ error: "Amount and currency are required" });
+      }
+      
+      const wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+      
+      const depositResponse = await paysafeClient.depositMoney({
+        amount,
+        currencyCode,
+        customerId: wallet.customerId,
+        description: description || "Deposit"
+      });
+      
+      await logApiCall(req, "Deposit money", 200, depositResponse);
+      res.json(depositResponse);
+    } catch (error) {
+      console.error("Error depositing money:", error);
+      res.status(500).json({ error: "Failed to deposit money" });
+    }
+  });
+  
+  app.post("/api/transactions/transfer", ensureAuth, async (req, res) => {
+    try {
+      const { amount, currencyCode, recipientUsername, note } = req.body;
+      
+      if (!amount || !currencyCode || !recipientUsername) {
+        return res.status(400).json({ error: "Amount, currency, and recipient are required" });
+      }
+      
+      // Get sender wallet
+      const senderWallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!senderWallet) {
+        return res.status(404).json({ error: "Sender wallet not found" });
+      }
+      
+      // Get recipient user
+      const recipientUser = await storage.getUserByUsername(recipientUsername);
+      
+      if (!recipientUser) {
+        return res.status(404).json({ error: "Recipient not found" });
+      }
+      
+      // Get recipient wallet
+      const recipientWallet = await storage.getWalletByUserId(recipientUser.id);
+      
+      if (!recipientWallet) {
+        return res.status(404).json({ error: "Recipient wallet not found" });
+      }
+      
+      const transferResponse = await paysafeClient.transferMoney({
+        amount,
+        currencyCode,
+        sourceCustomerId: senderWallet.customerId,
+        destinationCustomerId: recipientWallet.customerId,
+        note: note || "Transfer"
+      });
+      
+      await logApiCall(req, "Transfer money", 200, transferResponse);
+      res.json(transferResponse);
+    } catch (error) {
+      console.error("Error transferring money:", error);
+      res.status(500).json({ error: "Failed to transfer money" });
+    }
+  });
+  
+  app.post("/api/transactions/withdraw", ensureAuth, async (req, res) => {
+    try {
+      const { amount, currencyCode, description } = req.body;
+      
+      if (!amount || !currencyCode) {
+        return res.status(400).json({ error: "Amount and currency are required" });
+      }
+      
+      const wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+      
+      const withdrawResponse = await paysafeClient.withdrawMoney({
+        amount,
+        currencyCode,
+        customerId: wallet.customerId,
+        description: description || "Withdrawal"
+      });
+      
+      await logApiCall(req, "Withdraw money", 200, withdrawResponse);
+      res.json(withdrawResponse);
+    } catch (error) {
+      console.error("Error withdrawing money:", error);
+      res.status(500).json({ error: "Failed to withdraw money" });
+    }
+  });
+  
+  app.get("/api/transactions", ensureAuth, async (req, res) => {
+    try {
+      const wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+      
+      const transactions = await paysafeClient.getTransactions(wallet.customerId);
+      
+      await logApiCall(req, "Get transactions", 200, transactions);
+      res.json(transactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      res.status(500).json({ error: "Failed to fetch transactions" });
+    }
+  });
+  
+  // Card Management Routes
+  app.get("/api/cards", ensureAuth, async (req, res) => {
+    try {
+      const cards = await storage.getCardsByUserId(req.user!.id);
+      res.json(cards);
+    } catch (error) {
+      console.error("Error fetching cards:", error);
+      res.status(500).json({ error: "Failed to fetch cards" });
+    }
+  });
+  
+  app.post("/api/cards", ensureAuth, async (req, res) => {
+    try {
+      const cardData = insertCardSchema.parse({
+        ...req.body,
+        userId: req.user!.id
+      });
+      
+      const card = await storage.addCard(cardData);
+      
+      await logApiCall(req, "Add card", 201, card);
+      res.status(201).json(card);
+    } catch (error) {
+      console.error("Error adding card:", error);
+      res.status(400).json({ error: "Invalid card data" });
+    }
+  });
+  
+  app.delete("/api/cards/:id", ensureAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      const success = await storage.deleteCard(cardId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Card not found" });
+      }
+      
+      await logApiCall(req, `Delete card ${cardId}`, 200, { success });
+      res.json({ success });
+    } catch (error) {
+      console.error("Error deleting card:", error);
+      res.status(500).json({ error: "Failed to delete card" });
+    }
+  });
+  
+  // System Logs Routes (Admin only)
+  app.get("/api/logs", ensureAdmin, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 100;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+      
+      const logs = await storage.getSystemLogs(limit, offset);
+      res.json(logs);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      res.status(500).json({ error: "Failed to fetch logs" });
+    }
+  });
+  
+  // Bulk transfer
+  app.post("/api/transactions/bulk", ensureAuth, async (req, res) => {
+    try {
+      const { transfers } = req.body;
+      
+      if (!Array.isArray(transfers) || transfers.length === 0) {
+        return res.status(400).json({ error: "Invalid transfers data" });
+      }
+      
+      const wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (!wallet) {
+        return res.status(404).json({ error: "Wallet not found" });
+      }
+      
+      const results = [];
+      const errors = [];
+      
+      for (const transfer of transfers) {
+        try {
+          const { recipientUsername, amount, currencyCode, note } = transfer;
+          
+          // Get recipient user
+          const recipientUser = await storage.getUserByUsername(recipientUsername);
+          
+          if (!recipientUser) {
+            errors.push({ transfer, error: "Recipient not found" });
+            continue;
+          }
+          
+          // Get recipient wallet
+          const recipientWallet = await storage.getWalletByUserId(recipientUser.id);
+          
+          if (!recipientWallet) {
+            errors.push({ transfer, error: "Recipient wallet not found" });
+            continue;
+          }
+          
+          const transferResponse = await paysafeClient.transferMoney({
+            amount,
+            currencyCode,
+            sourceCustomerId: wallet.customerId,
+            destinationCustomerId: recipientWallet.customerId,
+            note: note || "Bulk Transfer"
+          });
+          
+          results.push({ transfer, result: transferResponse });
+        } catch (error) {
+          errors.push({ transfer, error: "Transfer failed" });
+        }
+      }
+      
+      await logApiCall(req, "Bulk transfer", 200, { results, errors });
+      res.json({ results, errors });
+    } catch (error) {
+      console.error("Error processing bulk transfer:", error);
+      res.status(500).json({ error: "Failed to process bulk transfer" });
+    }
+  });
+  
+  // User search for transfers
+  app.get("/api/users/search", ensureAuth, async (req, res) => {
+    try {
+      const query = req.query.q as string;
+      
+      if (!query) {
+        return res.json([]);
+      }
+      
+      const allUsers = await storage.listUsers(false);
+      const filteredUsers = allUsers.filter(user => 
+        user.id !== req.user!.id && // Don't include current user
+        (user.username.toLowerCase().includes(query.toLowerCase()) || 
+         user.fullName.toLowerCase().includes(query.toLowerCase()))
+      );
+      
+      // Only return necessary information
+      const results = filteredUsers.map(user => ({
+        id: user.id,
+        username: user.username,
+        fullName: user.fullName
+      }));
+      
+      res.json(results);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ error: "Failed to search users" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, Fragment } from "react";
 import {
   Table,
   TableBody,
@@ -149,7 +149,7 @@ export function DataTable<T>({
                     Math.abs(page - pagination.currentPage) <= 1
                 )
                 .map((page, i, arr) => (
-                  <React.Fragment key={page}>
+                  <div key={page} className="inline-flex">
                     {i > 0 && arr[i - 1] !== page - 1 && (
                       <span className="relative inline-flex items-center px-4 py-2 border border-neutral-300 bg-white text-sm font-medium text-neutral-700">
                         ...
@@ -169,7 +169,7 @@ export function DataTable<T>({
                     >
                       {page}
                     </Button>
-                  </React.Fragment>
+                  </div>
                 ))}
               <Button
                 variant="outline"

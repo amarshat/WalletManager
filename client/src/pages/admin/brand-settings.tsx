@@ -12,6 +12,7 @@ import { useBrand } from "@/hooks/use-brand";
 import { useToast } from "@/hooks/use-toast";
 import { ImageIcon, UploadCloud, AlertCircle, Save } from "lucide-react";
 import { insertBrandSettingsSchema, BrandSettings } from "@shared/schema";
+import imageCompression from "browser-image-compression";
 
 // Brand settings form schema
 const formSchema = insertBrandSettingsSchema.extend({

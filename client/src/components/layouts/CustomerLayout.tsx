@@ -112,14 +112,14 @@ export default function CustomerLayout({
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside
-          className={`w-64 bg-secondary text-white fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-20 md:z-0 md:relative md:translate-x-0 ${
+          className={`w-64 bg-gray-800 text-white fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-20 md:z-0 md:relative md:translate-x-0 ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="h-16 flex items-center justify-center border-b border-secondary-light">
-            <span className="font-semibold">{brand?.name || "PaySage Wallet"}</span>
+          <div className="h-16 flex items-center justify-center border-b border-gray-700">
+            <span className="font-semibold text-white">{brand?.name || "PaySage Wallet"}</span>
           </div>
-          <div className="p-4 border-b border-secondary-light">
+          <div className="p-4 border-b border-gray-700">
             <div className="flex items-center">
               <Avatar className="w-10 h-10 mr-3">
                 <AvatarFallback className="bg-primary text-white">
@@ -128,7 +128,7 @@ export default function CustomerLayout({
               </Avatar>
               <div>
                 <div className="font-medium text-white">{user?.fullName}</div>
-                <div className="text-xs text-neutral-400">@{user?.username}</div>
+                <div className="text-xs text-gray-300">@{user?.username}</div>
               </div>
             </div>
           </div>
@@ -140,8 +140,8 @@ export default function CustomerLayout({
                     <a
                       className={`flex items-center px-4 py-2 rounded ${
                         location === item.href
-                          ? "text-white bg-primary bg-opacity-20"
-                          : "text-white hover:bg-primary hover:bg-opacity-10"
+                          ? "bg-blue-600 text-white font-medium"
+                          : "text-gray-100 hover:bg-gray-700"
                       }`}
                     >
                       {item.icon}
@@ -153,7 +153,7 @@ export default function CustomerLayout({
               <li className="px-2 py-1 mt-auto">
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-2 text-white hover:bg-primary hover:bg-opacity-10 rounded"
+                  className="w-full flex items-center px-4 py-2 text-gray-100 hover:bg-gray-700 rounded"
                 >
                   <LogOut className="w-5 h-5 mr-3" />
                   <span>Logout</span>

@@ -162,9 +162,17 @@ export class PhantomPayClient {
    */
   async depositMoney(data: { amount: number, currencyCode: string, customerId: string, description?: string }): Promise<any> {
     try {
+      // Ensure amount is a valid number
+      let amount = data.amount;
+      
+      // If amount is a string, convert it to a number
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
       // Validate the amount
-      if (data.amount <= 0) {
-        throw new Error('Amount must be greater than zero');
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Amount must be a valid number greater than zero');
       }
       
       // Find the wallet
@@ -188,12 +196,18 @@ export class PhantomPayClient {
         throw new Error(`Account not found for currency: ${data.currencyCode}`);
       }
       
-      // Amount is already in cents from the client, so we don't need to convert
-      const amountInCents = data.amount;
+      // Ensure we're working with an integer amount (no decimals)
+      // Use Math.round to handle any decimal points
+      const amountInInteger = Math.round(amount);
+      console.log('Processing deposit amount:', { 
+        original: data.amount, 
+        parsed: amount,
+        final: amountInInteger 
+      });
       
       // Update account balance
       await db.update(phantomAccounts)
-        .set({ balance: (account.balance || 0) + amountInCents })
+        .set({ balance: (account.balance || 0) + amountInInteger })
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
@@ -203,7 +217,7 @@ export class PhantomPayClient {
         .values({
           transactionId,
           destinationAccountId: account.id,
-          amount: amountInCents,
+          amount: amountInInteger,
           currencyCode: data.currencyCode,
           type: 'DEPOSIT',
           note: data.description || 'Deposit',
@@ -215,7 +229,7 @@ export class PhantomPayClient {
         id: transactionId,
         customerId: data.customerId,
         accountId: account.accountId,
-        amount: data.amount,
+        amount: amountInInteger, // Return the processed amount
         currencyCode: data.currencyCode,
         type: 'DEPOSIT',
         status: 'COMPLETED',
@@ -238,9 +252,17 @@ export class PhantomPayClient {
     note?: string
   }): Promise<any> {
     try {
+      // Ensure amount is a valid number
+      let amount = data.amount;
+      
+      // If amount is a string, convert it to a number
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
       // Validate the amount
-      if (data.amount <= 0) {
-        throw new Error('Amount must be greater than zero');
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Amount must be a valid number greater than zero');
       }
       
       // Find the source wallet
@@ -285,23 +307,29 @@ export class PhantomPayClient {
         throw new Error(`Destination account not found for currency: ${data.currencyCode}`);
       }
       
-      // Amount is already in cents from the client
-      const amountInCents = data.amount;
+      // Ensure we're working with an integer amount (no decimals)
+      // Use Math.round to handle any decimal points
+      const amountInInteger = Math.round(amount);
+      console.log('Processing transfer amount:', { 
+        original: data.amount, 
+        parsed: amount,
+        final: amountInInteger 
+      });
       
       // Check if source has enough balance
-      if ((sourceAccount.balance || 0) < amountInCents) {
+      if ((sourceAccount.balance || 0) < amountInInteger) {
         throw new Error('Insufficient funds for transfer');
       }
       
       // Update source account balance
       await db.update(phantomAccounts)
-        .set({ balance: (sourceAccount.balance || 0) - amountInCents })
+        .set({ balance: (sourceAccount.balance || 0) - amountInInteger })
         .where(eq(phantomAccounts.id, sourceAccount.id))
         .execute();
       
       // Update destination account balance
       await db.update(phantomAccounts)
-        .set({ balance: (destAccount.balance || 0) + amountInCents })
+        .set({ balance: (destAccount.balance || 0) + amountInInteger })
         .where(eq(phantomAccounts.id, destAccount.id))
         .execute();
       
@@ -312,7 +340,7 @@ export class PhantomPayClient {
           transactionId,
           sourceAccountId: sourceAccount.id,
           destinationAccountId: destAccount.id,
-          amount: amountInCents,
+          amount: amountInInteger,
           currencyCode: data.currencyCode,
           type: 'TRANSFER',
           note: data.note || 'Transfer',
@@ -326,7 +354,7 @@ export class PhantomPayClient {
         destinationCustomerId: data.destinationCustomerId,
         sourceAccountId: sourceAccount.accountId,
         destinationAccountId: destAccount.accountId,
-        amount: data.amount,
+        amount: amountInInteger, // Return the processed amount
         currencyCode: data.currencyCode,
         type: 'TRANSFER',
         status: 'COMPLETED',
@@ -348,9 +376,17 @@ export class PhantomPayClient {
     description?: string
   }): Promise<any> {
     try {
+      // Ensure amount is a valid number
+      let amount = data.amount;
+      
+      // If amount is a string, convert it to a number
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
       // Validate the amount
-      if (data.amount <= 0) {
-        throw new Error('Amount must be greater than zero');
+      if (isNaN(amount) || amount <= 0) {
+        throw new Error('Amount must be a valid number greater than zero');
       }
       
       // Find the wallet
@@ -374,17 +410,23 @@ export class PhantomPayClient {
         throw new Error(`Account not found for currency: ${data.currencyCode}`);
       }
       
-      // Amount is already in cents from the client
-      const amountInCents = data.amount;
+      // Ensure we're working with an integer amount (no decimals)
+      // Use Math.round to handle any decimal points
+      const amountInInteger = Math.round(amount);
+      console.log('Processing withdrawal amount:', { 
+        original: data.amount, 
+        parsed: amount,
+        final: amountInInteger 
+      });
       
       // Check if account has enough balance
-      if ((account.balance || 0) < amountInCents) {
+      if ((account.balance || 0) < amountInInteger) {
         throw new Error('Insufficient funds for withdrawal');
       }
       
       // Update account balance
       await db.update(phantomAccounts)
-        .set({ balance: (account.balance || 0) - amountInCents })
+        .set({ balance: (account.balance || 0) - amountInInteger })
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
@@ -394,7 +436,7 @@ export class PhantomPayClient {
         .values({
           transactionId,
           sourceAccountId: account.id,
-          amount: amountInCents,
+          amount: amountInInteger,
           currencyCode: data.currencyCode,
           type: 'WITHDRAWAL',
           note: data.description || 'Withdrawal',
@@ -406,7 +448,7 @@ export class PhantomPayClient {
         id: transactionId,
         customerId: data.customerId,
         accountId: account.accountId,
-        amount: data.amount,
+        amount: amountInInteger, // Return the processed amount
         currencyCode: data.currencyCode,
         type: 'WITHDRAWAL',
         status: 'COMPLETED',

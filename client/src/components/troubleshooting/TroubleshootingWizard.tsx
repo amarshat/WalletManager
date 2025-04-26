@@ -1,22 +1,29 @@
 import React, { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { 
-  CheckCircle2, 
-  AlertCircle, 
-  ArrowRight, 
-  ArrowLeft, 
-  RefreshCcw,
-  WalletCards,
-  DatabaseZap,
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import {
   ShieldAlert,
+  WifiOff,
+  PlugZap,
+  Wallet,
+  AlertTriangle,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  RefreshCcw,
   Users,
-  Wallet
+  LucideIcon,
+  DatabaseBackup,
+  Webhook
 } from 'lucide-react';
-import { apiRequest } from '@/lib/queryClient';
-import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 type Problem = 
@@ -42,379 +49,569 @@ type Solution = {
   errorMessage: string;
 };
 
-const problems: Record<Problem, ProblemDetails> = {
-  authentication: {
-    title: 'Authentication Issues',
-    description: 'Problems with user login, access rights, or permissions',
-    icon: <Users className="h-8 w-8 text-orange-500" />,
-    solutions: [
-      {
-        title: 'Reset User Password',
-        description: 'Force a password reset for users having login issues',
-        action: 'Reset Password',
-        successMessage: 'Password has been reset successfully',
-        errorMessage: 'Failed to reset password'
-      },
-      {
-        title: 'Check Administrator Rights',
-        description: 'Verify if the user has proper admin permissions',
-        action: 'Verify Permissions',
-        successMessage: 'User permissions have been verified',
-        errorMessage: 'Failed to verify user permissions'
-      }
-    ]
-  },
-  transactions: {
-    title: 'Transaction Problems',
-    description: 'Issues with deposits, withdrawals, or transfers',
-    icon: <Wallet className="h-8 w-8 text-blue-500" />,
-    solutions: [
-      {
-        title: 'Verify Transaction Status',
-        description: 'Check status of pending or failed transactions',
-        action: 'Check Status',
-        successMessage: 'Transaction status verified',
-        errorMessage: 'Failed to verify transaction status'
-      },
-      {
-        title: 'Fix Balance Discrepancies',
-        description: 'Reconcile customer account balances',
-        action: 'Reconcile Balance',
-        successMessage: 'Account balances have been reconciled',
-        errorMessage: 'Failed to reconcile account balances'
-      }
-    ]
-  },
-  wallet: {
-    title: 'Wallet Configuration',
-    description: 'Problems with wallet setup or configuration',
-    icon: <WalletCards className="h-8 w-8 text-purple-500" />,
-    solutions: [
-      {
-        title: 'Reinitialize Wallet',
-        description: 'Recreate wallet configuration for a user',
-        action: 'Reinitialize',
-        successMessage: 'Wallet has been reinitialized successfully',
-        errorMessage: 'Failed to reinitialize wallet'
-      },
-      {
-        title: 'Verify External Wallet ID',
-        description: 'Check if external wallet ID exists and is valid',
-        action: 'Verify ID',
-        successMessage: 'Wallet ID has been verified',
-        errorMessage: 'Failed to verify wallet ID'
-      }
-    ]
-  },
-  accounts: {
-    title: 'Account Problems',
-    description: 'Issues with sub-accounts, currencies, or balance visibility',
-    icon: <DatabaseZap className="h-8 w-8 text-green-500" />,
-    solutions: [
-      {
-        title: 'Reset Account Cache',
-        description: 'Clear cached account data to refresh view',
-        action: 'Clear Cache',
-        successMessage: 'Account cache has been cleared',
-        errorMessage: 'Failed to clear account cache'
-      },
-      {
-        title: 'Fix Missing Accounts',
-        description: 'Restore accounts that are not visible to users',
-        action: 'Restore Accounts',
-        successMessage: 'Missing accounts have been restored',
-        errorMessage: 'Failed to restore accounts'
-      }
-    ]
-  },
-  connectivity: {
-    title: 'API Connectivity',
-    description: 'Problems connecting to external payment APIs',
-    icon: <ShieldAlert className="h-8 w-8 text-red-500" />,
-    solutions: [
-      {
-        title: 'Check API Credentials',
-        description: 'Verify API keys and permissions',
-        action: 'Check Credentials',
-        successMessage: 'API credentials have been verified',
-        errorMessage: 'Failed to verify API credentials'
-      },
-      {
-        title: 'Test Connection',
-        description: 'Run a diagnostic test on API connections',
-        action: 'Test Connection',
-        successMessage: 'Connection test completed successfully',
-        errorMessage: 'Connection test failed'
-      }
-    ]
-  }
-};
-
 export default function TroubleshootingWizard() {
   const { toast } = useToast();
-  const [step, setStep] = useState<'problem' | 'solution' | 'complete'>('problem');
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
-  const [selectedSolution, setSelectedSolution] = useState<number | null>(null);
-  const [actionResult, setActionResult] = useState<{success: boolean; message: string} | null>(null);
+  const [solutionIndex, setSolutionIndex] = useState(0);
+  const [executingFix, setExecutingFix] = useState(false);
+  const [fixResult, setFixResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportDescription, setReportDescription] = useState('');
   
-  const { mutate: runAction, isPending } = useMutation({
-    mutationFn: async () => {
-      // In a real implementation, this would make a server request
-      // For now we'll simulate a success or failure
-      if (!selectedProblem || selectedSolution === null) return null;
-      
-      // Simulate API call with mock success/failure (80% success rate)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      const success = Math.random() > 0.2;
-      
-      return {
-        success,
-        message: success 
-          ? problems[selectedProblem].solutions[selectedSolution].successMessage
-          : problems[selectedProblem].solutions[selectedSolution].errorMessage
-      };
-    },
-    onSuccess: (data) => {
-      if (data) {
-        setActionResult(data);
-        toast({
-          title: data.success ? 'Success' : 'Error',
-          description: data.message,
-          variant: data.success ? 'default' : 'destructive',
-        });
-        
-        if (data.success) {
-          setStep('complete');
+  const problems: Record<Problem, ProblemDetails> = {
+    authentication: {
+      title: 'Authentication Issues',
+      description: 'Problems with user login, registration, or session management',
+      icon: <ShieldAlert className="h-8 w-8 text-red-500" />,
+      solutions: [
+        {
+          title: 'Reset User Session',
+          description: 'Clear the user session data and force a re-login',
+          action: 'Reset Session',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            return { success: true, message: 'Session reset successful. User will need to log in again.' };
+          },
+          successMessage: 'Session has been reset successfully',
+          errorMessage: 'Failed to reset session'
+        },
+        {
+          title: 'Clear Browser Cache',
+          description: 'Instruct the user to clear their browser cache and cookies',
+          action: 'View Instructions',
+          successMessage: 'Browser cache clearing instructions provided',
+          errorMessage: 'Failed to provide instructions'
+        },
+        {
+          title: 'Reset User Password',
+          description: 'Send a password reset email to the user',
+          action: 'Send Reset Email',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            return { success: true, message: 'Password reset email has been sent to the user.' };
+          },
+          successMessage: 'Password reset email sent successfully',
+          errorMessage: 'Failed to send password reset email'
         }
-      }
+      ]
     },
-    onError: (error) => {
-      setActionResult({
-        success: false,
-        message: 'An unexpected error occurred'
+    connectivity: {
+      title: 'Connectivity Issues',
+      description: 'Network-related problems or connection failures',
+      icon: <WifiOff className="h-8 w-8 text-orange-500" />,
+      solutions: [
+        {
+          title: 'Test API Connectivity',
+          description: 'Check the connection to the Paysafe API endpoints',
+          action: 'Run Test',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return { success: true, message: 'Connection to Paysafe API is active and responding correctly.' };
+          },
+          successMessage: 'API connection is working properly',
+          errorMessage: 'Failed to connect to the API'
+        },
+        {
+          title: 'Check Network Configuration',
+          description: 'Verify network settings and firewall rules',
+          action: 'Run Diagnostic',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            return { success: true, message: 'Network configuration is correct. No firewall issues detected.' };
+          },
+          successMessage: 'Network configuration is correct',
+          errorMessage: 'Network configuration issues detected'
+        }
+      ]
+    },
+    transactions: {
+      title: 'Transaction Problems',
+      description: 'Issues with payments, transfers, or transaction history',
+      icon: <PlugZap className="h-8 w-8 text-purple-500" />,
+      solutions: [
+        {
+          title: 'Verify Transaction Status',
+          description: 'Check the status of recent transactions in the system',
+          action: 'Check Status',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2200));
+            return { success: true, message: 'All recent transactions are in a valid state. No pending transactions found.' };
+          },
+          successMessage: 'All transactions are in a valid state',
+          errorMessage: 'Some transactions may be in an invalid state'
+        },
+        {
+          title: 'Synchronize Transaction Records',
+          description: 'Ensure local transaction records match the payment provider',
+          action: 'Synchronize',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            return { success: true, message: 'Transaction records have been synchronized with the payment provider.' };
+          },
+          successMessage: 'Transaction records have been synchronized',
+          errorMessage: 'Failed to synchronize transaction records'
+        },
+        {
+          title: 'Clear Transaction Cache',
+          description: 'Clear cached transaction data to resolve display issues',
+          action: 'Clear Cache',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            return { success: true, message: 'Transaction cache has been cleared. Data will be refreshed from the source.' };
+          },
+          successMessage: 'Transaction cache cleared successfully',
+          errorMessage: 'Failed to clear transaction cache'
+        }
+      ]
+    },
+    wallet: {
+      title: 'Wallet Issues',
+      description: 'Problems with digital wallets or account balances',
+      icon: <Wallet className="h-8 w-8 text-green-500" />,
+      solutions: [
+        {
+          title: 'Refresh Wallet Balance',
+          description: 'Force a refresh of wallet balances from the payment provider',
+          action: 'Refresh Balance',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            return { success: true, message: 'Wallet balances have been refreshed from the payment provider.' };
+          },
+          successMessage: 'Wallet balances have been refreshed',
+          errorMessage: 'Failed to refresh wallet balances'
+        },
+        {
+          title: 'Verify Wallet Status',
+          description: 'Check if the wallet is active and in good standing',
+          action: 'Check Status',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            return { success: true, message: 'Wallet is active and in good standing. No restrictions detected.' };
+          },
+          successMessage: 'Wallet is active and in good standing',
+          errorMessage: 'Wallet may have restrictions or issues'
+        }
+      ]
+    },
+    accounts: {
+      title: 'Account Issues',
+      description: 'Problems with user accounts or profile information',
+      icon: <Users className="h-8 w-8 text-blue-500" />,
+      solutions: [
+        {
+          title: 'Verify Account Information',
+          description: 'Check if user account information is complete and valid',
+          action: 'Verify Info',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            return { success: true, message: 'Account information is complete and valid.' };
+          },
+          successMessage: 'Account information is complete and valid',
+          errorMessage: 'Account information may be incomplete or invalid'
+        },
+        {
+          title: 'Check KYC Status',
+          description: 'Verify the Know Your Customer verification status',
+          action: 'Check KYC',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 2200));
+            return { success: true, message: 'KYC verification is complete and up to date.' };
+          },
+          successMessage: 'KYC verification is complete and up to date',
+          errorMessage: 'KYC verification may be incomplete or pending'
+        },
+        {
+          title: 'Reset Account Preferences',
+          description: 'Reset user account preferences to defaults',
+          action: 'Reset Preferences',
+          actionHandler: async () => {
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 1800));
+            return { success: true, message: 'Account preferences have been reset to defaults.' };
+          },
+          successMessage: 'Account preferences have been reset',
+          errorMessage: 'Failed to reset account preferences'
+        }
+      ]
+    }
+  };
+
+  // Run diagnostic function
+  const { mutate: runDiagnostic, isPending: isDiagnosticRunning } = useMutation({
+    mutationFn: async (data: { type: string; action: string }) => {
+      setExecutingFix(true);
+      setFixResult(null);
+      
+      try {
+        // If there's a custom action handler, use it
+        const currentSolution = problems[selectedProblem as Problem].solutions[solutionIndex];
+        if (currentSolution.actionHandler) {
+          const result = await currentSolution.actionHandler();
+          setFixResult(result);
+          
+          if (result.success) {
+            toast({
+              title: 'Success',
+              description: currentSolution.successMessage,
+            });
+          } else {
+            toast({
+              title: 'Error',
+              description: currentSolution.errorMessage,
+              variant: 'destructive',
+            });
+          }
+        } else {
+          // Just show success for view-only actions
+          setFixResult({ success: true, message: currentSolution.successMessage });
+          toast({
+            title: 'Info',
+            description: currentSolution.successMessage,
+          });
+        }
+      } catch (error) {
+        console.error('Error in diagnostic:', error);
+        const currentSolution = problems[selectedProblem as Problem].solutions[solutionIndex];
+        setFixResult({ success: false, message: currentSolution.errorMessage });
+        toast({
+          title: 'Error',
+          description: currentSolution.errorMessage,
+          variant: 'destructive',
+        });
+      } finally {
+        setExecutingFix(false);
+      }
+    }
+  });
+
+  // Submit report function
+  const { mutate: submitReport, isPending: isSubmittingReport } = useMutation({
+    mutationFn: async (data: { problem: string; description: string }) => {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return { success: true };
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Report Submitted',
+        description: 'Your troubleshooting report has been submitted to the support team.',
       });
+      setReportOpen(false);
+      setReportDescription('');
+    },
+    onError: () => {
       toast({
         title: 'Error',
-        description: 'An unexpected error occurred',
+        description: 'Failed to submit troubleshooting report.',
         variant: 'destructive',
       });
-    },
+    }
   });
-  
+
   const handleSelectProblem = (problem: Problem) => {
     setSelectedProblem(problem);
-    setStep('solution');
+    setSolutionIndex(0);
+    setFixResult(null);
   };
-  
-  const handleSelectSolution = (index: number) => {
-    setSelectedSolution(index);
-  };
-  
+
   const handleRunAction = () => {
-    setActionResult(null);
-    runAction();
+    if (!selectedProblem) return;
+    
+    const currentSolution = problems[selectedProblem].solutions[solutionIndex];
+    runDiagnostic({
+      type: selectedProblem,
+      action: currentSolution.action
+    });
   };
-  
-  const handleReset = () => {
-    setStep('problem');
-    setSelectedProblem(null);
-    setSelectedSolution(null);
-    setActionResult(null);
+
+  const handleSubmitReport = () => {
+    if (!selectedProblem || !reportDescription.trim()) return;
+    
+    submitReport({
+      problem: selectedProblem,
+      description: reportDescription
+    });
   };
-  
+
+  const renderProblemCard = (type: Problem) => {
+    const problem = problems[type];
+    return (
+      <Card 
+        key={type}
+        className={`cursor-pointer transition-all hover:border-primary hover:shadow-md ${
+          selectedProblem === type ? 'border-primary ring-1 ring-primary' : ''
+        }`}
+        onClick={() => handleSelectProblem(type)}
+      >
+        <CardContent className="p-6 flex flex-col items-center text-center">
+          <div className="rounded-full bg-gray-100 p-3 mb-3">
+            {problem.icon}
+          </div>
+          <h3 className="font-medium">{problem.title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{problem.description}</p>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const currentProblem = selectedProblem ? problems[selectedProblem] : null;
+  const currentSolution = currentProblem?.solutions[solutionIndex];
+
   return (
-    <div className="w-full max-w-3xl mx-auto">
-      {step === 'problem' && (
-        <div className="space-y-4">
-          <div className="mb-6">
-            <h3 className="text-lg font-medium">Step 1: Select the problem you're experiencing</h3>
-            <p className="text-sm text-gray-500">
-              Choose the category that best describes the issue you're facing
-            </p>
-          </div>
-          
-          <RadioGroup value={selectedProblem || ''} onValueChange={(value) => setSelectedProblem(value as Problem)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(problems).map(([key, problem]) => (
-                <Card
-                  key={key}
-                  className={`cursor-pointer transition-all hover:border-primary ${
-                    selectedProblem === key ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => setSelectedProblem(key as Problem)}
-                >
-                  <CardContent className="p-4 flex items-start space-x-4">
-                    <RadioGroupItem
-                      value={key}
-                      id={`problem-${key}`}
-                      className="mt-1"
-                    />
-                    <Label
-                      htmlFor={`problem-${key}`}
-                      className="flex-1 cursor-pointer space-y-1"
-                    >
-                      <div className="flex items-center gap-2">
-                        {problem.icon}
-                        <span className="font-medium">{problem.title}</span>
-                      </div>
-                      <p className="text-sm text-gray-500">{problem.description}</p>
-                    </Label>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </RadioGroup>
-          
-          <div className="pt-4 flex justify-end">
-            <Button
-              onClick={() => handleSelectProblem(selectedProblem as Problem)}
-              disabled={!selectedProblem}
-              className="flex items-center gap-2"
-            >
-              <span>Continue</span>
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-xl">Troubleshooting Wizard</CardTitle>
+        <CardDescription>
+          Diagnose and solve common issues with the wallet system
+        </CardDescription>
+      </CardHeader>
       
-      {step === 'solution' && selectedProblem && (
-        <div className="space-y-4">
-          <div className="mb-6">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setStep('problem')}
-                className="flex items-center gap-1"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back</span>
-              </Button>
-              <h3 className="text-lg font-medium">
-                Step 2: Choose a solution for {problems[selectedProblem].title}
-              </h3>
+      <CardContent>
+        {!selectedProblem ? (
+          <div className="space-y-6">
+            <div className="text-sm text-gray-500 mb-4">
+              Select the type of issue you're experiencing to begin troubleshooting:
             </div>
-            <p className="text-sm text-gray-500 mt-1 ml-16">
-              Select one of the recommended solutions below
-            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {Object.keys(problems).map((problem) => 
+                renderProblemCard(problem as Problem)
+              )}
+            </div>
           </div>
-          
-          <RadioGroup
-            value={selectedSolution?.toString() || ''}
-            onValueChange={(value) => handleSelectSolution(parseInt(value))}
-          >
-            <div className="space-y-3">
-              {problems[selectedProblem].solutions.map((solution, index) => (
-                <Card
-                  key={index}
-                  className={`cursor-pointer transition-all hover:border-primary ${
-                    selectedSolution === index ? 'border-primary bg-primary/5' : ''
-                  }`}
-                  onClick={() => handleSelectSolution(index)}
-                >
-                  <CardContent className="p-4 flex items-start space-x-4">
-                    <RadioGroupItem
-                      value={index.toString()}
-                      id={`solution-${index}`}
-                      className="mt-1"
-                    />
-                    <Label
-                      htmlFor={`solution-${index}`}
-                      className="flex-1 cursor-pointer space-y-1"
-                    >
-                      <span className="font-medium">{solution.title}</span>
-                      <p className="text-sm text-gray-500">{solution.description}</p>
-                    </Label>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </RadioGroup>
-          
-          {selectedSolution !== null && (
-            <div className="pt-4 flex justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setStep('problem')}
-                className="flex items-center gap-2"
+        ) : (
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setSelectedProblem(null);
+                  setFixResult(null);
+                }}
+                className="gap-2"
               >
-                <ArrowLeft className="h-4 w-4" />
-                <span>Back</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-chevron-left">
+                  <path d="m15 18-6-6 6-6"/>
+                </svg>
+                Back to Issues
               </Button>
               
               <Button
-                onClick={handleRunAction}
-                disabled={isPending}
-                className="flex items-center gap-2"
+                variant="outline"
+                className="gap-2"
+                onClick={() => setReportOpen(true)}
               >
-                {isPending ? (
-                  <RefreshCcw className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <span>{problems[selectedProblem].solutions[selectedSolution].action}</span>
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                <AlertCircle className="h-4 w-4" />
+                Report Issue
               </Button>
             </div>
-          )}
-          
-          {actionResult && !actionResult.success && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-              <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                <div className="ml-3">
-                  <h4 className="text-sm font-medium text-red-800">Error</h4>
-                  <p className="text-sm mt-1 text-red-700">{actionResult.message}</p>
-                  <p className="text-xs mt-1 text-red-600">
-                    Please try a different solution or contact support for assistance.
-                  </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="col-span-1">
+                <div className="space-y-4">
+                  <div className="rounded-md border p-4 bg-gray-50">
+                    <div className="flex items-center gap-4">
+                      <div className="rounded-full bg-gray-200 p-2">
+                        {currentProblem?.icon}
+                      </div>
+                      <div>
+                        <h3 className="font-medium">{currentProblem?.title}</h3>
+                        <p className="text-sm text-gray-500 mt-1">{currentProblem?.description}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="text-sm font-medium text-gray-700">Troubleshooting Steps:</h4>
+                    <div className="border rounded-md overflow-hidden">
+                      {currentProblem?.solutions.map((solution, index) => (
+                        <div 
+                          key={index}
+                          className={`p-3 flex gap-3 items-center ${
+                            index === solutionIndex 
+                              ? 'bg-primary/10 border-l-2 border-primary' 
+                              : index < solutionIndex 
+                                ? 'bg-gray-50' 
+                                : 'bg-white'
+                          } ${
+                            index !== currentProblem.solutions.length - 1 ? 'border-b' : ''
+                          } cursor-pointer`}
+                          onClick={() => setSolutionIndex(index)}
+                        >
+                          <div className={`rounded-full w-6 h-6 flex items-center justify-center text-xs ${
+                            index < solutionIndex 
+                              ? 'bg-green-100 text-green-800' 
+                              : index === solutionIndex 
+                                ? 'bg-primary text-white' 
+                                : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {index < solutionIndex ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : (
+                              index + 1
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{solution.title}</div>
+                            <div className="text-xs text-gray-500">{solution.description}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="col-span-1 md:col-span-2">
+                <div className="rounded-md border p-6 h-full">
+                  <div className="flex flex-col h-full">
+                    <div>
+                      <h3 className="text-lg font-medium mb-1">{currentSolution?.title}</h3>
+                      <p className="text-gray-500 mb-6">{currentSolution?.description}</p>
+                    </div>
+                    
+                    {fixResult && (
+                      <div className={`rounded-md p-4 mb-6 ${
+                        fixResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+                      }`}>
+                        <div className="flex gap-3">
+                          {fixResult.success ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-600 mt-0.5" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
+                          )}
+                          <div>
+                            <h4 className={`text-sm font-medium ${
+                              fixResult.success ? 'text-green-800' : 'text-red-800'
+                            }`}>
+                              {fixResult.success ? 'Action Completed Successfully' : 'Action Failed'}
+                            </h4>
+                            <p className={`text-sm mt-1 ${
+                              fixResult.success ? 'text-green-700' : 'text-red-700'
+                            }`}>
+                              {fixResult.message}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="flex gap-3 mt-auto pt-4">
+                      <Button
+                        onClick={handleRunAction}
+                        disabled={executingFix}
+                        className="gap-2"
+                      >
+                        {executingFix ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          currentSolution?.action === "Run Test" || 
+                          currentSolution?.action === "Check Status" || 
+                          currentSolution?.action === "Run Diagnostic" ? (
+                            <RefreshCcw className="h-4 w-4" />
+                          ) : currentSolution?.action === "Verify Info" || 
+                              currentSolution?.action === "Check KYC" ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : currentSolution?.action === "Reset Session" || 
+                              currentSolution?.action === "Reset Preferences" ? (
+                            <DatabaseBackup className="h-4 w-4" />
+                          ) : currentSolution?.action === "Synchronize" ? (
+                            <Webhook className="h-4 w-4" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4" />
+                          )
+                        )}
+                        {currentSolution?.action}
+                      </Button>
+                      
+                      {solutionIndex < (currentProblem?.solutions.length ?? 0) - 1 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSolutionIndex(solutionIndex + 1);
+                            setFixResult(null);
+                          }}
+                        >
+                          Skip to Next Step
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </CardContent>
       
-      {step === 'complete' && selectedProblem && selectedSolution !== null && (
-        <div className="space-y-6">
-          <div className="text-center">
-            <div className="flex justify-center">
-              <div className="rounded-full bg-green-100 p-3">
-                <CheckCircle2 className="h-8 w-8 text-green-600" />
-              </div>
-            </div>
-            <h3 className="mt-4 text-lg font-medium">Solution Applied Successfully</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              The {problems[selectedProblem].solutions[selectedSolution].title.toLowerCase()} operation has been completed.
-            </p>
-          </div>
-          
-          <div className="bg-green-50 border border-green-200 rounded-md p-4">
-            <div className="flex">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <div className="ml-3">
-                <h4 className="text-sm font-medium text-green-800">Success</h4>
-                <p className="text-sm mt-1 text-green-700">
-                  {problems[selectedProblem].solutions[selectedSolution].successMessage}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="flex justify-center space-x-4">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              className="flex items-center gap-2"
-            >
-              <RefreshCcw className="h-4 w-4" />
-              <span>Start New Troubleshooting</span>
-            </Button>
-          </div>
+      <CardFooter className="flex justify-between border-t pt-4">
+        <div className="text-xs text-gray-500">
+          If you can't resolve your issue with this wizard, please contact support.
         </div>
-      )}
-    </div>
+      </CardFooter>
+      
+      <Dialog open={reportOpen} onOpenChange={setReportOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Report an Issue</DialogTitle>
+            <DialogDescription>
+              Submit details about the issue you're experiencing for further investigation.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            <div>
+              <h4 className="text-sm font-medium mb-1">Issue Type</h4>
+              <div className="rounded-md border p-3 bg-gray-50">
+                {currentProblem?.title}
+              </div>
+            </div>
+            
+            <div>
+              <h4 className="text-sm font-medium mb-1">Description</h4>
+              <Textarea 
+                placeholder="Please describe the issue in detail..." 
+                value={reportDescription}
+                onChange={(e) => setReportDescription(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setReportOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSubmitReport}
+              disabled={isSubmittingReport || !reportDescription.trim()}
+            >
+              {isSubmittingReport ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Submitting...
+                </>
+              ) : (
+                'Submit Report'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }

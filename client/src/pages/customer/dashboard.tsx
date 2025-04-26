@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import AddMoneyModal from "@/components/modals/AddMoneyModal";
 import SendMoneyModal from "@/components/modals/SendMoneyModal";
+import WithdrawModal from "@/components/modals/WithdrawModal";
 import BulkTransferModal from "@/components/modals/BulkTransferModal";
 import InitializeWalletCard from "@/components/wallet/InitializeWalletCard";
 import { Button } from "@/components/ui/button";
@@ -190,6 +191,13 @@ export default function CustomerDashboard() {
         open={bulkTransferModalOpen}
         onClose={() => setBulkTransferModalOpen(false)}
         currencyCode={selectedCurrency}
+      />
+      
+      <WithdrawModal
+        open={withdrawModalOpen}
+        onClose={() => setWithdrawModalOpen(false)}
+        currencyCode={selectedCurrency}
+        maxAmount={balanceAmount}
       />
     </CustomerLayout>
   );

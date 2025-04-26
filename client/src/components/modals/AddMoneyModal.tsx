@@ -32,12 +32,16 @@ export default function AddMoneyModal({
       const res = await apiRequest("POST", "/api/transactions/deposit", data);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      
+      // Get the amount as a dollar value for display
+      const displayAmount = (parseFloat(amount)).toFixed(2);
+      
       toast({
         title: "Deposit successful",
-        description: `Added ${currencyCode} ${parseFloat(amount).toFixed(2)} to your wallet`,
+        description: `Added ${currencyCode} ${displayAmount} to your wallet`,
       });
       handleClose();
     },

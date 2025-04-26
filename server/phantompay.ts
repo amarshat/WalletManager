@@ -188,8 +188,8 @@ export class PhantomPayClient {
         throw new Error(`Account not found for currency: ${data.currencyCode}`);
       }
       
-      // Convert to cents
-      const amountInCents = Math.round(data.amount * 100);
+      // Amount is already in cents from the client, so we don't need to convert
+      const amountInCents = data.amount;
       
       // Update account balance
       await db.update(phantomAccounts)
@@ -285,8 +285,8 @@ export class PhantomPayClient {
         throw new Error(`Destination account not found for currency: ${data.currencyCode}`);
       }
       
-      // Convert to cents
-      const amountInCents = Math.round(data.amount * 100);
+      // Amount is already in cents from the client
+      const amountInCents = data.amount;
       
       // Check if source has enough balance
       if ((sourceAccount.balance || 0) < amountInCents) {
@@ -374,8 +374,8 @@ export class PhantomPayClient {
         throw new Error(`Account not found for currency: ${data.currencyCode}`);
       }
       
-      // Convert to cents
-      const amountInCents = Math.round(data.amount * 100);
+      // Amount is already in cents from the client
+      const amountInCents = data.amount;
       
       // Check if account has enough balance
       if ((account.balance || 0) < amountInCents) {

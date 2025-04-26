@@ -46,9 +46,13 @@ export default function SendMoneyModal({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      
+      // Get the amount as a dollar value for display
+      const displayAmount = parseFloat(amount).toFixed(2);
+      
       toast({
         title: "Transfer successful",
-        description: `Sent ${currencyCode} ${parseInt(amount) / 100} to ${recipientUsername}`,
+        description: `Sent ${currencyCode} ${displayAmount} to ${recipientUsername}`,
       });
       handleClose();
     },

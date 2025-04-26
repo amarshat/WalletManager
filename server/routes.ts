@@ -5,6 +5,14 @@ import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertBrandSettingsSchema, insertCardSchema } from "@shared/schema";
 import { walletClient } from "./wallet-client";
+import { 
+  getPhantomSystemStatus, 
+  runPhantomDiagnostic, 
+  getErrorEvents, 
+  markErrorAsSeen, 
+  markAllErrorsAsSeen 
+} from "./diagnostics/diagnostics-routes";
+import { errorHandler, logClientError } from "./diagnostics/error-tracking";
 
 // Middleware to ensure user is authenticated
 const ensureAuth = (req: Request, res: Response, next: any) => {
@@ -50,6 +58,16 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
+  
+  // Setup error handler middleware
+  app.use('/api/client-error', logClientError);
+  
+  // Register troubleshooting and diagnostic routes
+  app.get('/api/admin/phantom-system-status', ensureAdmin, getPhantomSystemStatus);
+  app.post('/api/admin/phantom-diagnostics', ensureAdmin, runPhantomDiagnostic);
+  app.get('/api/admin/error-events', ensureAdmin, getErrorEvents);
+  app.post('/api/admin/error-events/:id/seen', ensureAdmin, markErrorAsSeen);
+  app.post('/api/admin/error-events/mark-all-seen', ensureAdmin, markAllErrorsAsSeen);
 
   // Brand Settings Routes
   app.get("/api/brand", async (req, res) => {

@@ -70,7 +70,11 @@ export const systemLogs = pgTable("system_logs", {
   statusCode: integer("status_code"),
   requestData: json("request_data"),
   responseData: json("response_data"),
-  timestamp: timestamp("timestamp").defaultNow(),
+  details: json("details"),
+  source: text("source"),
+  component: text("component"),
+  level: text("level"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Schema definitions for inserts
@@ -90,7 +94,7 @@ export const insertCardSchema = createInsertSchema(cards)
   .omit({ id: true, createdAt: true });
 
 export const insertSystemLogSchema = createInsertSchema(systemLogs)
-  .omit({ id: true, timestamp: true });
+  .omit({ id: true, createdAt: true });
 
 // Types for inserts and selects
 export type InsertUser = z.infer<typeof insertUserSchema>;

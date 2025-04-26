@@ -44,18 +44,31 @@ export function usePaysafe() {
   
   // Processed balances
   const balances = useMemo(() => {
+    // Add debugging to see what we're getting from the API
+    console.log('Wallet data from API:', walletData);
+    
     // Handle case where balances might be in different formats
     const accounts = walletData?.balances?.accounts || [];
     
+    console.log('Raw account data:', accounts);
+    
     return accounts.map((account: any) => {
       // Ensure we have valid numbers for balances (or default to 0)
-      const availableBalance = typeof account.availableBalance === 'number' && !isNaN(account.availableBalance) 
-        ? account.availableBalance 
+      const rawBalance = account.balance || account.availableBalance;
+      
+      console.log(`Processing account ${account.currencyCode}:`, {
+        rawBalance,
+        accountData: account 
+      });
+      
+      // Always use the 'balance' field first, then fall back to availableBalance
+      const availableBalance = typeof rawBalance === 'number' && !isNaN(rawBalance) 
+        ? rawBalance 
         : 0;
       
       const totalBalance = typeof account.totalBalance === 'number' && !isNaN(account.totalBalance)
         ? account.totalBalance
-        : 0;
+        : availableBalance; // Default to availableBalance if totalBalance is not provided
       
       return {
         currencyCode: account.currencyCode,

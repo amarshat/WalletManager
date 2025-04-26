@@ -47,7 +47,14 @@ export default function CustomerDashboard() {
   
   // Get selected currency balance
   const selectedBalance = balances.find(balance => balance.currencyCode === selectedCurrency);
+  
+  // Debug the selected balance
+  console.log('Selected balance from usePaysafe:', selectedBalance);
+  
   const balanceAmount = selectedBalance ? selectedBalance.availableBalance : 0;
+  
+  // Debug final amount passed to WalletCard
+  console.log('Final balance amount sent to WalletCard:', balanceAmount);
   
   // Handle refresh with explicit double refresh for better reliability
   const handleRefresh = async () => {

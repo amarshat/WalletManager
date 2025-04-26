@@ -827,6 +827,147 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Budget functionality
+  app.get('/api/budget/categories', ensureAuth, async (req, res) => {
+    try {
+      const categories = await storage.getBudgetCategories(req.user!.id);
+      res.json(categories);
+    } catch (error) {
+      await logApiCall(req, 'Get Budget Categories', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve budget categories' });
+    }
+  });
+
+  app.post('/api/budget/categories', ensureAuth, async (req, res) => {
+    try {
+      const category = await storage.createBudgetCategory({
+        ...req.body,
+        userId: req.user!.id,
+        isSystem: false
+      });
+      await logApiCall(req, 'Create Budget Category', 201, category);
+      res.status(201).json(category);
+    } catch (error) {
+      await logApiCall(req, 'Create Budget Category', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to create budget category' });
+    }
+  });
+
+  app.get('/api/budget/plans', ensureAuth, async (req, res) => {
+    try {
+      const plans = await storage.getBudgetPlans(req.user!.id);
+      res.json(plans);
+    } catch (error) {
+      await logApiCall(req, 'Get Budget Plans', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve budget plans' });
+    }
+  });
+
+  app.get('/api/budget/plans/active', ensureAuth, async (req, res) => {
+    try {
+      const plan = await storage.getActiveBudgetPlan(req.user!.id);
+      if (!plan) {
+        return res.status(404).json({ error: 'No active budget plan found' });
+      }
+      res.json(plan);
+    } catch (error) {
+      await logApiCall(req, 'Get Active Budget Plan', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve active budget plan' });
+    }
+  });
+
+  app.post('/api/budget/plans', ensureAuth, async (req, res) => {
+    try {
+      const plan = await storage.createBudgetPlan({
+        ...req.body,
+        userId: req.user!.id
+      });
+      
+      // If allocations were included in the request, create them
+      if (req.body.allocations && Array.isArray(req.body.allocations)) {
+        for (const allocation of req.body.allocations) {
+          await storage.createBudgetAllocation({
+            ...allocation,
+            budgetPlanId: plan.id,
+            spentAmount: "0"
+          });
+        }
+      }
+      
+      await logApiCall(req, 'Create Budget Plan', 201, plan);
+      res.status(201).json(plan);
+    } catch (error) {
+      await logApiCall(req, 'Create Budget Plan', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to create budget plan' });
+    }
+  });
+
+  app.get('/api/budget/plans/:id/allocations', ensureAuth, async (req, res) => {
+    try {
+      const planId = parseInt(req.params.id);
+      const plan = await storage.getBudgetPlan(planId);
+      
+      // Make sure the plan belongs to the authenticated user
+      if (!plan || plan.userId !== req.user!.id) {
+        return res.status(404).json({ error: 'Budget plan not found' });
+      }
+      
+      const allocations = await storage.getBudgetAllocations(planId);
+      res.json(allocations);
+    } catch (error) {
+      await logApiCall(req, 'Get Budget Allocations', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve budget allocations' });
+    }
+  });
+
+  app.post('/api/budget/allocations', ensureAuth, async (req, res) => {
+    try {
+      // Verify the budget plan belongs to the user
+      const plan = await storage.getBudgetPlan(req.body.budgetPlanId);
+      if (!plan || plan.userId !== req.user!.id) {
+        return res.status(404).json({ error: 'Budget plan not found' });
+      }
+      
+      const allocation = await storage.createBudgetAllocation({
+        ...req.body,
+        spentAmount: req.body.spentAmount || "0"
+      });
+      
+      await logApiCall(req, 'Create Budget Allocation', 201, allocation);
+      res.status(201).json(allocation);
+    } catch (error) {
+      await logApiCall(req, 'Create Budget Allocation', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to create budget allocation' });
+    }
+  });
+
+  app.post('/api/budget/transactions', ensureAuth, async (req, res) => {
+    try {
+      const transaction = await storage.createBudgetTransaction({
+        ...req.body,
+        userId: req.user!.id,
+        transactionDate: req.body.transactionDate || new Date()
+      });
+      
+      await logApiCall(req, 'Create Budget Transaction', 201, transaction);
+      res.status(201).json(transaction);
+    } catch (error) {
+      await logApiCall(req, 'Create Budget Transaction', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to create budget transaction' });
+    }
+  });
+
+  app.get('/api/budget/transactions', ensureAuth, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const transactions = await storage.getBudgetTransactions(req.user!.id, limit);
+      res.json(transactions);
+    } catch (error) {
+      await logApiCall(req, 'Get Budget Transactions', 500, { error: error.message });
+      res.status(500).json({ error: 'Failed to retrieve budget transactions' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

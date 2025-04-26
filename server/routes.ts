@@ -319,17 +319,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Transaction Routes
   app.post("/api/transactions/deposit", ensureAuth, async (req, res) => {
     try {
-      const { amount, currencyCode, description } = req.body;
+      let { amount, currencyCode, description } = req.body;
       
       if (!amount || !currencyCode) {
         return res.status(400).json({ error: "Amount and currency are required" });
       }
+      
+      // Ensure amount is a number, not a string
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: "Amount must be a valid positive number" });
+      }
+      
+      // Round to integer for database storage
+      amount = Math.round(amount);
       
       const wallet = await storage.getWalletByUserId(req.user!.id);
       
       if (!wallet) {
         return res.status(404).json({ error: "Wallet not found" });
       }
+      
+      console.log('Deposit amount after processing:', { amount, type: typeof amount });
       
       const depositResponse = await walletClient.depositMoney({
         amount,
@@ -348,11 +362,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/transactions/transfer", ensureAuth, async (req, res) => {
     try {
-      const { amount, currencyCode, recipientUsername, note } = req.body;
+      let { amount, currencyCode, recipientUsername, note } = req.body;
       
       if (!amount || !currencyCode || !recipientUsername) {
         return res.status(400).json({ error: "Amount, currency, and recipient are required" });
       }
+      
+      // Ensure amount is a number, not a string
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: "Amount must be a valid positive number" });
+      }
+      
+      // Round to integer for database storage
+      amount = Math.round(amount);
       
       // Get sender wallet
       const senderWallet = await storage.getWalletByUserId(req.user!.id);
@@ -375,6 +401,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Recipient wallet not found" });
       }
       
+      console.log('Transfer amount after processing:', { amount, type: typeof amount });
+      
       const transferResponse = await walletClient.transferMoney({
         amount,
         currencyCode,
@@ -393,17 +421,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post("/api/transactions/withdraw", ensureAuth, async (req, res) => {
     try {
-      const { amount, currencyCode, description } = req.body;
+      let { amount, currencyCode, description } = req.body;
       
       if (!amount || !currencyCode) {
         return res.status(400).json({ error: "Amount and currency are required" });
       }
+      
+      // Ensure amount is a number, not a string
+      if (typeof amount === 'string') {
+        amount = parseFloat(amount);
+      }
+      
+      if (isNaN(amount) || amount <= 0) {
+        return res.status(400).json({ error: "Amount must be a valid positive number" });
+      }
+      
+      // Round to integer for database storage
+      amount = Math.round(amount);
       
       const wallet = await storage.getWalletByUserId(req.user!.id);
       
       if (!wallet) {
         return res.status(404).json({ error: "Wallet not found" });
       }
+      
+      console.log('Withdrawal amount after processing:', { amount, type: typeof amount });
       
       const withdrawResponse = await walletClient.withdrawMoney({
         amount,
@@ -533,7 +575,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       for (const transfer of transfers) {
         try {
-          const { recipientUsername, amount, currencyCode, note } = transfer;
+          let { recipientUsername, amount, currencyCode, note } = transfer;
+          
+          // Ensure amount is a number, not a string
+          if (typeof amount === 'string') {
+            amount = parseFloat(amount);
+          }
+          
+          if (isNaN(amount) || amount <= 0) {
+            errors.push({ transfer, error: "Amount must be a valid positive number" });
+            continue;
+          }
+          
+          // Round to integer for database storage
+          amount = Math.round(amount);
           
           // Get recipient user
           const recipientUser = await storage.getUserByUsername(recipientUsername);
@@ -550,6 +605,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             errors.push({ transfer, error: "Recipient wallet not found" });
             continue;
           }
+          
+          console.log('Bulk transfer amount after processing:', { amount, type: typeof amount });
           
           const transferResponse = await walletClient.transferMoney({
             amount,

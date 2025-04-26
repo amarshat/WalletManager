@@ -49,11 +49,19 @@ export default function CustomerDashboard() {
   const selectedBalance = balances.find(balance => balance.currencyCode === selectedCurrency);
   const balanceAmount = selectedBalance ? selectedBalance.availableBalance : 0;
   
-  // Handle refresh
+  // Handle refresh with explicit double refresh for better reliability
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
+      // Do an initial refresh
       await refreshAllData();
+      
+      // Wait a moment and do a second refresh to ensure we have the latest data
+      setTimeout(async () => {
+        await refreshAllData();
+        setRefreshing(false);
+      }, 1000);
+      
       toast({
         title: "Refreshed",
         description: "Your wallet data has been updated",
@@ -64,7 +72,6 @@ export default function CustomerDashboard() {
         description: "Failed to update wallet data",
         variant: "destructive",
       });
-    } finally {
       setRefreshing(false);
     }
   };

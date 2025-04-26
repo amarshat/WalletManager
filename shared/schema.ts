@@ -25,6 +25,19 @@ export const brandSettings = pgTable("brand_settings", {
   tagline: text("tagline").default("Your Digital Wallet Solution"),
   logo: text("logo"),
   walletAuthKey: text("wallet_auth_key"),
+  // Wallet feature configurations
+  walletConfig: json("wallet_config").$defaultFn(() => ({
+    transactionDisplayCount: 10,
+    allowedCurrencies: ["USD", "EUR", "GBP"],
+    maxNegativeBalance: 0, // 0 means not allowed
+    enableAnalytics: true,
+    enableBulkTransfers: true,
+    enableTestCards: true,
+    maxTestCards: 5,
+    maxTransferAmount: 10000 * 100, // in cents
+    defaultCommissionRate: 0.5, // percentage
+    retentionPeriodDays: 7, // for system logs
+  })),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

@@ -62,6 +62,11 @@ export default function AdminLayout({
       icon: <Settings className="w-5 h-5 mr-3" /> 
     },
     { 
+      href: "/admin/wallet-config", 
+      label: "Wallet Configuration", 
+      icon: <Wallet className="w-5 h-5 mr-3" /> 
+    },
+    { 
       href: "/admin/manage-customers", 
       label: "Manage Customers", 
       icon: <Users className="w-5 h-5 mr-3" /> 

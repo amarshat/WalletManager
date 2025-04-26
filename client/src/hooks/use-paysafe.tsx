@@ -122,11 +122,15 @@ export function usePaysafe() {
     });
   }, [transactionsData, walletData]);
   
-  // Refresh all wallet data
-  const refreshAllData = () => {
-    refetchWallet();
-    refetchTransactions();
-    refetchCards();
+  // Refresh all wallet data with more reliable ordering
+  const refreshAllData = async () => {
+    // First refresh wallet data to get current balances
+    await refetchWallet();
+    // Then refresh transactions and cards
+    await Promise.all([
+      refetchTransactions(),
+      refetchCards()
+    ]);
   };
   
   return {

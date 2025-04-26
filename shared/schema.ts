@@ -179,10 +179,14 @@ export const budgetTransactions = pgTable("budget_transactions", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertBudgetCategorySchema = createInsertSchema(budgetCategories);
-export const insertBudgetPlanSchema = createInsertSchema(budgetPlans);
-export const insertBudgetAllocationSchema = createInsertSchema(budgetAllocations);
-export const insertBudgetTransactionSchema = createInsertSchema(budgetTransactions);
+export const insertBudgetCategorySchema = createInsertSchema(budgetCategories)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBudgetPlanSchema = createInsertSchema(budgetPlans)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBudgetAllocationSchema = createInsertSchema(budgetAllocations)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+export const insertBudgetTransactionSchema = createInsertSchema(budgetTransactions)
+  .omit({ id: true, createdAt: true });
 
 export type InsertBudgetCategory = z.infer<typeof insertBudgetCategorySchema>;
 export type BudgetCategory = typeof budgetCategories.$inferSelect;

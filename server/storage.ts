@@ -197,7 +197,7 @@ export class DatabaseStorage implements IStorage {
     return db
       .select()
       .from(systemLogs)
-      .orderBy(desc(systemLogs.timestamp))
+      .orderBy(desc(systemLogs.createdAt))
       .limit(limit)
       .offset(offset);
   }
@@ -207,7 +207,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(systemLogs)
       .where(eq(systemLogs.userId, userId))
-      .orderBy(desc(systemLogs.timestamp))
+      .orderBy(desc(systemLogs.createdAt))
       .limit(limit);
   }
 }

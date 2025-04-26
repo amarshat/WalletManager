@@ -5,14 +5,7 @@ import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertBrandSettingsSchema, insertCardSchema } from "@shared/schema";
 import { walletClient } from "./wallet-client";
-import { 
-  getPhantomSystemStatus, 
-  runPhantomDiagnostic, 
-  getErrorEvents, 
-  markErrorAsSeen, 
-  markAllErrorsAsSeen 
-} from "./diagnostics/diagnostics-routes";
-import { errorHandler, logClientError } from "./diagnostics/error-tracking";
+import { errorHandler } from "./diagnostics/error-tracking";
 
 // Middleware to ensure user is authenticated
 const ensureAuth = (req: Request, res: Response, next: any) => {

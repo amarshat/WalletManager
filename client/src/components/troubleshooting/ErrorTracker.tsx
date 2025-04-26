@@ -1,297 +1,330 @@
 import { useState, useEffect } from 'react';
-import { 
-  AlertTriangle, 
-  X, 
-  ChevronUp, 
-  ChevronDown, 
-  RefreshCw,
-  AlertCircle,
-  InfoIcon,
-  Check
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { useQuery } from '@tanstack/react-query';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { 
+  AlertCircle, 
+  AlertTriangle, 
+  Clock, 
+  Eye, 
+  Filter, 
+  Info, 
+  RefreshCcw, 
+  Server, 
+  ShieldAlert, 
+  SlidersHorizontal,
+  X
+} from 'lucide-react';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 
-interface ErrorEvent {
+interface SystemLog {
   id: number;
-  message: string;
-  details: {
-    level: 'info' | 'warning' | 'error' | 'critical';
-    source: 'client' | 'server' | 'api';
-    component?: string;
-    timestamp: string;
+  action: string;
+  component?: string;
+  userId?: number;
+  details?: {
+    level?: 'info' | 'warning' | 'error' | 'critical';
+    source?: 'client' | 'server' | 'api';
     seen?: boolean;
+    message?: string;
+    method?: string;
+    path?: string;
+    statusCode?: number;
   };
   createdAt: string;
 }
 
+const severityIcons = {
+  info: <Info className="h-4 w-4 text-blue-500" />,
+  warning: <AlertTriangle className="h-4 w-4 text-amber-500" />,
+  error: <ShieldAlert className="h-4 w-4 text-red-500" />,
+  critical: <AlertCircle className="h-4 w-4 text-purple-600" />
+};
+
+const sourceColors = {
+  client: 'bg-green-100 text-green-800',
+  server: 'bg-blue-100 text-blue-800',
+  api: 'bg-purple-100 text-purple-800'
+};
+
 export default function ErrorTracker() {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [errors, setErrors] = useState<ErrorEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasNewErrors, setHasNewErrors] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
   
-  // Load errors on mount
-  useEffect(() => {
-    fetchErrors();
-    
-    // Set up polling for new errors
-    const interval = setInterval(() => {
-      fetchErrors(true);
-    }, 30000); // Check for new errors every 30 seconds
-    
-    return () => clearInterval(interval);
-  }, []);
-  
-  // Fetch errors from the API
-  const fetchErrors = async (silent = false) => {
-    if (!silent) setIsLoading(true);
-    
-    try {
-      const response = await apiRequest('GET', '/api/logs?limit=10');
-      const data = await response.json();
-      
-      if (data.errors && Array.isArray(data.errors)) {
-        // Check if there are any new unseen errors
-        const newUnseen = data.errors.some((error: ErrorEvent) => !error.details.seen);
-        
-        if (newUnseen && errors.length > 0) {
-          setHasNewErrors(true);
-          if (!isOpen) {
-            toast({
-              title: 'New errors detected',
-              description: 'There are new errors that require your attention.',
-              variant: 'destructive'
-            });
-          }
-        }
-        
-        setErrors(data.errors);
+  const { data: errorLogs, isLoading, error, refetch } = useQuery({
+    queryKey: ['/api/logs'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/logs');
+        const data = await res.json();
+        return data.errors || [];
+      } catch (err) {
+        console.error('Failed to fetch error logs:', err);
+        return [];
       }
-    } catch (error) {
-      console.error('Error fetching errors:', error);
-      if (!silent) {
-        toast({
-          title: 'Error',
-          description: 'Failed to fetch error events.',
-          variant: 'destructive'
-        });
-      }
-    } finally {
-      if (!silent) setIsLoading(false);
     }
-  };
+  });
   
-  // Mark all errors as seen
-  const markAllAsSeen = async () => {
+  const totalPages = errorLogs ? Math.ceil(errorLogs.length / PAGE_SIZE) : 0;
+  
+  const filteredLogs = errorLogs?.filter((log: SystemLog) => {
+    if (activeTab === 'all') return true;
+    return log.details?.level === activeTab;
+  });
+  
+  const paginatedLogs = filteredLogs?.slice(
+    (currentPage - 1) * PAGE_SIZE, 
+    currentPage * PAGE_SIZE
+  );
+  
+  const handleMarkAllSeen = async () => {
     try {
       await apiRequest('POST', '/api/logs/mark-all-seen');
-      setHasNewErrors(false);
-      fetchErrors();
-      
       toast({
         title: 'Success',
-        description: 'All errors marked as seen.',
+        description: 'All errors have been marked as seen',
+        variant: 'default',
       });
-    } catch (error) {
-      console.error('Error marking errors as seen:', error);
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/logs'] });
+    } catch (err) {
       toast({
         title: 'Error',
-        description: 'Failed to mark errors as seen.',
-        variant: 'destructive'
+        description: 'Failed to mark errors as seen',
+        variant: 'destructive',
       });
     }
   };
   
-  // Get level badge color
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'critical':
-        return 'bg-red-500 text-white hover:bg-red-600';
-      case 'error':
-        return 'bg-red-400 text-white hover:bg-red-500';
-      case 'warning':
-        return 'bg-amber-400 text-amber-950 hover:bg-amber-500';
-      case 'info':
-        return 'bg-blue-400 text-blue-950 hover:bg-blue-500';
+  const getActionDescription = (action: string) => {
+    switch(action) {
+      case 'API_REQUEST':
+        return 'API Request';
+      case 'SYSTEM_ERROR':
+        return 'System Error';
+      case 'AUTH_FAILURE':
+        return 'Authentication Failure';
+      case 'TRANSACTION_ERROR':
+        return 'Transaction Error';
       default:
-        return 'bg-gray-400 text-gray-950 hover:bg-gray-500';
+        return action.split('_').map(word => 
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
     }
   };
   
-  // Get source badge color
-  const getSourceColor = (source: string) => {
-    switch (source) {
-      case 'client':
-        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
-      case 'server':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      case 'api':
-        return 'bg-green-100 text-green-800 hover:bg-green-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-  
-  // Get level icon
-  const getLevelIcon = (level: string) => {
-    switch (level) {
-      case 'critical':
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
-      case 'info':
-        return <InfoIcon className="h-4 w-4 text-blue-500" />;
-      default:
-        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
-    }
-  };
-  
-  // Format date
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-  
-  // If no errors, don't render anything
-  if (errors.length === 0 && !isOpen) {
-    return null;
-  }
+  useEffect(() => {
+    // Reset to page 1 when filter changes
+    setCurrentPage(1);
+  }, [activeTab]);
   
   return (
-    <div className="fixed bottom-4 right-4 z-50">
-      {/* Collapsed state - just show icon */}
-      {!isOpen && (
-        <button
-          onClick={() => {
-            setIsOpen(true);
-            setHasNewErrors(false);
-          }}
-          className="flex items-center space-x-2 bg-white shadow-lg border rounded-full px-4 py-2 hover:bg-gray-50 transition-all"
-        >
-          <AlertTriangle className={`h-5 w-5 ${hasNewErrors ? 'text-red-500 animate-pulse' : 'text-amber-500'}`} />
-          <span className="font-medium">{errors.length} Errors</span>
-          {hasNewErrors && (
-            <Badge variant="destructive" className="ml-1 text-[10px] h-5 animate-pulse">
-              NEW
-            </Badge>
-          )}
-        </button>
-      )}
-      
-      {/* Expanded state - show error list */}
-      {isOpen && (
-        <div className="bg-white shadow-xl border rounded-lg w-[380px] transition-all overflow-hidden flex flex-col">
-          {/* Header */}
-          <div className="border-b p-3 flex items-center justify-between bg-gray-50">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
-              <h3 className="font-medium">Error Tracker</h3>
-              {hasNewErrors && (
-                <Badge variant="destructive" className="animate-pulse text-[10px] h-5">NEW</Badge>
-              )}
-            </div>
-            <div className="flex items-center space-x-1">
-              <button 
-                onClick={() => fetchErrors()}
-                className="p-1 hover:bg-gray-200 rounded-md text-gray-500"
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </button>
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  setIsExpanded(false);
-                }}
-                className="p-1 hover:bg-gray-200 rounded-md text-gray-500"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+    <Card className="w-full overflow-hidden">
+      <CardHeader className="pb-0">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-xl">Error Tracker</CardTitle>
+            <CardDescription>
+              Monitor and troubleshoot system errors and events
+            </CardDescription>
           </div>
-          
-          {/* Main content - error list */}
-          <div className={`overflow-y-auto transition-all ${isExpanded ? 'max-h-[500px]' : 'max-h-[300px]'}`}>
-            {errors.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                <Check className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                <p>No errors to display!</p>
-                <p className="text-sm mt-1">The system is running smoothly.</p>
-              </div>
-            ) : (
-              <ul className="divide-y">
-                {errors.map((error) => (
-                  <li 
-                    key={error.id} 
-                    className={`p-3 text-sm hover:bg-gray-50 ${!error.details.seen ? 'bg-amber-50' : ''}`}
-                  >
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="flex items-center space-x-2">
-                        {getLevelIcon(error.details.level)}
-                        <span className="font-medium">{error.message}</span>
-                      </div>
-                      <div className="flex space-x-1">
-                        <Badge className={getLevelColor(error.details.level)}>
-                          {error.details.level}
-                        </Badge>
-                        <Badge className={getSourceColor(error.details.source)}>
-                          {error.details.source}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-xs text-gray-500 flex justify-between">
-                      <div>
-                        {error.details.component && (
-                          <span className="mr-2">
-                            Component: <span className="font-mono">{error.details.component}</span>
-                          </span>
-                        )}
-                      </div>
-                      <div>{formatDate(error.createdAt)}</div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-          
-          {/* Footer */}
-          <div className="border-t p-2 flex items-center justify-between bg-gray-50">
+          <div className="flex space-x-2">
             <Button 
               variant="outline" 
               size="sm"
-              onClick={markAllAsSeen}
-              disabled={errors.length === 0 || errors.every(e => e.details.seen)}
+              onClick={() => refetch()}
+              className="flex items-center gap-1"
             >
-              Mark All as Seen
+              <RefreshCcw className="h-4 w-4" />
+              <span>Refresh</span>
             </Button>
-            <Button
-              variant="ghost"
+            <Button 
+              variant="outline" 
               size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="text-gray-500"
+              onClick={handleMarkAllSeen}
+              className="flex items-center gap-1"
             >
-              {isExpanded ? (
-                <>
-                  <ChevronDown className="h-4 w-4 mr-1" />
-                  Collapse
-                </>
-              ) : (
-                <>
-                  <ChevronUp className="h-4 w-4 mr-1" />
-                  Expand
-                </>
-              )}
+              <Eye className="h-4 w-4" />
+              <span>Mark All Seen</span>
             </Button>
           </div>
         </div>
-      )}
-    </div>
+      </CardHeader>
+      
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="px-6 pt-2">
+          <TabsList className="grid grid-cols-5 w-full">
+            <TabsTrigger value="all" className="flex items-center gap-1">
+              <Filter className="h-4 w-4" />
+              <span>All</span>
+            </TabsTrigger>
+            <TabsTrigger value="info" className="flex items-center gap-1">
+              <Info className="h-4 w-4" />
+              <span>Info</span>
+            </TabsTrigger>
+            <TabsTrigger value="warning" className="flex items-center gap-1">
+              <AlertTriangle className="h-4 w-4" />
+              <span>Warning</span>
+            </TabsTrigger>
+            <TabsTrigger value="error" className="flex items-center gap-1">
+              <ShieldAlert className="h-4 w-4" />
+              <span>Error</span>
+            </TabsTrigger>
+            <TabsTrigger value="critical" className="flex items-center gap-1">
+              <AlertCircle className="h-4 w-4" />
+              <span>Critical</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+      </Tabs>
+      
+      <CardContent className="pt-4 px-0">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-60">
+            <div className="animate-spin w-8 h-8 border-4 border-t-primary rounded-full" />
+          </div>
+        ) : error ? (
+          <Alert variant="destructive" className="mx-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>
+              Failed to load error logs. Please refresh and try again.
+            </AlertDescription>
+          </Alert>
+        ) : !paginatedLogs?.length ? (
+          <div className="text-center py-12 text-gray-500">
+            <Server className="h-10 w-10 mb-2 mx-auto text-gray-400" />
+            <p className="text-lg font-medium">No errors found</p>
+            <p className="text-sm">The system appears to be running smoothly</p>
+          </div>
+        ) : (
+          <div className="space-y-0 pb-2">
+            {paginatedLogs.map((log: SystemLog) => (
+              <div key={log.id} className="px-6 py-3 border-b last:border-0 hover:bg-gray-50">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {severityIcons[log.details?.level || 'info']}
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-medium text-gray-800">{getActionDescription(log.action)}</h3>
+                        <Badge variant="outline" className={log.details?.source ? sourceColors[log.details.source] : ''}>
+                          {log.details?.source || 'system'}
+                        </Badge>
+                        {log.details?.seen === false && (
+                          <Badge className="bg-blue-500 text-white">New</Badge>
+                        )}
+                      </div>
+                      
+                      <p className="text-sm text-gray-600 mt-1">
+                        {log.details?.message || 'No additional details'}
+                      </p>
+                      
+                      {log.details?.method && log.details?.path && (
+                        <div className="mt-2 text-xs bg-gray-100 p-1 px-2 rounded font-mono">
+                          {log.details.method} {log.details.path} 
+                          {log.details.statusCode && (
+                            <span className={`ml-1 px-1 py-0.5 rounded ${
+                              log.details.statusCode >= 400 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+                            }`}>
+                              {log.details.statusCode}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex items-center mt-2 text-xs text-gray-500">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>
+                          {new Date(log.createdAt).toLocaleString()}
+                        </span>
+                        
+                        {log.component && (
+                          <>
+                            <Separator orientation="vertical" className="mx-2 h-3" />
+                            <Server className="h-3 w-3 mr-1" />
+                            <span>{log.component}</span>
+                          </>
+                        )}
+                        
+                        {log.userId && (
+                          <>
+                            <Separator orientation="vertical" className="mx-2 h-3" />
+                            <span>User ID: {log.userId}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Dismiss</span>
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-between items-center px-6 pt-4">
+            <div className="text-sm text-gray-500">
+              Page {currentPage} of {totalPages}
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="bg-gray-50 border-t flex justify-between">
+        <div className="text-sm text-gray-500 flex items-center">
+          <SlidersHorizontal className="h-4 w-4 mr-2" />
+          <span>Showing {filteredLogs?.length || 0} events</span>
+        </div>
+        
+        <div className="flex space-x-4">
+          {['info', 'warning', 'error', 'critical'].map(severity => (
+            <div key={severity} className="flex items-center gap-1 text-sm">
+              {severityIcons[severity as keyof typeof severityIcons]}
+              <span className="capitalize">{severity}</span>
+              <Badge variant="outline" className="ml-1 px-2 py-0">
+                {errorLogs?.filter((log: SystemLog) => log.details?.level === severity).length || 0}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

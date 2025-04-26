@@ -1,553 +1,446 @@
 import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { 
-  CheckCircle2, 
-  XCircle, 
-  AlertTriangle, 
-  Database, 
-  Workflow, 
-  Link, 
-  User, 
-  CreditCard, 
-  BarChart4, 
-  Wallet,
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  AlertCircle,
+  CheckCircle2,
+  DatabaseIcon,
+  ServerCrash,
+  Settings,
+  ShieldAlert,
   Loader2
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
-interface DiagnosticResult {
+type DiagnosticResult = {
   success: boolean;
   message: string;
-  details?: any;
-  recommendation?: string;
-}
+  details?: Record<string, any>;
+};
+
+type SystemStatusResult = {
+  serverHealth: boolean;
+  databaseHealth: boolean;
+  apiHealth: boolean;
+  customersCount: number;
+  accountsCount: number;
+  transactionsCount: number;
+  lastUpdate: string;
+};
 
 export default function PhantomPayDiagnostics() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('system');
-  const [isRunningTest, setIsRunningTest] = useState(false);
-  const [testResults, setTestResults] = useState<Record<string, DiagnosticResult | null>>({
-    database: null,
-    schema: null,
-    integration: null,
-    routes: null,
-    errorHandling: null,
-    dataIntegrity: null
+  const [customerId, setCustomerId] = useState('');
+  const [transactionId, setTransactionId] = useState('');
+  const [testType, setTestType] = useState('all');
+  
+  const [systemStatus, setSystemStatus] = useState<SystemStatusResult | null>(null);
+  const [diagnosticResults, setDiagnosticResults] = useState<DiagnosticResult[]>([]);
+  
+  const { mutate: getSystemStatus, isPending: isLoadingStatus } = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('GET', '/api/admin/phantom-system-status');
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setSystemStatus(data);
+      toast({
+        title: "System status retrieved",
+        description: "Successfully retrieved current system status",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error retrieving status",
+        description: String(error),
+        variant: "destructive",
+      });
+    }
   });
-  const [systemStatus, setSystemStatus] = useState<any>(null);
-  const [isLoadingStatus, setIsLoadingStatus] = useState(false);
   
-  // Run a diagnostic test
-  const runDiagnosticTest = async (type: string, params: Record<string, string> = {}) => {
-    setIsRunningTest(true);
-    try {
-      // Build query parameters
-      const queryParams = new URLSearchParams({ type, ...params }).toString();
-      
-      // Run the diagnostic test
-      const response = await apiRequest('GET', `/api/phantom/diagnostics?${queryParams}`);
-      const result = await response.json();
-      
-      // Update test results
-      setTestResults(prev => ({
-        ...prev,
-        [type]: result
-      }));
-      
+  const { mutate: runDiagnostic, isPending: isRunningDiagnostic } = useMutation({
+    mutationFn: async (payload: { customerId?: string; transactionId?: string; testType: string }) => {
+      const res = await apiRequest('POST', '/api/admin/phantom-diagnostics', payload);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      setDiagnosticResults(data.results || []);
       toast({
-        title: result.success ? 'Diagnostic Complete' : 'Diagnostic Failed',
-        description: result.message,
-        variant: result.success ? 'default' : 'destructive'
+        title: "Diagnostic complete",
+        description: "Diagnostic tests have completed successfully",
       });
-      
-      return result;
-    } catch (error) {
-      console.error('Error running diagnostic test:', error);
+    },
+    onError: (error) => {
       toast({
-        title: 'Error Running Diagnostic',
-        description: error instanceof Error ? error.message : 'An unexpected error occurred',
-        variant: 'destructive'
+        title: "Error running diagnostic",
+        description: String(error),
+        variant: "destructive",
       });
-      return null;
-    } finally {
-      setIsRunningTest(false);
     }
+  });
+  
+  const handleRunSystemDiagnostic = () => {
+    runDiagnostic({ testType: 'system' });
   };
   
-  // Get system status
-  const getSystemStatus = async () => {
-    setIsLoadingStatus(true);
-    try {
-      const response = await apiRequest('GET', '/api/phantom/status');
-      const status = await response.json();
-      
-      setSystemStatus(status);
-      
+  const handleRunCustomerDiagnostic = () => {
+    if (!customerId.trim()) {
       toast({
-        title: 'System Status Updated',
-        description: 'PhantomPay system status has been refreshed.'
+        title: "Customer ID required",
+        description: "Please enter a customer ID to run this diagnostic",
+        variant: "destructive",
       });
-    } catch (error) {
-      console.error('Error fetching system status:', error);
-      toast({
-        title: 'Status Update Failed',
-        description: error instanceof Error ? error.message : 'Failed to fetch system status',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoadingStatus(false);
-    }
-  };
-  
-  // Run all system tests
-  const runAllSystemTests = async () => {
-    await runDiagnosticTest('database');
-    await runDiagnosticTest('schema');
-    await runDiagnosticTest('integration');
-    await runDiagnosticTest('routes');
-  };
-  
-  // Format diagnostic result as a component
-  const formatResult = (result: DiagnosticResult | null) => {
-    if (!result) {
-      return <div className="text-gray-500 italic">No test results available</div>;
+      return;
     }
     
-    return (
-      <div className="space-y-2">
-        <div className="flex items-start gap-2">
-          {result.success ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0 mt-1" />
-          ) : (
-            <XCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-1" />
-          )}
-          <div>
-            <div className="font-medium">{result.message}</div>
-            {result.recommendation && (
-              <p className="text-sm text-gray-600">{result.recommendation}</p>
-            )}
-          </div>
-        </div>
-        
-        {result.details && (
-          <Accordion type="single" collapsible className="mt-2">
-            <AccordionItem value="details">
-              <AccordionTrigger className="text-sm">View Details</AccordionTrigger>
-              <AccordionContent>
-                <pre className="bg-gray-100 p-4 rounded-md text-xs overflow-auto max-h-60">
-                  {JSON.stringify(result.details, null, 2)}
-                </pre>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        )}
-      </div>
-    );
+    runDiagnostic({ customerId, testType });
+  };
+  
+  const handleRunTransactionDiagnostic = () => {
+    if (!transactionId.trim()) {
+      toast({
+        title: "Transaction ID required",
+        description: "Please enter a transaction ID to run this diagnostic",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    runDiagnostic({ transactionId, testType });
   };
   
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle className="flex items-center">
-                <Database className="mr-2 h-5 w-5 text-primary" />
-                PhantomPay Diagnostics
-              </CardTitle>
-              <CardDescription>
-                Run diagnostics to check the health of the PhantomPay mock system
-              </CardDescription>
-            </div>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={getSystemStatus}
-              disabled={isLoadingStatus}
-            >
-              {isLoadingStatus ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Checking...
-                </>
-              ) : (
-                'Check System Status'
-              )}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {systemStatus ? (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Database</h4>
-                <Badge variant={systemStatus.database.status === 'healthy' ? 'outline' : 'destructive'}>
-                  {systemStatus.database.status}
-                </Badge>
-                <p className="text-xs text-gray-500">{systemStatus.database.message}</p>
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Schema</h4>
-                <Badge variant={systemStatus.schemas.status === 'healthy' ? 'outline' : 'destructive'}>
-                  {systemStatus.schemas.status}
-                </Badge>
-                <p className="text-xs text-gray-500">{systemStatus.schemas.message}</p>
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium">Services</h4>
-                <div className="flex space-x-2">
-                  <Badge variant={systemStatus.services.wallet ? 'outline' : 'destructive'}>
-                    Wallet {systemStatus.services.wallet ? 'OK' : 'Error'}
-                  </Badge>
-                  <Badge variant={systemStatus.services.transactions ? 'outline' : 'destructive'}>
-                    Transactions {systemStatus.services.transactions ? 'OK' : 'Error'}
-                  </Badge>
-                </div>
-                <p className="text-xs text-gray-500">Last updated: {new Date(systemStatus.timestamp).toLocaleString()}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-gray-50 p-6 rounded-lg text-center">
-              <Database className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-              <h3 className="text-lg font-medium">No System Status Available</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Click the "Check System Status" button to get the current health status of PhantomPay.
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle className="text-xl">PhantomPay Diagnostics</CardTitle>
+        <CardDescription>
+          Run diagnostics on the PhantomPay mock payment system
+        </CardDescription>
+      </CardHeader>
       
-      <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid grid-cols-3 mb-4">
-          <TabsTrigger value="system">System Tests</TabsTrigger>
-          <TabsTrigger value="data">Data Tests</TabsTrigger>
-          <TabsTrigger value="transaction">Transaction Tests</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="px-6">
+          <TabsList className="grid grid-cols-3 w-full">
+            <TabsTrigger value="system" className="flex items-center gap-1">
+              <Settings className="h-4 w-4" />
+              <span>System Status</span>
+            </TabsTrigger>
+            <TabsTrigger value="customer" className="flex items-center gap-1">
+              <DatabaseIcon className="h-4 w-4" />
+              <span>Customer Tests</span>
+            </TabsTrigger>
+            <TabsTrigger value="transaction" className="flex items-center gap-1">
+              <ServerCrash className="h-4 w-4" />
+              <span>Transaction Tests</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value="system" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">PhantomPay System Tests</CardTitle>
-              <CardDescription>
-                Run diagnostics to verify the core system functionality
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Database className="h-5 w-5 text-blue-500 mr-2" />
-                    <h3 className="font-medium">Database Connectivity</h3>
-                  </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.database)}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => runDiagnosticTest('database')}
-                      disabled={isRunningTest}
-                    >
-                      {isRunningTest ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Database className="mr-2 h-4 w-4" />
-                      )}
-                      Run Test
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Workflow className="h-5 w-5 text-green-500 mr-2" />
-                    <h3 className="font-medium">Schema Validation</h3>
-                  </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.schema)}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => runDiagnosticTest('schema')}
-                      disabled={isRunningTest}
-                    >
-                      {isRunningTest ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Workflow className="mr-2 h-4 w-4" />
-                      )}
-                      Run Test
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Link className="h-5 w-5 text-purple-500 mr-2" />
-                    <h3 className="font-medium">Integration Points</h3>
-                  </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.integration)}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => runDiagnosticTest('integration')}
-                      disabled={isRunningTest}
-                    >
-                      {isRunningTest ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Link className="mr-2 h-4 w-4" />
-                      )}
-                      Run Test
-                    </Button>
-                  </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Link className="h-5 w-5 text-amber-500 mr-2" />
-                    <h3 className="font-medium">API Routes</h3>
-                  </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.routes)}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => runDiagnosticTest('routes')}
-                      disabled={isRunningTest}
-                    >
-                      {isRunningTest ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <Link className="mr-2 h-4 w-4" />
-                      )}
-                      Run Test
-                    </Button>
-                  </div>
-                </div>
+        <TabsContent value="system" className="p-6 pt-4">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium">System Health Overview</h3>
+                <p className="text-sm text-gray-500">
+                  Check the overall health of the PhantomPay system
+                </p>
               </div>
-              
-              <Separator />
-              
-              <div className="flex justify-center">
-                <Button onClick={runAllSystemTests} disabled={isRunningTest}>
-                  {isRunningTest ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <BarChart4 className="mr-2 h-4 w-4" />
-                  )}
-                  Run All System Tests
+              <div className="space-x-3">
+                <Button 
+                  variant="outline"
+                  onClick={() => getSystemStatus()}
+                  disabled={isLoadingStatus}
+                  className="flex items-center gap-1"
+                >
+                  {isLoadingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                  <span>Check Status</span>
+                </Button>
+                <Button 
+                  onClick={handleRunSystemDiagnostic}
+                  disabled={isRunningDiagnostic}
+                  className="flex items-center gap-1"
+                >
+                  {isRunningDiagnostic ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldAlert className="h-4 w-4" />}
+                  <span>Run Diagnostic</span>
                 </Button>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="data" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Data Integrity Tests</CardTitle>
-              <CardDescription>
-                Run diagnostics to verify data consistency and integrity
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 mr-2" />
-                    <h3 className="font-medium">Error Handling</h3>
-                  </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.errorHandling)}
-                    <Button 
-                      size="sm" 
-                      variant="outline"
-                      className="mt-2"
-                      onClick={() => runDiagnosticTest('error-handling')}
-                      disabled={isRunningTest}
-                    >
-                      {isRunningTest ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            </div>
+            
+            {systemStatus ? (
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Server Health</p>
+                        <p className="text-lg font-semibold">
+                          {systemStatus.serverHealth ? 'Operational' : 'Issues Detected'}
+                        </p>
+                      </div>
+                      {systemStatus.serverHealth ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
                       ) : (
-                        <AlertTriangle className="mr-2 h-4 w-4" />
+                        <AlertCircle className="h-6 w-6 text-red-500" />
                       )}
-                      Run Test
-                    </Button>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-4">
-                  <div className="flex items-center">
-                    <Database className="h-5 w-5 text-red-500 mr-2" />
-                    <h3 className="font-medium">Data Integrity</h3>
+                  
+                  <div className="bg-white rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Database Health</p>
+                        <p className="text-lg font-semibold">
+                          {systemStatus.databaseHealth ? 'Operational' : 'Issues Detected'}
+                        </p>
+                      </div>
+                      {systemStatus.databaseHealth ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-6 w-6 text-red-500" />
+                      )}
+                    </div>
                   </div>
-                  <div className="pl-7">
-                    {formatResult(testResults.dataIntegrity)}
-                    <div className="flex gap-2 mt-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => runDiagnosticTest('data-integrity', { testType: 'basic' })}
-                        disabled={isRunningTest}
-                      >
-                        {isRunningTest ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Database className="mr-2 h-4 w-4" />
-                        )}
-                        Basic
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => runDiagnosticTest('data-integrity', { testType: 'comprehensive' })}
-                        disabled={isRunningTest}
-                      >
-                        {isRunningTest ? (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                          <Database className="mr-2 h-4 w-4" />
-                        )}
-                        Comprehensive
-                      </Button>
+                  
+                  <div className="bg-white rounded-lg border p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">API Health</p>
+                        <p className="text-lg font-semibold">
+                          {systemStatus.apiHealth ? 'Operational' : 'Issues Detected'}
+                        </p>
+                      </div>
+                      {systemStatus.apiHealth ? (
+                        <CheckCircle2 className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <AlertCircle className="h-6 w-6 text-red-500" />
+                      )}
                     </div>
                   </div>
                 </div>
+                
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-white rounded-lg border p-4">
+                    <p className="text-sm font-medium text-gray-500">Customers</p>
+                    <p className="text-2xl font-bold">{systemStatus.customersCount}</p>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg border p-4">
+                    <p className="text-sm font-medium text-gray-500">Accounts</p>
+                    <p className="text-2xl font-bold">{systemStatus.accountsCount}</p>
+                  </div>
+                  
+                  <div className="bg-white rounded-lg border p-4">
+                    <p className="text-sm font-medium text-gray-500">Transactions</p>
+                    <p className="text-2xl font-bold">{systemStatus.transactionsCount}</p>
+                  </div>
+                </div>
+                
+                <div className="text-right text-xs text-gray-500 mt-2">
+                  Last updated: {new Date(systemStatus.lastUpdate).toLocaleString()}
+                </div>
               </div>
-            </CardContent>
-          </Card>
+            ) : (
+              <div className="border rounded-lg bg-gray-50 p-6 text-center mt-4">
+                <ServerCrash className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                <p className="font-medium">No system status data</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  Click "Check Status" to retrieve current system health status
+                </p>
+              </div>
+            )}
+          </div>
         </TabsContent>
         
-        <TabsContent value="transaction" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Transaction Tests</CardTitle>
-              <CardDescription>
-                Run diagnostics to verify transaction processing
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Alert>
-                <AlertTriangle className="h-4 w-4" />
-                <AlertTitle>Transaction Testing</AlertTitle>
-                <AlertDescription>
-                  Enter a customer ID or transaction ID to test specific transaction functionality.
-                </AlertDescription>
-              </Alert>
-              
-              <div className="mt-4 space-y-4">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                  <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <label htmlFor="customerId" className="text-sm font-medium">Customer ID</label>
-                    <input
-                      type="text"
-                      id="customerId"
-                      placeholder="phantom-wallet-xxxx"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const customerId = (document.getElementById('customerId') as HTMLInputElement)?.value;
-                        if (customerId) {
-                          runDiagnosticTest('customer', { customerId, testType: 'basic' });
-                        } else {
-                          toast({
-                            title: 'Missing Customer ID',
-                            description: 'Please enter a customer ID to run this test',
-                            variant: 'destructive'
-                          });
-                        }
-                      }}
-                      disabled={isRunningTest}
-                    >
-                      <User className="mr-2 h-4 w-4" />
-                      Test Customer
-                    </Button>
-                    
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        const customerId = (document.getElementById('customerId') as HTMLInputElement)?.value;
-                        if (customerId) {
-                          runDiagnosticTest('account', { customerId, testType: 'basic' });
-                        } else {
-                          toast({
-                            title: 'Missing Customer ID',
-                            description: 'Please enter a customer ID to run this test',
-                            variant: 'destructive'
-                          });
-                        }
-                      }}
-                      disabled={isRunningTest}
-                    >
-                      <Wallet className="mr-2 h-4 w-4" />
-                      Test Accounts
-                    </Button>
-                  </div>
-                </div>
+        <TabsContent value="customer" className="p-6 pt-4">
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="customerId">Customer ID</Label>
+              <div className="flex gap-3 mt-1.5">
+                <Input
+                  id="customerId"
+                  placeholder="Enter phantom-cust-xxxxx ID"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                />
                 
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                  <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <label htmlFor="transactionId" className="text-sm font-medium">Transaction ID</label>
-                    <input
-                      type="text"
-                      id="transactionId"
-                      placeholder="phantom-tx-xxxx"
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      const transactionId = (document.getElementById('transactionId') as HTMLInputElement)?.value;
-                      runDiagnosticTest('transaction', transactionId ? { transactionId } : {});
-                    }}
-                    disabled={isRunningTest}
+                <div className="flex-shrink-0">
+                  <Label htmlFor="testType">Test Type</Label>
+                  <select
+                    id="testType"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={testType}
+                    onChange={(e) => setTestType(e.target.value)}
                   >
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Test Transaction
-                  </Button>
+                    <option value="all">All Tests</option>
+                    <option value="balance">Balance Tests</option>
+                    <option value="transactions">Transaction Tests</option>
+                    <option value="accounts">Account Tests</option>
+                  </select>
                 </div>
                 
-                <Separator className="my-4" />
-                
-                <div className="flex justify-center gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => runDiagnosticTest('transaction', { testType: 'stats' })}
-                    disabled={isRunningTest}
-                  >
-                    {isRunningTest ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <BarChart4 className="mr-2 h-4 w-4" />
-                    )}
-                    Get Transaction Statistics
-                  </Button>
-                </div>
+                <Button
+                  onClick={handleRunCustomerDiagnostic}
+                  disabled={isRunningDiagnostic || !customerId.trim()}
+                  className="flex-shrink-0 flex items-center gap-1"
+                >
+                  {isRunningDiagnostic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                  <span>Run Tests</span>
+                </Button>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-3">Diagnostic Results</h3>
+              {diagnosticResults.length > 0 ? (
+                <div className="space-y-3">
+                  {diagnosticResults.map((result, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-4 rounded-md border ${
+                        result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {result.success ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <h4 className={`text-sm font-medium ${
+                            result.success ? 'text-green-800' : 'text-red-800'
+                          }`}>
+                            {result.success ? 'Success' : 'Error'}
+                          </h4>
+                          <p className="text-sm mt-1">{result.message}</p>
+                          
+                          {result.details && (
+                            <div className="mt-2 p-2 bg-white/50 rounded text-xs font-mono">
+                              <pre className="whitespace-pre-wrap break-all">
+                                {JSON.stringify(result.details, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border rounded-lg bg-gray-50 p-6 text-center">
+                  <ServerCrash className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                  <p className="font-medium">No diagnostic results</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Enter a customer ID and run tests to see results
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+        
+        <TabsContent value="transaction" className="p-6 pt-4">
+          <div className="space-y-6">
+            <div>
+              <Label htmlFor="transactionId">Transaction ID</Label>
+              <div className="flex gap-3 mt-1.5">
+                <Input
+                  id="transactionId"
+                  placeholder="Enter phantom-tx-xxxxx ID"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                />
+                
+                <div className="flex-shrink-0">
+                  <Label htmlFor="transactionTestType">Test Type</Label>
+                  <select
+                    id="transactionTestType"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    value={testType}
+                    onChange={(e) => setTestType(e.target.value)}
+                  >
+                    <option value="all">All Tests</option>
+                    <option value="consistency">Data Consistency</option>
+                    <option value="accounts">Account Effects</option>
+                  </select>
+                </div>
+                
+                <Button
+                  onClick={handleRunTransactionDiagnostic}
+                  disabled={isRunningDiagnostic || !transactionId.trim()}
+                  className="flex-shrink-0 flex items-center gap-1"
+                >
+                  {isRunningDiagnostic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Settings className="h-4 w-4" />}
+                  <span>Run Tests</span>
+                </Button>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-medium mb-3">Diagnostic Results</h3>
+              {diagnosticResults.length > 0 ? (
+                <div className="space-y-3">
+                  {diagnosticResults.map((result, index) => (
+                    <div 
+                      key={index} 
+                      className={`p-4 rounded-md border ${
+                        result.success ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                      }`}
+                    >
+                      <div className="flex items-start">
+                        <div className="flex-shrink-0 mt-0.5">
+                          {result.success ? (
+                            <CheckCircle2 className="h-5 w-5 text-green-500" />
+                          ) : (
+                            <AlertCircle className="h-5 w-5 text-red-500" />
+                          )}
+                        </div>
+                        <div className="ml-3">
+                          <h4 className={`text-sm font-medium ${
+                            result.success ? 'text-green-800' : 'text-red-800'
+                          }`}>
+                            {result.success ? 'Success' : 'Error'}
+                          </h4>
+                          <p className="text-sm mt-1">{result.message}</p>
+                          
+                          {result.details && (
+                            <div className="mt-2 p-2 bg-white/50 rounded text-xs font-mono">
+                              <pre className="whitespace-pre-wrap break-all">
+                                {JSON.stringify(result.details, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="border rounded-lg bg-gray-50 p-6 text-center">
+                  <ServerCrash className="h-10 w-10 text-gray-400 mx-auto mb-3" />
+                  <p className="font-medium">No diagnostic results</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Enter a transaction ID and run tests to see results
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
-    </div>
+      
+      <CardFooter className="bg-gray-50 border-t py-3 px-6 text-xs text-gray-500 flex justify-between">
+        <div>PhantomPay Status & Diagnostics • {new Date().toLocaleString()}</div>
+        <div>Mock Payment System for Testing</div>
+      </CardFooter>
+    </Card>
   );
 }

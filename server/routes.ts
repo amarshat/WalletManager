@@ -352,8 +352,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           throw new Error('Amount must be greater than zero');
         }
         
-        // Round to integer for storage
-        amount = Math.round(amount);
+        // Keep decimal precision by using parseFloat and toFixed(2)
+        amount = parseFloat(amount.toFixed(2));
         
       } catch (error) {
         console.error("Amount validation failed:", error);

@@ -33,8 +33,11 @@ export default function AddMoneyModal({
       return await res.json();
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      // Force a more thorough refresh of all wallet data
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["/api/wallet"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
+      }, 500);
       
       // Get the amount as a dollar value for display
       const displayAmount = (parseFloat(amount)).toFixed(2);

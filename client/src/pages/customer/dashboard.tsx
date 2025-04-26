@@ -128,7 +128,7 @@ export default function CustomerDashboard() {
       <Card className="bg-white rounded-lg shadow-md overflow-hidden mt-6">
         <div className="p-4 md:p-6 border-b border-neutral-200">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-secondary">Recent Transactions</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
             <Button variant="link" className="text-primary hover:text-primary-dark text-sm font-medium">
               View All
             </Button>

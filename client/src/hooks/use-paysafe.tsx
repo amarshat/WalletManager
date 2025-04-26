@@ -112,7 +112,7 @@ export function usePaysafe() {
         type,
         amount: transaction.amount,
         currencyCode: transaction.currencyCode,
-        timestamp: transaction.timestamp || transaction.createdDate,
+        timestamp: transaction.timestamp || transaction.createdDate || transaction.createdAt || new Date().toISOString(),
         status: transaction.status,
         counterparty,
         note: transaction.note,

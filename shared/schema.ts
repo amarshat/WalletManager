@@ -21,9 +21,10 @@ export const users = pgTable("users", {
 // Brand Settings Table
 export const brandSettings = pgTable("brand_settings", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull().default("PaySage"),
+  name: text("name").notNull().default("PaySage Wallet"),
   tagline: text("tagline").default("Your Digital Wallet Solution"),
   logo: text("logo"),
+  iconUrl: text("icon_url"), // Added icon URL for brand
   walletAuthKey: text("wallet_auth_key"),
   // Wallet feature configurations
   walletConfig: json("wallet_config").$defaultFn(() => ({

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,13 +10,27 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useBrand } from "@/hooks/use-brand";
 import { useToast } from "@/hooks/use-toast";
-import { ImageIcon, UploadCloud, AlertCircle, Save } from "lucide-react";
+import { ImageIcon, UploadCloud, AlertCircle, Save, Share2, Copy, Download } from "lucide-react";
 import { insertBrandSettingsSchema, BrandSettings } from "@shared/schema";
 import imageCompression from "browser-image-compression";
+import BrandLogo from "@/components/ui/brand-logo";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useConfigImport } from "@/hooks/use-config-import";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose 
+} from "@/components/ui/dialog";
 
 // Brand settings form schema
 const formSchema = insertBrandSettingsSchema.extend({
   logoFile: z.any().optional(),
+  iconUrlFile: z.any().optional(),
 }).partial();
 
 type FormData = z.infer<typeof formSchema>;
@@ -25,6 +39,7 @@ export default function BrandSettingsPage() {
   const { brand, isLoading, updateBrand } = useBrand();
   const { toast } = useToast();
   const [logo, setLogo] = useState<string | null>(null);
+  const [icon, setIcon] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Initialize form with current brand settings
@@ -34,7 +49,9 @@ export default function BrandSettingsPage() {
       name: "",
       tagline: "",
       walletAuthKey: "",
+      iconUrl: "",
       logoFile: undefined,
+      iconUrlFile: undefined,
     },
   });
   
@@ -45,15 +62,20 @@ export default function BrandSettingsPage() {
         name: brand.name,
         tagline: brand.tagline,
         walletAuthKey: brand.walletAuthKey,
+        iconUrl: brand.iconUrl,
       });
       
       if (brand.logo) {
         setLogo(brand.logo);
       }
+      
+      if (brand.iconUrl) {
+        setIcon(brand.iconUrl);
+      }
     }
   }, [brand, form]);
   
-  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, setImageState: (url: string) => void, formField: "logoFile" | "iconUrlFile") => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -77,7 +99,7 @@ export default function BrandSettingsPage() {
       // Compress the image before uploading
       const options = {
         maxSizeMB: 1,
-        maxWidthOrHeight: 800,
+        maxWidthOrHeight: formField === "iconUrlFile" ? 128 : 800, // Different sizes for icon vs logo
         useWebWorker: true
       };
       
@@ -87,8 +109,8 @@ export default function BrandSettingsPage() {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setLogo(event.target.result as string);
-          form.setValue("logoFile", event.target.result);
+          setImageState(event.target.result as string);
+          form.setValue(formField, event.target.result);
           
           // Success toast
           toast({
@@ -108,6 +130,14 @@ export default function BrandSettingsPage() {
     }
   };
   
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageChange(e, setLogo, "logoFile");
+  };
+  
+  const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageChange(e, setIcon, "iconUrlFile");
+  };
+  
   const onSubmit = async (data: FormData) => {
     try {
       setIsSubmitting(true);
@@ -117,11 +147,17 @@ export default function BrandSettingsPage() {
         name: data.name,
         tagline: data.tagline,
         walletAuthKey: data.walletAuthKey,
+        iconUrl: data.iconUrl,
       };
       
       // If a new logo was uploaded
       if (data.logoFile && typeof data.logoFile === 'string') {
         updateData.logo = data.logoFile;
+      }
+      
+      // If a new icon was uploaded 
+      if (data.iconUrlFile && typeof data.iconUrlFile === 'string') {
+        updateData.iconUrl = data.iconUrlFile;
       }
       
       await updateBrand(updateData);
@@ -236,77 +272,181 @@ export default function BrandSettingsPage() {
                       </FormItem>
                     )}
                   />
-                </div>
-                
-                <div>
+                  
                   <FormField
                     control={form.control}
-                    name="logoFile"
-                    render={() => (
+                    name="iconUrl"
+                    render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Brand Logo</FormLabel>
+                        <FormLabel>Icon URL</FormLabel>
                         <FormControl>
-                          <div className="mt-2">
-                            <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
-                              <input
-                                id="logo-upload"
-                                type="file"
-                                accept="image/*"
-                                className="hidden"
-                                onChange={handleLogoChange}
-                              />
-                              
-                              {logo ? (
-                                <div className="flex flex-col items-center">
-                                  <img 
-                                    src={logo} 
-                                    alt="Brand Logo" 
-                                    className="max-h-32 mb-4"
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => document.getElementById('logo-upload')?.click()}
-                                  >
-                                    Change Logo
-                                  </Button>
-                                </div>
-                              ) : (
-                                <div 
-                                  className="flex flex-col items-center cursor-pointer"
-                                  onClick={() => document.getElementById('logo-upload')?.click()}
-                                >
-                                  <UploadCloud className="mx-auto h-12 w-12 text-neutral-400 mb-2" />
-                                  <p className="text-sm text-neutral-600 mb-2">
-                                    Drag and drop your logo here
-                                  </p>
-                                  <p className="text-xs text-neutral-500">or</p>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      document.getElementById('logo-upload')?.click();
-                                    }}
-                                  >
-                                    Browse Files
-                                  </Button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
+                          <Input 
+                            placeholder="Enter icon URL" 
+                            value={field.value || ''}
+                            onChange={field.onChange}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
                         </FormControl>
                         <FormDescription>
-                          Recommended size: 300x100 pixels, PNG or SVG format. 
-                          Larger images will be automatically optimized.
+                          URL to an icon that will be used for the wallet. You can also upload an icon below.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
+                </div>
+                
+                <div>
+                  <Tabs defaultValue="logo" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 mb-4">
+                      <TabsTrigger value="logo">Logo</TabsTrigger>
+                      <TabsTrigger value="icon">Icon</TabsTrigger>
+                    </TabsList>
+                    
+                    <TabsContent value="logo">
+                      <FormField
+                        control={form.control}
+                        name="logoFile"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Brand Logo</FormLabel>
+                            <FormControl>
+                              <div className="mt-2">
+                                <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                                  <input
+                                    id="logo-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleLogoChange}
+                                  />
+                                  
+                                  {logo ? (
+                                    <div className="flex flex-col items-center">
+                                      <img 
+                                        src={logo} 
+                                        alt="Brand Logo" 
+                                        className="max-h-32 mb-4"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => document.getElementById('logo-upload')?.click()}
+                                      >
+                                        Change Logo
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="flex flex-col items-center cursor-pointer"
+                                      onClick={() => document.getElementById('logo-upload')?.click()}
+                                    >
+                                      <UploadCloud className="mx-auto h-12 w-12 text-neutral-400 mb-2" />
+                                      <p className="text-sm text-neutral-600 mb-2">
+                                        Drag and drop your logo here
+                                      </p>
+                                      <p className="text-xs text-neutral-500">or</p>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          document.getElementById('logo-upload')?.click();
+                                        }}
+                                      >
+                                        Browse Files
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Recommended size: 300x100 pixels, PNG or SVG format. 
+                              Larger images will be automatically optimized.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="icon">
+                      <FormField
+                        control={form.control}
+                        name="iconUrlFile"
+                        render={() => (
+                          <FormItem>
+                            <FormLabel>Brand Icon</FormLabel>
+                            <FormControl>
+                              <div className="mt-2">
+                                <div className="border-2 border-dashed border-neutral-300 rounded-lg p-6 text-center hover:border-primary transition-colors">
+                                  <input
+                                    id="icon-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleIconChange}
+                                  />
+                                  
+                                  {icon ? (
+                                    <div className="flex flex-col items-center">
+                                      <img 
+                                        src={icon} 
+                                        alt="Brand Icon" 
+                                        className="h-24 w-24 mb-4 object-contain"
+                                      />
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => document.getElementById('icon-upload')?.click()}
+                                      >
+                                        Change Icon
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div 
+                                      className="flex flex-col items-center cursor-pointer"
+                                      onClick={() => document.getElementById('icon-upload')?.click()}
+                                    >
+                                      <UploadCloud className="mx-auto h-12 w-12 text-neutral-400 mb-2" />
+                                      <p className="text-sm text-neutral-600 mb-2">
+                                        Drag and drop your icon here
+                                      </p>
+                                      <p className="text-xs text-neutral-500">or</p>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="mt-2"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          document.getElementById('icon-upload')?.click();
+                                        }}
+                                      >
+                                        Browse Files
+                                      </Button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Recommended size: 128x128 pixels, square format. 
+                              This icon will be used for favicons and mobile bookmarks.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TabsContent>
+                  </Tabs>
                   
                   <div className="mt-6 p-4 bg-blue-50 rounded-md border border-blue-200">
                     <div className="flex">
@@ -343,6 +483,37 @@ export default function BrandSettingsPage() {
               </CardFooter>
             </form>
           </Form>
+        </CardContent>
+      </Card>
+      
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Brand Preview</CardTitle>
+          <CardDescription>
+            Preview how your brand will appear across the platform
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="p-4 border rounded-lg">
+              <h3 className="text-sm font-medium mb-2">Logo</h3>
+              <div className="flex items-center justify-center bg-slate-50 rounded-lg p-4 h-20">
+                <BrandLogo className="h-12" />
+              </div>
+            </div>
+            <div className="p-4 border rounded-lg">
+              <h3 className="text-sm font-medium mb-2">Icon</h3>
+              <div className="flex items-center justify-center bg-slate-50 rounded-lg p-4 h-20">
+                <BrandLogo className="h-12 w-12" useIcon={true} />
+              </div>
+            </div>
+            <div className="p-4 border rounded-lg">
+              <h3 className="text-sm font-medium mb-2">Brand Name</h3>
+              <div className="flex items-center justify-center bg-slate-50 rounded-lg p-4 h-20">
+                <span className="text-xl font-semibold">{brand?.name || "PaySage Wallet"}</span>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </AdminLayout>

@@ -425,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Round to integer for storage
-        amount = Math.round(amount);
+        amount = parseFloat(amount.toFixed(2));
         
       } catch (error) {
         console.error("Amount validation failed:", error);
@@ -512,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         
         // Round to integer for storage
-        amount = Math.round(amount);
+        amount = parseFloat(amount.toFixed(2));
         
       } catch (error) {
         console.error("Amount validation failed:", error);
@@ -690,7 +690,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             
             // Round to integer for storage
-            amount = Math.round(amount);
+            amount = parseFloat(amount.toFixed(2));
             
           } catch (error) {
             console.error("Amount validation failed in bulk transfer:", error);

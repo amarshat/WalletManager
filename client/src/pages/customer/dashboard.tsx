@@ -22,6 +22,7 @@ export default function CustomerDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [addMoneyModalOpen, setAddMoneyModalOpen] = useState(false);
   const [sendMoneyModalOpen, setSendMoneyModalOpen] = useState(false);
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [bulkTransferModalOpen, setBulkTransferModalOpen] = useState(false);
   
   const { 
@@ -114,12 +115,7 @@ export default function CustomerDashboard() {
             currencyCode={selectedCurrency}
             onAddMoney={() => setAddMoneyModalOpen(true)}
             onSendMoney={() => setSendMoneyModalOpen(true)}
-            onWithdraw={() => {
-              toast({ 
-                title: "Coming Soon", 
-                description: "Withdrawal functionality is coming soon" 
-              });
-            }}
+            onWithdraw={() => setWithdrawModalOpen(true)}
             onRefresh={handleRefresh}
             loading={refreshing || isLoadingWallet}
           />

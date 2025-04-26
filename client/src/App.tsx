@@ -64,6 +64,12 @@ function Router() {
         requireAdmin={true} 
         redirectTo="/auth" 
       />
+      <ProtectedRoute 
+        path="/admin/dev-center" 
+        component={DevCenter} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
       
       {/* Customer Routes */}
       <ProtectedRoute 

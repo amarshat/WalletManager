@@ -7,7 +7,8 @@ import {
   User, 
   CreditCard, 
   LayoutDashboard, 
-  RefreshCw
+  RefreshCw,
+  PieChart
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -66,6 +67,11 @@ export default function CustomerLayout({
       href: "/transactions", 
       label: "Transactions", 
       icon: <RefreshCw className="w-5 h-5 mr-3" /> 
+    },
+    { 
+      href: "/budget", 
+      label: "Budget", 
+      icon: <PieChart className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/payment-methods", 

@@ -90,8 +90,7 @@ export default function BudgetPage() {
           await createCategory({
             name: category.name,
             color: category.color,
-            icon: category.icon,
-            isSystem: true,
+            icon: category.icon
           });
         }
       }

@@ -13,6 +13,8 @@ export const users = pgTable("users", {
   profilePhoto: text("profile_photo"),
   defaultCurrency: text("default_currency").default("USD"),
   isAdmin: boolean("is_admin").default(false),
+  isPhantomUser: boolean("is_phantom_user").default(false), // Flag to indicate if using PhantomPay mock system
+  phantomUserId: text("phantom_user_id"), // Reference ID for PhantomPay system
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -108,6 +110,61 @@ export type Card = typeof cards.$inferSelect;
 
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type SystemLog = typeof systemLogs.$inferSelect;
+
+// PhantomPay Mock System Tables
+
+// PhantomPay Wallets Table
+export const phantomWallets = pgTable("phantom_wallets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  walletId: text("wallet_id").notNull().unique(), // Mock wallet ID format: "phantom-xxxxxx"
+  status: text("status").default("ACTIVE"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// PhantomPay Accounts Table (one per currency)
+export const phantomAccounts = pgTable("phantom_accounts", {
+  id: serial("id").primaryKey(),
+  phantomWalletId: integer("phantom_wallet_id").notNull().references(() => phantomWallets.id),
+  accountId: text("account_id").notNull().unique(), // Mock account ID format: "phantom-acct-xxxxx"
+  currencyCode: text("currency_code").notNull(),
+  balance: integer("balance").default(0), // Balance stored in cents/pennies
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// PhantomPay Transactions Table
+export const phantomTransactions = pgTable("phantom_transactions", {
+  id: serial("id").primaryKey(),
+  transactionId: text("transaction_id").notNull().unique(), // Mock transaction ID format: "phantom-tx-xxxxx"
+  sourceAccountId: integer("source_account_id").references(() => phantomAccounts.id),
+  destinationAccountId: integer("destination_account_id").references(() => phantomAccounts.id),
+  amount: integer("amount").notNull(), // Amount in cents/pennies
+  currencyCode: text("currency_code").notNull(),
+  type: text("type").notNull(), // 'DEPOSIT', 'TRANSFER', 'WITHDRAWAL'
+  status: text("status").default("COMPLETED"),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Schema definitions for PhantomPay inserts
+export const insertPhantomWalletSchema = createInsertSchema(phantomWallets)
+  .omit({ id: true, createdAt: true });
+
+export const insertPhantomAccountSchema = createInsertSchema(phantomAccounts)
+  .omit({ id: true, createdAt: true });
+
+export const insertPhantomTransactionSchema = createInsertSchema(phantomTransactions)
+  .omit({ id: true, createdAt: true });
+
+// Types for PhantomPay inserts and selects
+export type InsertPhantomWallet = z.infer<typeof insertPhantomWalletSchema>;
+export type PhantomWallet = typeof phantomWallets.$inferSelect;
+
+export type InsertPhantomAccount = z.infer<typeof insertPhantomAccountSchema>;
+export type PhantomAccount = typeof phantomAccounts.$inferSelect;
+
+export type InsertPhantomTransaction = z.infer<typeof insertPhantomTransactionSchema>;
+export type PhantomTransaction = typeof phantomTransactions.$inferSelect;
 
 // Other types needed for the application
 export type TransactionType = 'DEPOSIT' | 'TRANSFER' | 'WITHDRAWAL';

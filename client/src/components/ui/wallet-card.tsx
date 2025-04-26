@@ -36,14 +36,14 @@ export default function WalletCard({
   const formattedBalance = useMemo(() => {
     // Handle undefined, null, or NaN balance values
     const safeBalance = (balance !== undefined && balance !== null && !isNaN(balance)) 
-      ? balance / 100 
+      ? balance // No need to divide by 100, amount is already in dollars
       : 0;
       
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(safeBalance); // Assuming balance is in cents
+    }).format(safeBalance);
   }, [balance]);
   
   return (

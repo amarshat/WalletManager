@@ -69,11 +69,11 @@ export default function AddMoneyModal({
       return;
     }
     
-    // Convert dollars to cents for API
-    const amountInCents = Math.round(parseFloat(amount) * 100);
+    // Parse amount but don't convert to cents
+    const parsedAmount = parseFloat(amount);
     
     depositMutation.mutate({
-      amount: amountInCents,
+      amount: parsedAmount,
       currencyCode,
       description,
     });

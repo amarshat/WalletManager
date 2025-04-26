@@ -1,12 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useBrand } from './use-brand';
 import { useToast } from './use-toast';
-import { useLocation, useRoute } from 'wouter';
+import { useLocation } from 'wouter';
 
 type WalletConfig = {
   name?: string;
-  tagline?: string;
-  iconUrl?: string;
+  tagline?: string | null;  // Allow null to match the database type
+  iconUrl?: string | null;  // Allow null to match the database type
+  logo?: string | null;     // Allow null to match the database type
   walletConfig?: {
     transactionDisplayCount?: number;
     allowedCurrencies?: string[];

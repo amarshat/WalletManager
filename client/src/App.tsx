@@ -7,6 +7,7 @@ import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
+import { useConfigImport } from "./hooks/use-config-import";
 
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
@@ -31,6 +32,14 @@ import BudgetPage from "@/pages/customer/budget";
 
 import SplashScreen from "@/components/ui/splash-screen";
 import { useState, useEffect } from "react";
+
+// This component wraps the application to handle config import
+function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
+  // Using the hook will automatically check for config parameters in URL
+  useConfigImport();
+  
+  return <>{children}</>;
+}
 
 function Router() {
   return (
@@ -149,10 +158,12 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <BrandProvider>
-              <BudgetProvider>
-                <Toaster />
-                {loading ? <SplashScreen /> : <Router />}
-              </BudgetProvider>
+              <ConfigImportWrapper>
+                <BudgetProvider>
+                  <Toaster />
+                  {loading ? <SplashScreen /> : <Router />}
+                </BudgetProvider>
+              </ConfigImportWrapper>
             </BrandProvider>
           </AuthProvider>
         </TooltipProvider>

@@ -462,7 +462,36 @@ export default function BrandSettingsPage() {
                 </div>
               </div>
               
-              <CardFooter className="px-0 pt-6 flex justify-end">
+              <CardFooter className="px-0 pt-6 flex justify-between">
+                <div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center mr-2">
+                        <Share2 className="mr-2 h-4 w-4" />
+                        Share Configuration
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Share Configuration</DialogTitle>
+                        <DialogDescription>
+                          You can share your wallet configuration with other instances by using this URL.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="flex items-center space-x-2 mt-4">
+                        <div className="grid flex-1 gap-2">
+                          <ShareConfigSection brand={brand} />
+                        </div>
+                      </div>
+                      <DialogFooter className="sm:justify-end mt-4">
+                        <DialogClose asChild>
+                          <Button type="button" variant="secondary">Close</Button>
+                        </DialogClose>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
@@ -517,5 +546,184 @@ export default function BrandSettingsPage() {
         </CardContent>
       </Card>
     </AdminLayout>
+  );
+}
+
+interface ShareConfigSectionProps {
+  brand: BrandSettings | null;
+}
+
+function ShareConfigSection({ brand }: ShareConfigSectionProps) {
+  const { generateConfigUrl } = useConfigImport();
+  const { toast } = useToast();
+  const [configUrl, setConfigUrl] = useState<string>("");
+  const [exporting, setExporting] = useState<boolean>(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Generate a sharable configuration URL
+  const handleGenerateUrl = () => {
+    if (!brand) return;
+    
+    try {
+      setExporting(true);
+      
+      // Create a configuration object with only what we want to share
+      const config = {
+        name: brand.name,
+        tagline: brand.tagline,
+        iconUrl: brand.iconUrl,
+        walletConfig: brand.walletConfig
+      };
+      
+      // Generate the URL with the configuration
+      const url = generateConfigUrl(config);
+      setConfigUrl(url);
+      
+      toast({
+        title: "Configuration URL Generated",
+        description: "The URL has been created. Copy it to share your configuration.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to Generate URL",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+  
+  // Copy the URL to clipboard
+  const handleCopyUrl = () => {
+    if (!configUrl) return;
+    
+    navigator.clipboard.writeText(configUrl)
+      .then(() => {
+        toast({
+          title: "Copied to clipboard",
+          description: "The configuration URL has been copied to your clipboard.",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to copy",
+          description: error.message || "An error occurred while copying to clipboard.",
+          variant: "destructive",
+        });
+      });
+  };
+  
+  // Download configuration as JSON file
+  const handleDownloadConfig = () => {
+    if (!brand) return;
+    
+    try {
+      // Create a configuration object with only what we want to share
+      const config = {
+        name: brand.name,
+        tagline: brand.tagline,
+        iconUrl: brand.iconUrl,
+        logo: brand.logo,
+        walletConfig: brand.walletConfig
+      };
+      
+      // Convert to JSON
+      const configJson = JSON.stringify(config, null, 2);
+      const blob = new Blob([configJson], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `wallet-config-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Configuration Downloaded",
+        description: "The configuration has been downloaded as a JSON file.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: error instanceof Error ? error.message : "An unknown error occurred",
+        variant: "destructive",
+      });
+    }
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">
+          You can share your wallet configuration with others by generating a URL 
+          or downloading it as a JSON file.
+        </p>
+        
+        <div className="flex flex-col space-y-2">
+          <Button 
+            variant="outline" 
+            onClick={handleGenerateUrl}
+            disabled={exporting || !brand}
+            className="w-full"
+          >
+            {exporting ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                Generating...
+              </>
+            ) : (
+              <>
+                <Share2 className="mr-2 h-4 w-4" /> 
+                Generate Shareable URL
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadConfig}
+            disabled={!brand}
+            className="w-full"
+          >
+            <Download className="mr-2 h-4 w-4" /> 
+            Download Configuration
+          </Button>
+        </div>
+      </div>
+      
+      {configUrl && (
+        <div className="flex items-center space-x-2 mt-4">
+          <div className="grid flex-1 gap-2">
+            <div className="flex items-center gap-2">
+              <Input
+                ref={inputRef}
+                readOnly
+                value={configUrl}
+                className="flex-1"
+              />
+              <Button 
+                size="icon" 
+                variant="outline" 
+                type="button" 
+                onClick={handleCopyUrl}
+                className="px-3"
+              >
+                <Copy className="h-4 w-4" />
+                <span className="sr-only">Copy</span>
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Share this URL with others who want to use your configuration.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

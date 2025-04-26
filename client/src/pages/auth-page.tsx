@@ -90,7 +90,7 @@ export default function AuthPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-secondary">{brand?.name || "PaySage"}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{brand?.name || "PaySage Wallet"}</h1>
             <p className="text-neutral-600 mt-1">{brand?.tagline || "Your Digital Wallet Solution"}</p>
           </div>
 

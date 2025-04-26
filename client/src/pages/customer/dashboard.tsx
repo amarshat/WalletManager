@@ -25,6 +25,7 @@ export default function CustomerDashboard() {
   const [bulkTransferModalOpen, setBulkTransferModalOpen] = useState(false);
   
   const { 
+    wallet,
     balances, 
     transactions, 
     cards,
@@ -75,8 +76,7 @@ export default function CustomerDashboard() {
   ).slice(0, 10); // Show only last 10
   
   // Check if wallet is created or needs initialization
-  const isWalletMissing = walletError?.message === "Wallet not found" || 
-    (walletError?.response && walletError?.response?.status === 404);
+  const isWalletMissing = !isLoadingWallet && (!wallet || walletError);
   
   return (
     <CustomerLayout showRefreshButton={true} onRefresh={handleRefresh}>

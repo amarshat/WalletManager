@@ -114,6 +114,7 @@ export function usePaysafe() {
   
   return {
     wallet: walletData?.wallet,
+    walletData, // Add direct access to walletData
     balances,
     transactions,
     cards: cardsData || [],

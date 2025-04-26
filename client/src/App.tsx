@@ -14,6 +14,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
 import BrandSettings from "@/pages/admin/brand-settings";
+import WalletConfig from "@/pages/admin/wallet-config";
 import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
@@ -51,6 +52,12 @@ function Router() {
       <ProtectedRoute 
         path="/admin/brand-settings" 
         component={BrandSettings} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
+        path="/admin/wallet-config" 
+        component={WalletConfig} 
         requireAdmin={true} 
         redirectTo="/auth" 
       />

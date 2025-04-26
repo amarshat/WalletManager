@@ -7,8 +7,10 @@ import { useToast } from "@/hooks/use-toast";
 type BrandContextType = {
   brand: BrandSettings | null;
   isLoading: boolean;
+  isLoadingBrand: boolean;
   error: Error | null;
   updateBrand: (data: Partial<InsertBrandSettings>) => Promise<void>;
+  refetchBrand: () => Promise<void>;
 };
 
 export const BrandContext = createContext<BrandContextType | null>(null);
@@ -20,6 +22,7 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     data: brand,
     error,
     isLoading,
+    refetch
   } = useQuery<BrandSettings, Error>({
     queryKey: ["/api/brand"],
   });
@@ -49,13 +52,19 @@ export function BrandProvider({ children }: { children: ReactNode }) {
     await mutation.mutateAsync(data);
   };
 
+  const refetchBrand = async () => {
+    await refetch();
+  };
+
   return (
     <BrandContext.Provider
       value={{
         brand: brand ?? null,
         isLoading,
+        isLoadingBrand: isLoading,
         error,
         updateBrand,
+        refetchBrand
       }}
     >
       {children}

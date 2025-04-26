@@ -10,7 +10,8 @@ import {
   ScrollText, 
   LayoutDashboard,
   Wrench,
-  AlertCircle
+  AlertCircle,
+  Wallet
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";

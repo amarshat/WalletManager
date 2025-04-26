@@ -17,6 +17,7 @@ import BrandSettings from "@/pages/admin/brand-settings";
 import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
+import TroubleshootingDashboard from "@/pages/admin/troubleshooting";
 
 // Customer Pages
 import CustomerDashboard from "@/pages/customer/dashboard";
@@ -67,6 +68,12 @@ function Router() {
       <ProtectedRoute 
         path="/admin/dev-center" 
         component={DevCenter} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
+        path="/admin/troubleshooting" 
+        component={TroubleshootingDashboard} 
         requireAdmin={true} 
         redirectTo="/auth" 
       />

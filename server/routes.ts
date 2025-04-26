@@ -55,6 +55,15 @@ import {
   withdrawalTest 
 } from './admin/test-routes';
 
+import { 
+  getPhantomSystemStatus, 
+  runPhantomDiagnostic, 
+  getErrorEvents,
+  markErrorAsSeen, 
+  markAllErrorsAsSeen 
+} from './diagnostics/diagnostics-routes';
+import { logClientError } from './diagnostics/error-tracking';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);

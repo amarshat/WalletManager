@@ -1,363 +1,296 @@
 import { useState, useEffect } from 'react';
-import { X, AlertTriangle, AlertCircle, Info, FileText, Loader2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { 
+  AlertTriangle, 
+  X, 
+  ChevronUp, 
+  ChevronDown, 
+  RefreshCw,
+  AlertCircle,
+  InfoIcon,
+  Check
+} from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 
 interface ErrorEvent {
-  id: string;
-  timestamp: string;
-  level: 'info' | 'warning' | 'error' | 'critical';
+  id: number;
   message: string;
-  component: string;
-  source: 'client' | 'server' | 'api';
-  details?: Record<string, any>;
-  stackTrace?: string;
-  url?: string;
-  userId?: number;
-  seen: boolean;
+  details: {
+    level: 'info' | 'warning' | 'error' | 'critical';
+    source: 'client' | 'server' | 'api';
+    component?: string;
+    timestamp: string;
+    seen?: boolean;
+  };
+  createdAt: string;
 }
 
 export default function ErrorTracker() {
+  const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [errors, setErrors] = useState<ErrorEvent[]>([]);
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-  const [isVisible, setIsVisible] = useState(true);
-  const [minimized, setMinimized] = useState(false);
-  const [unseenCount, setUnseenCount] = useState(0);
-  const [isPolling, setIsPolling] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasNewErrors, setHasNewErrors] = useState(false);
   
-  // Polling for new errors
+  // Load errors on mount
   useEffect(() => {
-    if (!isPolling) return;
-    
-    const fetchErrors = async () => {
-      try {
-        const response = await apiRequest('GET', '/api/admin/error-events?limit=10');
-        const data = await response.json();
-        
-        // Update errors
-        setErrors(data);
-        
-        // Count unseen errors
-        const newUnseenCount = data.filter((error: ErrorEvent) => !error.seen).length;
-        setUnseenCount(newUnseenCount);
-        
-      } catch (error) {
-        console.error('Failed to fetch errors:', error);
-      }
-    };
-    
-    // Initial fetch
     fetchErrors();
     
-    // Set up polling
-    const intervalId = setInterval(fetchErrors, 15000); // Poll every 15 seconds
+    // Set up polling for new errors
+    const interval = setInterval(() => {
+      fetchErrors(true);
+    }, 30000); // Check for new errors every 30 seconds
     
-    return () => clearInterval(intervalId);
-  }, [isPolling]);
+    return () => clearInterval(interval);
+  }, []);
   
-  // Mark errors as seen
-  const markAsSeen = async (errorId: string) => {
+  // Fetch errors from the API
+  const fetchErrors = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    
     try {
-      await apiRequest('POST', `/api/admin/error-events/${errorId}/seen`);
+      const response = await apiRequest('GET', '/api/logs?limit=10');
+      const data = await response.json();
       
-      // Update local state
-      setErrors(prev => 
-        prev.map(error => 
-          error.id === errorId ? { ...error, seen: true } : error
-        )
-      );
-      
-      // Update unseen count
-      setUnseenCount(prev => Math.max(0, prev - 1));
-      
+      if (data.errors && Array.isArray(data.errors)) {
+        // Check if there are any new unseen errors
+        const newUnseen = data.errors.some((error: ErrorEvent) => !error.details.seen);
+        
+        if (newUnseen && errors.length > 0) {
+          setHasNewErrors(true);
+          if (!isOpen) {
+            toast({
+              title: 'New errors detected',
+              description: 'There are new errors that require your attention.',
+              variant: 'destructive'
+            });
+          }
+        }
+        
+        setErrors(data.errors);
+      }
     } catch (error) {
-      console.error('Failed to mark error as seen:', error);
+      console.error('Error fetching errors:', error);
+      if (!silent) {
+        toast({
+          title: 'Error',
+          description: 'Failed to fetch error events.',
+          variant: 'destructive'
+        });
+      }
+    } finally {
+      if (!silent) setIsLoading(false);
     }
   };
   
   // Mark all errors as seen
   const markAllAsSeen = async () => {
     try {
-      await apiRequest('POST', '/api/admin/error-events/mark-all-seen');
+      await apiRequest('POST', '/api/logs/mark-all-seen');
+      setHasNewErrors(false);
+      fetchErrors();
       
-      // Update local state
-      setErrors(prev => prev.map(error => ({ ...error, seen: true })));
-      setUnseenCount(0);
-      
+      toast({
+        title: 'Success',
+        description: 'All errors marked as seen.',
+      });
     } catch (error) {
-      console.error('Failed to mark all errors as seen:', error);
+      console.error('Error marking errors as seen:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to mark errors as seen.',
+        variant: 'destructive'
+      });
     }
   };
   
-  // Toggle expanded state for an error
-  const toggleExpanded = (errorId: string) => {
-    setExpanded(prev => ({
-      ...prev,
-      [errorId]: !prev[errorId]
-    }));
-    
-    // Mark as seen when expanded
-    if (!expanded[errorId]) {
-      markAsSeen(errorId);
+  // Get level badge color
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'critical':
+        return 'bg-red-500 text-white hover:bg-red-600';
+      case 'error':
+        return 'bg-red-400 text-white hover:bg-red-500';
+      case 'warning':
+        return 'bg-amber-400 text-amber-950 hover:bg-amber-500';
+      case 'info':
+        return 'bg-blue-400 text-blue-950 hover:bg-blue-500';
+      default:
+        return 'bg-gray-400 text-gray-950 hover:bg-gray-500';
     }
   };
   
-  // Get icon based on error level
+  // Get source badge color
+  const getSourceColor = (source: string) => {
+    switch (source) {
+      case 'client':
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
+      case 'server':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
+      case 'api':
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
+    }
+  };
+  
+  // Get level icon
   const getLevelIcon = (level: string) => {
     switch (level) {
       case 'critical':
       case 'error':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle className="h-4 w-4 text-red-500" />;
       case 'warning':
-        return <AlertCircle className="h-4 w-4 text-amber-500" />;
+        return <AlertTriangle className="h-4 w-4 text-amber-500" />;
       case 'info':
+        return <InfoIcon className="h-4 w-4 text-blue-500" />;
       default:
-        return <Info className="h-4 w-4 text-blue-500" />;
+        return <AlertTriangle className="h-4 w-4 text-gray-500" />;
     }
   };
   
-  // Get badge color based on error level
-  const getLevelBadgeColor = (level: string) => {
-    switch (level) {
-      case 'critical':
-        return 'bg-red-100 text-red-800 border-red-200';
-      case 'error':
-        return 'bg-rose-100 text-rose-800 border-rose-200';
-      case 'warning':
-        return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'info':
-      default:
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-    }
+  // Format date
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleString();
   };
   
-  // Format timestamp
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  };
-  
-  if (!isVisible) {
-    return (
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button
-          onClick={() => setIsVisible(true)}
-          className="flex items-center bg-red-500 hover:bg-red-600 text-white"
-          size="sm"
-        >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Error Tracker {unseenCount > 0 && `(${unseenCount})`}
-        </Button>
-      </div>
-    );
+  // If no errors, don't render anything
+  if (errors.length === 0 && !isOpen) {
+    return null;
   }
   
   return (
-    <div 
-      className={`fixed ${minimized ? 'bottom-4 right-4 w-auto' : 'bottom-0 right-0 w-96'} z-50 transition-all duration-200 ease-in-out`}
-    >
-      {minimized ? (
-        <Button
-          onClick={() => setMinimized(false)}
-          className="flex items-center bg-red-500 hover:bg-red-600 text-white"
-          size="sm"
+    <div className="fixed bottom-4 right-4 z-50">
+      {/* Collapsed state - just show icon */}
+      {!isOpen && (
+        <button
+          onClick={() => {
+            setIsOpen(true);
+            setHasNewErrors(false);
+          }}
+          className="flex items-center space-x-2 bg-white shadow-lg border rounded-full px-4 py-2 hover:bg-gray-50 transition-all"
         >
-          <AlertTriangle className="h-4 w-4 mr-2" />
-          Error Tracker {unseenCount > 0 && `(${unseenCount})`}
-        </Button>
-      ) : (
-        <Card className="shadow-lg border-t-4 border-t-red-500">
-          <CardHeader className="pb-2 pt-3 px-4">
-            <div className="flex justify-between items-center">
-              <CardTitle className="text-md font-semibold flex items-center">
-                <AlertTriangle className="h-4 w-4 text-red-500 mr-2" />
-                Error Tracker
-                {unseenCount > 0 && (
-                  <Badge variant="destructive" className="ml-2 text-xs">
-                    {unseenCount} new
-                  </Badge>
-                )}
-              </CardTitle>
-              <div className="flex items-center space-x-1">
-                {isPolling ? (
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setIsPolling(false)}
-                    title="Pause updates"
-                  >
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  </Button>
-                ) : (
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => setIsPolling(true)}
-                    title="Resume updates"
-                  >
-                    <Loader2 className="h-3 w-3" />
-                  </Button>
-                )}
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setMinimized(true)}
-                  title="Minimize"
-                >
-                  <ChevronDown className="h-3 w-3" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => setIsVisible(false)}
-                  title="Close"
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
+          <AlertTriangle className={`h-5 w-5 ${hasNewErrors ? 'text-red-500 animate-pulse' : 'text-amber-500'}`} />
+          <span className="font-medium">{errors.length} Errors</span>
+          {hasNewErrors && (
+            <Badge variant="destructive" className="ml-1 text-[10px] h-5 animate-pulse">
+              NEW
+            </Badge>
+          )}
+        </button>
+      )}
+      
+      {/* Expanded state - show error list */}
+      {isOpen && (
+        <div className="bg-white shadow-xl border rounded-lg w-[380px] transition-all overflow-hidden flex flex-col">
+          {/* Header */}
+          <div className="border-b p-3 flex items-center justify-between bg-gray-50">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <h3 className="font-medium">Error Tracker</h3>
+              {hasNewErrors && (
+                <Badge variant="destructive" className="animate-pulse text-[10px] h-5">NEW</Badge>
+              )}
             </div>
-          </CardHeader>
-          <CardContent className="p-0">
+            <div className="flex items-center space-x-1">
+              <button 
+                onClick={() => fetchErrors()}
+                className="p-1 hover:bg-gray-200 rounded-md text-gray-500"
+                disabled={isLoading}
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => {
+                  setIsOpen(false);
+                  setIsExpanded(false);
+                }}
+                className="p-1 hover:bg-gray-200 rounded-md text-gray-500"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          
+          {/* Main content - error list */}
+          <div className={`overflow-y-auto transition-all ${isExpanded ? 'max-h-[500px]' : 'max-h-[300px]'}`}>
             {errors.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-gray-300" />
-                <p className="text-sm">No errors recorded</p>
+              <div className="p-8 text-center text-gray-500">
+                <Check className="h-12 w-12 text-green-500 mx-auto mb-2" />
+                <p>No errors to display!</p>
+                <p className="text-sm mt-1">The system is running smoothly.</p>
               </div>
             ) : (
-              <>
-                <div className="border-b border-gray-200 px-4 py-2 flex justify-between items-center bg-gray-50">
-                  <span className="text-xs text-gray-500">
-                    Showing recent errors
-                  </span>
-                  {unseenCount > 0 && (
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      className="text-xs h-7 py-0"
-                      onClick={markAllAsSeen}
-                    >
-                      Mark all as seen
-                    </Button>
-                  )}
-                </div>
-                <ScrollArea className="h-[300px]">
-                  <div className="divide-y divide-gray-100">
-                    {errors.map((error) => (
-                      <div 
-                        key={error.id} 
-                        className={`py-2 px-4 ${error.seen ? '' : 'bg-gray-50'}`}
-                      >
-                        <div 
-                          className="flex items-start cursor-pointer"
-                          onClick={() => toggleExpanded(error.id)}
-                        >
-                          <div className="mr-2 mt-0.5">
-                            {expanded[error.id] ? (
-                              <ChevronDown className="h-4 w-4 text-gray-400" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
-                            )}
-                          </div>
-                          <div className="mr-2 mt-0.5">
-                            {getLevelIcon(error.level)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex justify-between items-start">
-                              <p className={`text-sm font-medium truncate pr-2 ${!error.seen ? 'text-gray-900' : 'text-gray-700'}`}>
-                                {error.message}
-                              </p>
-                              <span className="text-xs text-gray-500 whitespace-nowrap">
-                                {formatTimestamp(error.timestamp)}
-                              </span>
-                            </div>
-                            <div className="flex items-center mt-1">
-                              <Badge className={`text-xs px-1 py-0 h-4 mr-2 ${getLevelBadgeColor(error.level)}`}>
-                                {error.level}
-                              </Badge>
-                              <span className="text-xs text-gray-500">
-                                {error.component}
-                              </span>
-                              {error.source && (
-                                <Badge variant="outline" className="ml-2 text-xs px-1 py-0 h-4">
-                                  {error.source}
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Expanded details */}
-                        {expanded[error.id] && (
-                          <div className="pl-10 mt-2 space-y-2">
-                            {error.details && (
-                              <div className="text-xs">
-                                <div className="font-semibold text-gray-700 mb-1">Details:</div>
-                                <pre className="bg-gray-50 p-2 rounded text-gray-700 overflow-auto max-h-20">
-                                  {JSON.stringify(error.details, null, 2)}
-                                </pre>
-                              </div>
-                            )}
-                            
-                            {error.stackTrace && (
-                              <div className="text-xs">
-                                <div className="font-semibold text-gray-700 mb-1">Stack Trace:</div>
-                                <pre className="bg-gray-50 p-2 rounded text-gray-700 overflow-auto max-h-32 whitespace-pre-wrap">
-                                  {error.stackTrace}
-                                </pre>
-                              </div>
-                            )}
-                            
-                            {error.url && (
-                              <div className="text-xs">
-                                <span className="font-semibold text-gray-700">URL: </span>
-                                <span className="text-gray-600">{error.url}</span>
-                              </div>
-                            )}
-                            
-                            {error.userId && (
-                              <div className="text-xs">
-                                <span className="font-semibold text-gray-700">User ID: </span>
-                                <span className="text-gray-600">{error.userId}</span>
-                              </div>
-                            )}
-                            
-                            <div className="flex justify-end pt-1">
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="text-xs h-7"
-                                onClick={() => {
-                                  // Copy to clipboard
-                                  const errorText = `Error: ${error.message}
-Level: ${error.level}
-Component: ${error.component}
-Timestamp: ${error.timestamp}
-Details: ${JSON.stringify(error.details || {})}
-Stack Trace: ${error.stackTrace || ''}
-`;
-                                  navigator.clipboard.writeText(errorText);
-                                }}
-                              >
-                                Copy Details
-                              </Button>
-                            </div>
-                          </div>
+              <ul className="divide-y">
+                {errors.map((error) => (
+                  <li 
+                    key={error.id} 
+                    className={`p-3 text-sm hover:bg-gray-50 ${!error.details.seen ? 'bg-amber-50' : ''}`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <div className="flex items-center space-x-2">
+                        {getLevelIcon(error.details.level)}
+                        <span className="font-medium">{error.message}</span>
+                      </div>
+                      <div className="flex space-x-1">
+                        <Badge className={getLevelColor(error.details.level)}>
+                          {error.details.level}
+                        </Badge>
+                        <Badge className={getSourceColor(error.details.source)}>
+                          {error.details.source}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-500 flex justify-between">
+                      <div>
+                        {error.details.component && (
+                          <span className="mr-2">
+                            Component: <span className="font-mono">{error.details.component}</span>
+                          </span>
                         )}
                       </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </>
+                      <div>{formatDate(error.createdAt)}</div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
             )}
-          </CardContent>
-        </Card>
+          </div>
+          
+          {/* Footer */}
+          <div className="border-t p-2 flex items-center justify-between bg-gray-50">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={markAllAsSeen}
+              disabled={errors.length === 0 || errors.every(e => e.details.seen)}
+            >
+              Mark All as Seen
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="text-gray-500"
+            >
+              {isExpanded ? (
+                <>
+                  <ChevronDown className="h-4 w-4 mr-1" />
+                  Collapse
+                </>
+              ) : (
+                <>
+                  <ChevronUp className="h-4 w-4 mr-1" />
+                  Expand
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

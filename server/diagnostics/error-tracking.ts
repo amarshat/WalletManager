@@ -1,13 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { storage } from '../storage';
+import { db } from '../db';
+import { systemLogs } from '@shared/schema';
 
-// Error levels
 export type ErrorLevel = 'info' | 'warning' | 'error' | 'critical';
-
-// Error sources
 export type ErrorSource = 'client' | 'server' | 'api';
 
-// Error context
 export interface ErrorContext {
   component?: string;
   source?: ErrorSource;
@@ -18,182 +15,197 @@ export interface ErrorContext {
   url?: string;
 }
 
-// Format error for logging
+/**
+ * Format error data into a structured object for consistent error logging
+ */
 export function formatError(err: Error, context: ErrorContext = {}): Record<string, any> {
   return {
     message: err.message,
-    stackTrace: err.stack,
-    ...context
+    name: err.name,
+    level: context.level || 'error',
+    source: context.source || 'server',
+    component: context.component || 'unknown',
+    userId: context.userId,
+    details: context.details || {},
+    stackTrace: context.stackTrace || err.stack,
+    timestamp: new Date(),
+    url: context.url
   };
 }
 
-// Catch-all error handler middleware
+/**
+ * Global error handler middleware
+ */
 export function errorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
-  const userId = req.user?.id;
-  const url = req.originalUrl;
-  const method = req.method;
-  
-  // Default error context
-  const errorContext: ErrorContext = {
-    component: 'api',
-    source: 'server',
-    level: 'error',
-    userId,
-    url,
-    details: {
-      method,
-      path: url,
-      query: req.query,
-      body: sanitizeRequestBody(req.body)
-    }
-  };
-  
-  // Determine error level based on status code or error type
-  if (err.name === 'ValidationError') {
-    errorContext.level = 'warning';
-  } else if (err.name === 'AuthenticationError' || err.name === 'AuthorizationError') {
-    errorContext.level = 'warning';
-  } else if (err.name === 'SyntaxError') {
-    errorContext.level = 'warning';
-  } else if (err.name === 'DatabaseError' || err.name === 'SequelizeError') {
-    errorContext.level = 'critical';
-    errorContext.component = 'database';
+  // Skip to next error handler if headers already sent
+  if (res.headersSent) {
+    return next(err);
   }
-  
-  // Log error to system logs
-  storage.addSystemLog({
-    userId,
-    action: `Error: ${err.message}`,
-    details: formatError(err, errorContext)
-  }).catch(logError => {
-    console.error('Error logging to database failed:', logError);
-  });
-  
-  // Send appropriate response
+
+  // Get error details
   const statusCode = getErrorStatusCode(err);
+  const errorMessage = getUserFriendlyErrorMessage(err, statusCode);
   
-  // Create user-friendly error message
-  const userMessage = getUserFriendlyErrorMessage(err, statusCode);
+  // Prepare error context
+  const errorContext: ErrorContext = {
+    source: 'server',
+    level: statusCode >= 500 ? 'error' : 'warning',
+    userId: req.user?.id,
+    details: {
+      method: req.method,
+      path: req.path,
+      statusCode,
+      body: sanitizeRequestBody(req.body)
+    },
+    url: req.originalUrl
+  };
+
+  // Log error to database
+  const formattedError = formatError(err, errorContext);
   
+  try {
+    // Log to database
+    db.insert(systemLogs).values({
+      type: 'ERROR',
+      message: errorMessage,
+      details: formattedError,
+      userId: req.user?.id,
+      createdAt: new Date()
+    }).execute();
+  } catch (dbError) {
+    console.error('Failed to log error to database:', dbError);
+  }
+
+  // Log to console in development
+  console.error('Error:', formattedError);
+
+  // Send error response
   res.status(statusCode).json({
-    error: {
-      message: userMessage,
-      code: err.name,
-      id: Date.now().toString()
-    }
+    error: errorMessage,
+    code: err.name,
+    requestId: req.headers['x-request-id'] || null
   });
 }
 
-// Client-side error logging endpoint
+/**
+ * API route for client-side error logging
+ */
 export async function logClientError(req: Request, res: Response) {
   try {
-    const { 
-      message, 
-      stackTrace, 
-      component, 
-      level = 'error',
-      details,
-      url
-    } = req.body;
-    
+    const { message, name, stack, componentStack, details, level, url } = req.body;
+
     if (!message) {
       return res.status(400).json({ error: 'Error message is required' });
     }
+
+    // Create error from client data
+    const error = new Error(message);
+    error.name = name || 'ClientError';
     
-    // Create error context
+    // Prepare error context
     const errorContext: ErrorContext = {
-      component: component || 'client',
       source: 'client',
-      level: level as ErrorLevel,
+      level: level || 'error',
       userId: req.user?.id,
-      stackTrace,
-      url,
-      details
+      stackTrace: stack,
+      details: {
+        ...details,
+        componentStack,
+        userAgent: req.headers['user-agent']
+      },
+      url: url || req.headers.referer
     };
+
+    // Log error to database
+    const formattedError = formatError(error, errorContext);
     
-    // Log to system logs
-    await storage.addSystemLog({
+    await db.insert(systemLogs).values({
+      type: 'ERROR',
+      message: message,
+      details: formattedError,
       userId: req.user?.id,
-      action: `Client Error: ${message}`,
-      details: errorContext
-    });
-    
-    res.json({ success: true });
-  } catch (error: any) {
-    console.error('Error logging client-side error:', error);
+      createdAt: new Date()
+    }).execute();
+
+    res.status(200).json({ success: true });
+  } catch (err) {
+    console.error('Failed to log client error:', err);
     res.status(500).json({ error: 'Failed to log error' });
   }
 }
 
-// Get error status code
+/**
+ * Helper function to get appropriate HTTP status code for an error
+ */
 function getErrorStatusCode(err: Error): number {
-  if (err.name === 'ValidationError') return 400;
-  if (err.name === 'AuthenticationError') return 401;
-  if (err.name === 'AuthorizationError') return 403;
-  if (err.name === 'NotFoundError') return 404;
-  if (err.name === 'ConflictError') return 409;
-  if (err.name === 'RateLimitError') return 429;
-  
-  // Default to 500 for server errors
-  return 500;
+  switch (err.constructor.name) {
+    case 'ValidationError':
+      return 400;
+    case 'AuthenticationError':
+      return 401;
+    case 'AuthorizationError':
+      return 403;
+    case 'NotFoundError':
+      return 404;
+    case 'ConflictError':
+      return 409;
+    case 'RateLimitError':
+      return 429;
+    case 'DatabaseError':
+      return 500;
+    default:
+      // Certain error messages can indicate specific status codes
+      if (err.message.includes('not found') || err.message.includes('does not exist')) {
+        return 404;
+      }
+      if (err.message.includes('unauthorized') || err.message.includes('not authenticated')) {
+        return 401;
+      }
+      if (err.message.includes('permission') || err.message.includes('not allowed')) {
+        return 403;
+      }
+      return 500;
+  }
 }
 
-// Create user-friendly error messages
+/**
+ * Helper function to get user-friendly error messages
+ */
 function getUserFriendlyErrorMessage(err: Error, statusCode: number): string {
-  // For validation errors, return the original message
-  if (statusCode === 400) {
+  // Return original message for client errors (4xx)
+  if (statusCode < 500) {
     return err.message;
   }
   
-  // For authentication errors
-  if (statusCode === 401) {
-    return 'Authentication required. Please sign in to continue.';
-  }
-  
-  // For authorization errors
-  if (statusCode === 403) {
-    return 'You don\'t have permission to perform this action.';
-  }
-  
-  // For not found errors
-  if (statusCode === 404) {
-    return 'The requested resource was not found.';
-  }
-  
-  // For conflict errors
-  if (statusCode === 409) {
-    return 'This operation couldn\'t be completed due to a conflict with current state.';
-  }
-  
-  // For rate limit errors
-  if (statusCode === 429) {
-    return 'Too many requests. Please try again later.';
-  }
-  
   // For server errors, provide a generic message
-  return 'An unexpected error occurred. Our team has been notified.';
+  return 'An unexpected error occurred. Our technical team has been notified.';
 }
 
-// Sanitize request body to remove sensitive data
+/**
+ * Helper function to sanitize request body for logging (remove sensitive data)
+ */
 function sanitizeRequestBody(body: any): any {
-  if (!body) return body;
+  if (!body) return null;
   
-  const sensitiveFields = ['password', 'confirmPassword', 'secret', 'token', 'apiKey', 'creditCard'];
   const sanitized = { ...body };
   
-  // Recursively sanitize nested objects
-  for (const key in sanitized) {
-    if (sensitiveFields.includes(key)) {
+  // List of sensitive fields to redact
+  const sensitiveFields = [
+    'password', 'token', 'secret', 'key', 'authorization', 
+    'auth', 'apiKey', 'api_key', 'credentials', 'card'
+  ];
+  
+  // Redact sensitive fields
+  Object.keys(sanitized).forEach(key => {
+    if (sensitiveFields.some(field => key.toLowerCase().includes(field.toLowerCase()))) {
       sanitized[key] = '[REDACTED]';
-    } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
-      sanitized[key] = sanitizeRequestBody(sanitized[key]);
     }
-  }
+  });
   
   return sanitized;
 }
 
-// Create custom error types
+// Custom error classes
 export class ValidationError extends Error {
   constructor(message: string) {
     super(message);

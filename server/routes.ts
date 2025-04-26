@@ -39,6 +39,14 @@ const logApiCall = async (req: Request, action: string, statusCode: number, resp
   }
 };
 
+// Import the test routes
+import { 
+  healthAuthTest, 
+  createWalletTest, 
+  depositTest, 
+  withdrawalTest 
+} from './admin/test-routes';
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
@@ -372,6 +380,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to delete card" });
     }
   });
+  
+  // API Testing Routes (Admin only)
+  app.get("/api/admin/test/auth", ensureAdmin, healthAuthTest);
+  app.post("/api/admin/test/wallet", ensureAdmin, createWalletTest);
+  app.post("/api/admin/test/deposit", ensureAdmin, depositTest);
+  app.post("/api/admin/test/withdrawal", ensureAdmin, withdrawalTest);
   
   // System Logs Routes (Admin only)
   app.get("/api/logs", ensureAdmin, async (req, res) => {

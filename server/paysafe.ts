@@ -15,7 +15,7 @@ export class PaysafeClient {
     this.brand = process.env.PAYSAFE_BRAND || 'dummy-us';
   }
   
-  private async getToken(): Promise<string> {
+  async getToken(): Promise<string> {
     // If we have a valid token, return it
     if (this.accessToken && Date.now() < this.tokenExpiry - 60000) { // 1 minute buffer
       return this.accessToken as string;

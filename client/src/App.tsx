@@ -16,6 +16,7 @@ import AdminDashboard from "@/pages/admin/dashboard";
 import BrandSettings from "@/pages/admin/brand-settings";
 import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
+import DevCenter from "@/pages/admin/dev-center";
 
 // Customer Pages
 import CustomerDashboard from "@/pages/customer/dashboard";

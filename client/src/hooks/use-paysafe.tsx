@@ -61,13 +61,15 @@ export function usePaysafe() {
         accountData: account 
       });
       
-      // Always use the 'balance' field first, then fall back to availableBalance
-      const availableBalance = typeof rawBalance === 'number' && !isNaN(rawBalance) 
-        ? rawBalance 
+      // Handle both string and number formats for balance values
+      // Convert string balance to number, handle null and undefined cases
+      const availableBalance = rawBalance !== null && rawBalance !== undefined
+        ? Number(rawBalance) // Convert string to number
         : 0;
       
-      const totalBalance = typeof account.totalBalance === 'number' && !isNaN(account.totalBalance)
-        ? account.totalBalance
+      // Convert totalBalance if exists, otherwise use availableBalance
+      const totalBalance = account.totalBalance !== null && account.totalBalance !== undefined
+        ? Number(account.totalBalance)
         : availableBalance; // Default to availableBalance if totalBalance is not provided
       
       return {
@@ -120,17 +122,26 @@ export function usePaysafe() {
         type = 'EXCHANGE';
       }
       
+      // Ensure transaction amounts are properly converted from strings to numbers when needed
+      const amount = transaction.amount !== null && transaction.amount !== undefined
+        ? Number(transaction.amount) // Convert to number if needed
+        : 0;
+  
+      const destinationAmount = transaction.destinationAmount !== null && transaction.destinationAmount !== undefined
+        ? Number(transaction.destinationAmount)
+        : null;
+        
       return {
         id: transaction.id,
         type,
-        amount: transaction.amount,
+        amount,
         currencyCode: transaction.currencyCode,
         timestamp: transaction.timestamp || transaction.createdDate || transaction.createdAt || new Date().toISOString(),
         status: transaction.status,
         counterparty,
         note: transaction.note,
         destinationCurrencyCode: transaction.destinationCurrencyCode,
-        destinationAmount: transaction.destinationAmount
+        destinationAmount
       };
     });
   }, [transactionsData, walletData]);

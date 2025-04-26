@@ -28,12 +28,15 @@ const logApiCall = async (req: Request, action: string, statusCode: number, resp
   if (!req.user) return;
   
   try {
+    // Only include properties defined in the schema
     await storage.addSystemLog({
       userId: req.user.id,
       action,
       statusCode,
       requestData: req.body,
-      responseData
+      responseData,
+      source: 'api',
+      level: statusCode >= 400 ? 'error' : 'info'
     });
   } catch (error) {
     console.error("Failed to log API call:", error);

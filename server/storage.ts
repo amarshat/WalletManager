@@ -5,7 +5,7 @@ import type {
   Card, InsertCard, SystemLog, InsertSystemLog 
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, gte } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -204,19 +204,35 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getSystemLogs(limit: number = 100, offset: number = 0): Promise<SystemLog[]> {
+    // Get current date minus 7 days for retention policy
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
     return db
       .select()
       .from(systemLogs)
+      .where(
+        gte(systemLogs.createdAt, sevenDaysAgo)
+      )
       .orderBy(desc(systemLogs.createdAt))
       .limit(limit)
       .offset(offset);
   }
   
   async getSystemLogsByUserId(userId: number, limit: number = 10): Promise<SystemLog[]> {
+    // Get current date minus 7 days for retention policy
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    
     return db
       .select()
       .from(systemLogs)
-      .where(eq(systemLogs.userId, userId))
+      .where(
+        and(
+          eq(systemLogs.userId, userId),
+          gte(systemLogs.createdAt, sevenDaysAgo)
+        )
+      )
       .orderBy(desc(systemLogs.createdAt))
       .limit(limit);
   }

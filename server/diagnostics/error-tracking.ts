@@ -66,10 +66,13 @@ export function errorHandler(err: Error, req: Request, res: Response, next: Next
   try {
     // Log to database
     db.insert(systemLogs).values({
-      type: 'ERROR',
-      message: errorMessage,
+      action: 'ERROR', // Use action field instead of type
       details: formattedError,
       userId: req.user?.id,
+      level: 'error',
+      source: errorContext.source || 'server',
+      component: errorContext.component || 'unknown',
+      statusCode: statusCode,
       createdAt: new Date()
     }).execute();
   } catch (dbError) {
@@ -120,9 +123,11 @@ export async function logClientError(req: Request, res: Response) {
     const formattedError = formatError(error, errorContext);
     
     await db.insert(systemLogs).values({
-      type: 'ERROR',
-      message: message,
+      action: 'CLIENT_ERROR',
       details: formattedError,
+      source: 'client',
+      level: level || 'error',
+      component: details?.component || 'unknown',
       userId: req.user?.id,
       createdAt: new Date()
     }).execute();

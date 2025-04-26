@@ -1,11 +1,16 @@
-import { users, brandSettings, customerWallets, walletAccounts, cards, systemLogs } from "@shared/schema";
+import { 
+  users, brandSettings, customerWallets, walletAccounts, cards, systemLogs,
+  budgetCategories, budgetPlans, budgetAllocations, budgetTransactions
+} from "@shared/schema";
 import type { 
   User, InsertUser, BrandSettings, InsertBrandSettings, 
   CustomerWallet, InsertCustomerWallet, WalletAccount, InsertWalletAccount,
-  Card, InsertCard, SystemLog, InsertSystemLog 
+  Card, InsertCard, SystemLog, InsertSystemLog,
+  BudgetCategory, InsertBudgetCategory, BudgetPlan, InsertBudgetPlan,
+  BudgetAllocation, InsertBudgetAllocation, BudgetTransaction, InsertBudgetTransaction
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte } from "drizzle-orm";
+import { eq, desc, and, gte, not, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -39,6 +44,27 @@ export interface IStorage {
   addCard(card: InsertCard): Promise<Card>;
   updateCard(id: number, data: Partial<InsertCard>): Promise<Card | undefined>;
   deleteCard(id: number): Promise<boolean>;
+  
+  // Budget operations
+  getBudgetCategories(userId?: number): Promise<BudgetCategory[]>;
+  getBudgetCategory(id: number): Promise<BudgetCategory | undefined>;
+  createBudgetCategory(category: InsertBudgetCategory): Promise<BudgetCategory>;
+  updateBudgetCategory(id: number, data: Partial<InsertBudgetCategory>): Promise<BudgetCategory | undefined>;
+  deleteBudgetCategory(id: number): Promise<boolean>;
+  
+  getBudgetPlans(userId: number): Promise<BudgetPlan[]>;
+  getActiveBudgetPlan(userId: number): Promise<BudgetPlan | undefined>;
+  getBudgetPlan(id: number): Promise<BudgetPlan | undefined>;
+  createBudgetPlan(plan: InsertBudgetPlan): Promise<BudgetPlan>;
+  updateBudgetPlan(id: number, data: Partial<InsertBudgetPlan>): Promise<BudgetPlan | undefined>;
+  deleteBudgetPlan(id: number): Promise<boolean>;
+  
+  getBudgetAllocations(budgetPlanId: number): Promise<BudgetAllocation[]>;
+  createBudgetAllocation(allocation: InsertBudgetAllocation): Promise<BudgetAllocation>;
+  updateBudgetAllocation(id: number, data: Partial<InsertBudgetAllocation>): Promise<BudgetAllocation | undefined>;
+  
+  getBudgetTransactions(userId: number, limit?: number): Promise<BudgetTransaction[]>;
+  createBudgetTransaction(transaction: InsertBudgetTransaction): Promise<BudgetTransaction>;
   
   // Logs operations
   addSystemLog(log: InsertSystemLog): Promise<SystemLog>;
@@ -235,6 +261,212 @@ export class DatabaseStorage implements IStorage {
       )
       .orderBy(desc(systemLogs.createdAt))
       .limit(limit);
+  }
+
+  // Budget Categories operations
+  async getBudgetCategories(userId?: number): Promise<BudgetCategory[]> {
+    if (userId) {
+      // Get system categories + user's custom categories
+      return db
+        .select()
+        .from(budgetCategories)
+        .where(
+          or(
+            eq(budgetCategories.isSystem, true),
+            eq(budgetCategories.userId, userId)
+          )
+        );
+    } else {
+      // Get all categories
+      return db
+        .select()
+        .from(budgetCategories);
+    }
+  }
+
+  async getBudgetCategory(id: number): Promise<BudgetCategory | undefined> {
+    const [category] = await db
+      .select()
+      .from(budgetCategories)
+      .where(eq(budgetCategories.id, id));
+    return category;
+  }
+
+  async createBudgetCategory(category: InsertBudgetCategory): Promise<BudgetCategory> {
+    const [created] = await db
+      .insert(budgetCategories)
+      .values(category)
+      .returning();
+    return created;
+  }
+
+  async updateBudgetCategory(id: number, data: Partial<InsertBudgetCategory>): Promise<BudgetCategory | undefined> {
+    const [updated] = await db
+      .update(budgetCategories)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(budgetCategories.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBudgetCategory(id: number): Promise<boolean> {
+    const [deleted] = await db
+      .delete(budgetCategories)
+      .where(eq(budgetCategories.id, id))
+      .returning();
+    return !!deleted;
+  }
+
+  // Budget Plans operations
+  async getBudgetPlans(userId: number): Promise<BudgetPlan[]> {
+    return db
+      .select()
+      .from(budgetPlans)
+      .where(eq(budgetPlans.userId, userId));
+  }
+
+  async getActiveBudgetPlan(userId: number): Promise<BudgetPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(budgetPlans)
+      .where(
+        and(
+          eq(budgetPlans.userId, userId),
+          eq(budgetPlans.isActive, true)
+        )
+      );
+    return plan;
+  }
+
+  async getBudgetPlan(id: number): Promise<BudgetPlan | undefined> {
+    const [plan] = await db
+      .select()
+      .from(budgetPlans)
+      .where(eq(budgetPlans.id, id));
+    return plan;
+  }
+
+  async createBudgetPlan(plan: InsertBudgetPlan): Promise<BudgetPlan> {
+    // If setting this plan as active, deactivate all other plans for this user
+    if (plan.isActive) {
+      await db
+        .update(budgetPlans)
+        .set({ isActive: false })
+        .where(eq(budgetPlans.userId, plan.userId));
+    }
+
+    const [created] = await db
+      .insert(budgetPlans)
+      .values(plan)
+      .returning();
+    return created;
+  }
+
+  async updateBudgetPlan(id: number, data: Partial<InsertBudgetPlan>): Promise<BudgetPlan | undefined> {
+    // If setting this plan as active, deactivate all other plans for this user
+    if (data.isActive) {
+      const plan = await this.getBudgetPlan(id);
+      if (plan) {
+        await db
+          .update(budgetPlans)
+          .set({ isActive: false })
+          .where(
+            and(
+              eq(budgetPlans.userId, plan.userId),
+              not(eq(budgetPlans.id, id))
+            )
+          );
+      }
+    }
+
+    const [updated] = await db
+      .update(budgetPlans)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(budgetPlans.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBudgetPlan(id: number): Promise<boolean> {
+    // First delete all allocations for this plan
+    await db
+      .delete(budgetAllocations)
+      .where(eq(budgetAllocations.budgetPlanId, id));
+
+    const [deleted] = await db
+      .delete(budgetPlans)
+      .where(eq(budgetPlans.id, id))
+      .returning();
+    return !!deleted;
+  }
+
+  // Budget Allocations operations
+  async getBudgetAllocations(budgetPlanId: number): Promise<BudgetAllocation[]> {
+    return db
+      .select()
+      .from(budgetAllocations)
+      .where(eq(budgetAllocations.budgetPlanId, budgetPlanId));
+  }
+
+  async createBudgetAllocation(allocation: InsertBudgetAllocation): Promise<BudgetAllocation> {
+    const [created] = await db
+      .insert(budgetAllocations)
+      .values(allocation)
+      .returning();
+    return created;
+  }
+
+  async updateBudgetAllocation(id: number, data: Partial<InsertBudgetAllocation>): Promise<BudgetAllocation | undefined> {
+    const [updated] = await db
+      .update(budgetAllocations)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(budgetAllocations.id, id))
+      .returning();
+    return updated;
+  }
+
+  // Budget Transactions operations
+  async getBudgetTransactions(userId: number, limit: number = 50): Promise<BudgetTransaction[]> {
+    return db
+      .select()
+      .from(budgetTransactions)
+      .where(eq(budgetTransactions.userId, userId))
+      .orderBy(desc(budgetTransactions.transactionDate))
+      .limit(limit);
+  }
+
+  async createBudgetTransaction(transaction: InsertBudgetTransaction): Promise<BudgetTransaction> {
+    const [created] = await db
+      .insert(budgetTransactions)
+      .values(transaction)
+      .returning();
+
+    // If this is an expense (not income), update the spent amount for the active budget
+    if (!transaction.isIncome) {
+      const activePlan = await this.getActiveBudgetPlan(transaction.userId);
+      if (activePlan) {
+        // Find allocation for this category in the active budget
+        const [allocation] = await db
+          .select()
+          .from(budgetAllocations)
+          .where(
+            and(
+              eq(budgetAllocations.budgetPlanId, activePlan.id),
+              eq(budgetAllocations.categoryId, transaction.categoryId)
+            )
+          );
+
+        if (allocation) {
+          // Update the spent amount
+          const newSpentAmount = Number(allocation.spentAmount) + Number(transaction.amount);
+          await this.updateBudgetAllocation(allocation.id, {
+            spentAmount: newSpentAmount
+          });
+        }
+      }
+    }
+
+    return created;
   }
 }
 

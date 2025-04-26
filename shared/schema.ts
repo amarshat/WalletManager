@@ -128,6 +128,74 @@ export type Card = typeof cards.$inferSelect;
 export type InsertSystemLog = z.infer<typeof insertSystemLogSchema>;
 export type SystemLog = typeof systemLogs.$inferSelect;
 
+// Budget Categories Table
+export const budgetCategories = pgTable("budget_categories", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull().default("#6366F1"), // Default color
+  icon: text("icon"),
+  parentId: integer("parent_id"), // Will reference budgetCategories.id via relation
+  userId: integer("user_id").references(() => users.id), // For custom categories
+  isSystem: boolean("is_system").default(false), // True for system categories
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Budget Plans Table
+export const budgetPlans = pgTable("budget_plans", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  currencyCode: text("currency_code").notNull().default("USD"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Budget Allocations Table
+export const budgetAllocations = pgTable("budget_allocations", {
+  id: serial("id").primaryKey(),
+  budgetPlanId: integer("budget_plan_id").notNull().references(() => budgetPlans.id),
+  categoryId: integer("category_id").notNull().references(() => budgetCategories.id),
+  allocatedAmount: decimal("allocated_amount", { precision: 10, scale: 2 }).notNull(),
+  spentAmount: decimal("spent_amount", { precision: 10, scale: 2 }).default("0"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Budget Transactions Table
+export const budgetTransactions = pgTable("budget_transactions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  categoryId: integer("category_id").notNull().references(() => budgetCategories.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  transactionDate: timestamp("transaction_date").notNull().defaultNow(),
+  walletTransactionId: text("wallet_transaction_id"), // For linking to wallet transactions
+  isIncome: boolean("is_income").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertBudgetCategorySchema = createInsertSchema(budgetCategories);
+export const insertBudgetPlanSchema = createInsertSchema(budgetPlans);
+export const insertBudgetAllocationSchema = createInsertSchema(budgetAllocations);
+export const insertBudgetTransactionSchema = createInsertSchema(budgetTransactions);
+
+export type InsertBudgetCategory = z.infer<typeof insertBudgetCategorySchema>;
+export type BudgetCategory = typeof budgetCategories.$inferSelect;
+
+export type InsertBudgetPlan = z.infer<typeof insertBudgetPlanSchema>;
+export type BudgetPlan = typeof budgetPlans.$inferSelect;
+
+export type InsertBudgetAllocation = z.infer<typeof insertBudgetAllocationSchema>;
+export type BudgetAllocation = typeof budgetAllocations.$inferSelect;
+
+export type InsertBudgetTransaction = z.infer<typeof insertBudgetTransactionSchema>;
+export type BudgetTransaction = typeof budgetTransactions.$inferSelect;
+
 // PhantomPay Mock System Tables
 
 // PhantomPay Wallets Table

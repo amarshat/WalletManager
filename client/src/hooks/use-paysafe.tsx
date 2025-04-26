@@ -95,19 +95,24 @@ export function usePaysafe() {
   const transactions = useMemo(() => {
     if (!transactionsData) return [];
     
+    // Add debugging to see what transactions we're getting from the API
+    console.log('Raw transactions data from API:', transactionsData);
+    
     // Handle different response formats (direct array or {transactions: array})
     const transactionArray = Array.isArray(transactionsData) 
       ? transactionsData 
       : (transactionsData.transactions || []);
+      
+    console.log('Transaction array after formatting:', transactionArray);
     
     return transactionArray.map((transaction: any) => {
       let type: 'DEPOSIT' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'WITHDRAWAL' | 'EXCHANGE' = 'DEPOSIT';
       let counterparty;
       
       // Determine transaction type
-      if (transaction.transactionType === 'DEPOSIT') {
+      if (transaction.type === 'DEPOSIT' || transaction.transactionType === 'DEPOSIT') {
         type = 'DEPOSIT';
-      } else if (transaction.transactionType === 'TRANSFER') {
+      } else if (transaction.type === 'TRANSFER' || transaction.transactionType === 'TRANSFER') {
         // Check if current user is source or destination
         if (walletData?.wallet?.customerId === transaction.sourceCustomerId) {
           type = 'TRANSFER_OUT';
@@ -116,9 +121,9 @@ export function usePaysafe() {
           type = 'TRANSFER_IN';
           counterparty = transaction.sourceCustomerId;
         }
-      } else if (transaction.transactionType === 'WITHDRAWAL') {
+      } else if (transaction.type === 'WITHDRAWAL' || transaction.transactionType === 'WITHDRAWAL') {
         type = 'WITHDRAWAL';
-      } else if (transaction.transactionType === 'EXCHANGE') {
+      } else if (transaction.type === 'EXCHANGE' || transaction.transactionType === 'EXCHANGE') {
         type = 'EXCHANGE';
       }
       
@@ -131,7 +136,8 @@ export function usePaysafe() {
         ? Number(transaction.destinationAmount)
         : null;
         
-      return {
+      // Create the formatted transaction object
+      const formattedTransaction = {
         id: transaction.id,
         type,
         amount,
@@ -143,6 +149,17 @@ export function usePaysafe() {
         destinationCurrencyCode: transaction.destinationCurrencyCode,
         destinationAmount
       };
+      
+      console.log(`Processed transaction ${transaction.id}:`, {
+        original: {
+          type: transaction.type,
+          transactionType: transaction.transactionType,
+          amount: transaction.amount
+        },
+        processed: formattedTransaction
+      });
+      
+      return formattedTransaction;
     });
   }, [transactionsData, walletData]);
   

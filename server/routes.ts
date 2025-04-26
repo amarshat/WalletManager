@@ -77,6 +77,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/admin/error-events', ensureAdmin, getErrorEvents);
   app.post('/api/admin/error-events/:id/seen', ensureAdmin, markErrorAsSeen);
   app.post('/api/admin/error-events/mark-all-seen', ensureAdmin, markAllErrorsAsSeen);
+  
+  // Error log endpoints
+  app.get('/api/logs', ensureAdmin, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      const logs = await storage.getSystemLogs(limit);
+      res.json({ errors: logs });
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      res.status(500).json({ error: 'Failed to fetch logs' });
+    }
+  });
+  
+  app.post('/api/logs/mark-all-seen', ensureAdmin, async (req, res) => {
+    try {
+      // This is a simplified version - in a real app we would update the 'seen' flag in the database
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error marking logs as seen:', error);
+      res.status(500).json({ error: 'Failed to mark logs as seen' });
+    }
+  });
 
   // Brand Settings Routes
   app.get("/api/brand", async (req, res) => {

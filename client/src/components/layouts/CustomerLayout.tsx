@@ -173,6 +173,11 @@ export default function CustomerLayout({
               <p className="text-neutral-600">
                 {description || "Here's your wallet overview"}
               </p>
+              {user?.isPhantomUser && (
+                <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                  PhantomPay Mock System
+                </div>
+              )}
             </div>
             {showRefreshButton && onRefresh && (
               <Button variant="outline" size="sm" onClick={onRefresh}>

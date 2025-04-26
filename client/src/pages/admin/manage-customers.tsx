@@ -187,9 +187,21 @@ export default function ManageCustomers() {
       key: "status",
       header: "Status",
       cell: (user: User) => (
-        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-          Active
-        </span>
+        <div className="flex flex-col gap-1">
+          <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+            Active
+          </span>
+          {user.isPhantomUser && (
+            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+              PhantomPay
+            </span>
+          )}
+          {!user.isPhantomUser && (
+            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+              Paysafe API
+            </span>
+          )}
+        </div>
       )
     },
     {
@@ -307,7 +319,11 @@ export default function ManageCustomers() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter email" {...field} />
+                        <Input 
+                          placeholder="Enter email" 
+                          {...field} 
+                          value={field.value || ''} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -321,7 +337,11 @@ export default function ManageCustomers() {
                     <FormItem>
                       <FormLabel>Country</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter country" {...field} />
+                        <Input 
+                          placeholder="Enter country" 
+                          {...field}
+                          value={field.value || ''}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -332,12 +352,15 @@ export default function ManageCustomers() {
               <FormField
                 control={form.control}
                 name="defaultCurrency"
-                render={({ field }) => (
+                render={({ field: { value, onChange, ...field } }) => (
                   <FormItem>
                     <FormLabel>Default Currency</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select 
+                      onValueChange={onChange}
+                      defaultValue={value as string || "USD"}
+                    >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger {...field}>
                           <SelectValue placeholder="Select a currency" />
                         </SelectTrigger>
                       </FormControl>

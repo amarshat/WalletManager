@@ -9,7 +9,8 @@ import {
   Users, 
   ScrollText, 
   LayoutDashboard,
-  Wrench
+  Wrench,
+  AlertCircle
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -23,9 +24,15 @@ interface AdminLayoutProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
+  subtitle?: string;
 }
 
-export default function AdminLayout({ children, title = "Dashboard", description = "Manage your digital wallet platform" }: AdminLayoutProps) {
+export default function AdminLayout({ 
+  children, 
+  title = "Dashboard", 
+  description = "Manage your digital wallet platform",
+  subtitle
+}: AdminLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { brand } = useBrand();
@@ -63,6 +70,11 @@ export default function AdminLayout({ children, title = "Dashboard", description
       href: "/admin/system-logs", 
       label: "System Logs", 
       icon: <ScrollText className="w-5 h-5 mr-3" /> 
+    },
+    { 
+      href: "/admin/troubleshooting", 
+      label: "Troubleshooting", 
+      icon: <AlertCircle className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/admin/dev-center", 
@@ -156,7 +168,11 @@ export default function AdminLayout({ children, title = "Dashboard", description
         <main className="flex-1 overflow-y-auto bg-neutral-100 p-4 md:p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            <p className="text-neutral-600">{description}</p>
+            {subtitle ? (
+              <p className="text-neutral-600">{subtitle}</p>
+            ) : (
+              <p className="text-neutral-600">{description}</p>
+            )}
           </div>
           
           {children}

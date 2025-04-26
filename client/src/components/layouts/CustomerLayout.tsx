@@ -68,11 +68,6 @@ export default function CustomerLayout({
       icon: <RefreshCw className="w-5 h-5 mr-3" /> 
     },
     { 
-      href: "/cards", 
-      label: "Cards", 
-      icon: <CreditCard className="w-5 h-5 mr-3" /> 
-    },
-    { 
       href: "/payment-methods", 
       label: "Payment Methods", 
       icon: <CreditCard className="w-5 h-5 mr-3" /> 

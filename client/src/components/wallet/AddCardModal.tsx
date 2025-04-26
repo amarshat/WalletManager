@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 import { InsertCard } from '@shared/schema';
 
 // Test cards imported from CSV
@@ -79,6 +80,7 @@ interface AddCardModalProps {
 
 export default function AddCardModal({ isOpen, onClose }: AddCardModalProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [cardType, setCardType] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [expiryMonth, setExpiryMonth] = useState('');
@@ -99,16 +101,19 @@ export default function AddCardModal({ isOpen, onClose }: AddCardModalProps) {
     if (isOpen) {
       setCardType('');
       setCardNumber('');
-      setExpiryMonth('');
-      setExpiryYear('');
+      // Set default expiry date to next year, current month
+      const currentDate = new Date();
+      setExpiryMonth((currentDate.getMonth() + 1).toString().padStart(2, '0'));
+      setExpiryYear((currentDate.getFullYear() + 1).toString());
       setCvv('');
-      setCardholderName('');
+      // Set default cardholder name to user's name
+      setCardholderName(user?.fullName || '');
       setIsDefault(false);
       setUseTestCard(false);
       setSelectedTestCardNetwork('');
       setSelectedTestCard('');
     }
-  }, [isOpen]);
+  }, [isOpen, user?.fullName]);
 
   // Apply test card when selected
   useEffect(() => {
@@ -157,7 +162,41 @@ export default function AddCardModal({ isOpen, onClose }: AddCardModalProps) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
+    // Special validation for test cards
+    if (useTestCard) {
+      if (!selectedTestCardNetwork || !selectedTestCard) {
+        toast({
+          title: "Missing Test Card Information",
+          description: "Please select a test card network and card.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      // For test cards, all fields are auto-populated, so we can proceed
+      const last4 = cardNumber.slice(-4);
+      
+      // Map the test card network to the correct card type format
+      const cardTypeMap: Record<string, string> = {
+        'Visa': 'VISA',
+        'Mastercard': 'MASTERCARD',
+        'American Express': 'AMEX'
+      };
+      
+      const mappedCardType = cardTypeMap[selectedTestCardNetwork] || selectedTestCardNetwork;
+      
+      addCardMutation.mutate({
+        cardType: mappedCardType,
+        last4,
+        expiryMonth,
+        expiryYear,
+        cardholderName,
+        isDefault,
+      });
+      return;
+    }
+    
+    // Normal card validation
     if (!cardType || !cardNumber || !expiryMonth || !expiryYear || !cvv || !cardholderName) {
       toast({
         title: "Missing Information",

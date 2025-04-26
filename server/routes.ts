@@ -28,7 +28,7 @@ const logApiCall = async (req: Request, action: string, statusCode: number, resp
   if (!req.user) return;
   
   try {
-    // Only include properties defined in the schema
+    // Only include properties defined in the schema, omit component for now
     await storage.addSystemLog({
       userId: req.user.id,
       action,

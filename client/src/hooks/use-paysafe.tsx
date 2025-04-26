@@ -44,14 +44,26 @@ export function usePaysafe() {
   
   // Processed balances
   const balances = useMemo(() => {
-    if (!walletData?.balances?.accounts) return [];
+    // Handle case where balances might be in different formats
+    const accounts = walletData?.balances?.accounts || [];
     
-    return walletData.balances.accounts.map((account: any) => ({
-      currencyCode: account.currencyCode,
-      availableBalance: account.availableBalance,
-      totalBalance: account.totalBalance,
-      currencySymbol: supportedCurrencies.find(c => c.code === account.currencyCode)?.symbol || '$'
-    }));
+    return accounts.map((account: any) => {
+      // Ensure we have valid numbers for balances (or default to 0)
+      const availableBalance = typeof account.availableBalance === 'number' && !isNaN(account.availableBalance) 
+        ? account.availableBalance 
+        : 0;
+      
+      const totalBalance = typeof account.totalBalance === 'number' && !isNaN(account.totalBalance)
+        ? account.totalBalance
+        : 0;
+      
+      return {
+        currencyCode: account.currencyCode,
+        availableBalance: availableBalance,
+        totalBalance: totalBalance,
+        currencySymbol: supportedCurrencies.find(c => c.code === account.currencyCode)?.symbol || '$'
+      };
+    });
   }, [walletData]);
   
   // Current active currencies
@@ -68,7 +80,12 @@ export function usePaysafe() {
   const transactions = useMemo(() => {
     if (!transactionsData) return [];
     
-    return transactionsData.map((transaction: any) => {
+    // Handle different response formats (direct array or {transactions: array})
+    const transactionArray = Array.isArray(transactionsData) 
+      ? transactionsData 
+      : (transactionsData.transactions || []);
+    
+    return transactionArray.map((transaction: any) => {
       let type: 'DEPOSIT' | 'TRANSFER_IN' | 'TRANSFER_OUT' | 'WITHDRAWAL' | 'EXCHANGE' = 'DEPOSIT';
       let counterparty;
       

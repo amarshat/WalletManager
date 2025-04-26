@@ -40,23 +40,23 @@ export default function TransactionItem({
     }
   }, [timestamp]);
   
-  // Format amount
+  // Format amount - no division by 100 needed, amounts are already in dollars
   const formattedAmount = useMemo(() => {
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(amount / 100); // Assuming amount is in cents
+    }).format(amount);
   }, [amount]);
   
-  // Format destination amount for exchange
+  // Format destination amount for exchange - no division by 100 needed
   const formattedDestAmount = useMemo(() => {
     if (!destAmount) return '';
     return new Intl.NumberFormat('en-US', {
       style: 'decimal',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(destAmount / 100);
+    }).format(destAmount);
   }, [destAmount]);
   
   const getIcon = () => {

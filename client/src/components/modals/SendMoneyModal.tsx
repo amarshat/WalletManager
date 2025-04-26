@@ -109,11 +109,11 @@ export default function SendMoneyModal({
       return;
     }
     
-    // Convert dollars to cents for API
-    const amountInCents = Math.round(parseFloat(amount) * 100);
+    // Parse amount but don't convert to cents
+    const parsedAmount = parseFloat(amount);
     
     transferMutation.mutate({
-      amount: amountInCents,
+      amount: parsedAmount,
       currencyCode,
       recipientUsername,
       note,

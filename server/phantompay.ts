@@ -477,7 +477,7 @@ export class PhantomPayClient {
             id: tx.transactionId,
             type: tx.type,
             status: tx.status,
-            amount: tx.amount / 100, // Convert cents to dollars
+            amount: tx.amount, // No conversion needed, keep as is
             currencyCode: tx.currencyCode,
             sourceAccountId: sourceAccount?.accountId,
             destinationAccountId: destAccount?.accountId,

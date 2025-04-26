@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, json, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, json, timestamp, varchar, decimal } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -145,7 +145,7 @@ export const phantomAccounts = pgTable("phantom_accounts", {
   phantomWalletId: integer("phantom_wallet_id").notNull().references(() => phantomWallets.id),
   accountId: text("account_id").notNull().unique(), // Mock account ID format: "phantom-acct-xxxxx"
   currencyCode: text("currency_code").notNull(),
-  balance: integer("balance").default(0), // Balance stored in cents/pennies
+  balance: decimal("balance", { precision: 10, scale: 2 }).default("0"), // Balance as decimal with 2 decimal places
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -155,7 +155,7 @@ export const phantomTransactions = pgTable("phantom_transactions", {
   transactionId: text("transaction_id").notNull().unique(), // Mock transaction ID format: "phantom-tx-xxxxx"
   sourceAccountId: integer("source_account_id").references(() => phantomAccounts.id),
   destinationAccountId: integer("destination_account_id").references(() => phantomAccounts.id),
-  amount: integer("amount").notNull(), // Amount in cents/pennies
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Amount as decimal with 2 decimal places
   currencyCode: text("currency_code").notNull(),
   type: text("type").notNull(), // 'DEPOSIT', 'TRANSFER', 'WITHDRAWAL'
   status: text("status").default("COMPLETED"),

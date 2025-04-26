@@ -196,33 +196,34 @@ export class PhantomPayClient {
         throw new Error(`Account not found for currency: ${data.currencyCode}`);
       }
       
-      // Ensure we're working with an integer amount (no decimals)
-      // Use Math.round to handle any decimal points
-      let amountInInteger;
+      // Ensure we're working with a valid decimal amount
+      let decimalAmount;
       try {
-        amountInInteger = Math.round(Number(amount));
-        if (isNaN(amountInInteger)) {
+        decimalAmount = Number(amount);
+        if (isNaN(decimalAmount)) {
           throw new Error(`Cannot convert "${amount}" to a number`);
         }
+        // Format to 2 decimal places but keep as number
+        decimalAmount = parseFloat(decimalAmount.toFixed(2));
       } catch (err) {
-        console.error(`Error converting amount: ${amount} of type ${typeof amount} to integer`);
+        console.error(`Error converting amount: ${amount} of type ${typeof amount} to decimal`);
         throw new Error(`Invalid amount: ${amount}. Must be a valid number.`);
       }
       
       console.log('Processing deposit amount:', { 
         original: data.amount, 
         parsed: amount,
-        final: amountInInteger,
-        finalType: typeof amountInInteger
+        final: decimalAmount,
+        finalType: typeof decimalAmount
       });
       
       // Update account balance - ensure we're using numbers not strings
       const currentBalance = Number(account.balance || 0);
-      const newBalance = currentBalance + amountInInteger;
+      const newBalance = parseFloat((currentBalance + decimalAmount).toFixed(2));
       
       console.log('Balance calculation:', {
         currentBalance,
-        amountToAdd: amountInInteger,
+        amountToAdd: decimalAmount,
         newBalance,
         currentBalanceType: typeof currentBalance,
         newBalanceType: typeof newBalance

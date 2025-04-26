@@ -560,6 +560,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Create a route to initialize/repair wallet for the current user
+  app.post("/api/wallet/initialize", ensureAuth, async (req, res) => {
+    try {
+      // Check if user already has a wallet
+      let wallet = await storage.getWalletByUserId(req.user!.id);
+      
+      if (wallet) {
+        return res.json({ 
+          message: "Wallet already exists", 
+          wallet 
+        });
+      }
+      
+      // User doesn't have a wallet, create one
+      const walletResponse = await walletClient.createWallet(req.user!.id, {
+        customer: {
+          firstName: req.user!.fullName.split(' ')[0],
+          lastName: req.user!.fullName.split(' ').slice(1).join(' ') || req.user!.fullName.split(' ')[0],
+          email: req.user!.email || `${req.user!.username}@example.com`,
+          id: req.user!.id.toString()
+        }
+      });
+      
+      // Create a local wallet record
+      if (walletResponse.id) {
+        wallet = await storage.createWallet({
+          userId: req.user!.id,
+          customerId: walletResponse.id,
+          externalReference: walletResponse.externalReference || null,
+          status: walletResponse.status || 'ACTIVE'
+        });
+        
+        // Create accounts for the wallet if needed
+        if (walletResponse.accounts && Array.isArray(walletResponse.accounts)) {
+          for (const account of walletResponse.accounts) {
+            await storage.addWalletAccount({
+              walletId: wallet.id,
+              accountId: account.id,
+              currencyCode: account.currencyCode,
+              externalId: account.externalId || null,
+              hasVirtualInstrument: account.hasVirtualInstrument || false
+            });
+          }
+        }
+        
+        await logApiCall(req, "Initialize wallet", 201, wallet);
+        return res.status(201).json({
+          message: "Wallet created successfully",
+          wallet
+        });
+      } else {
+        return res.status(500).json({ error: "Failed to create wallet" });
+      }
+    } catch (error) {
+      console.error("Error initializing wallet:", error);
+      res.status(500).json({ error: "Failed to initialize wallet" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

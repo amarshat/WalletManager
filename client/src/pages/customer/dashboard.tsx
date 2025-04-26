@@ -11,6 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import AddMoneyModal from "@/components/modals/AddMoneyModal";
 import SendMoneyModal from "@/components/modals/SendMoneyModal";
 import BulkTransferModal from "@/components/modals/BulkTransferModal";
+import InitializeWalletCard from "@/components/wallet/InitializeWalletCard";
 import { Button } from "@/components/ui/button";
 import { ArrowDownIcon, Send, Upload } from "lucide-react";
 
@@ -30,6 +31,7 @@ export default function CustomerDashboard() {
     activeCurrencies,
     isLoadingWallet,
     isLoadingTransactions,
+    walletError,
     refreshAllData
   } = usePaysafe();
   
@@ -43,7 +45,7 @@ export default function CustomerDashboard() {
   }, [user, balances]);
   
   // Get selected currency balance
-  const selectedBalance = balances.find(b => b.currencyCode === selectedCurrency);
+  const selectedBalance = balances.find(balance => balance.currencyCode === selectedCurrency);
   const balanceAmount = selectedBalance ? selectedBalance.availableBalance : 0;
   
   // Handle refresh
@@ -67,35 +69,48 @@ export default function CustomerDashboard() {
   };
   
   // Filter transactions by selected currency
-  const filteredTransactions = transactions.filter(t => 
-    t.currencyCode === selectedCurrency || 
-    (t.type === 'EXCHANGE' && t.destinationCurrencyCode === selectedCurrency)
+  const filteredTransactions = transactions.filter(transaction => 
+    transaction.currencyCode === selectedCurrency || 
+    (transaction.type === 'EXCHANGE' && transaction.destinationCurrencyCode === selectedCurrency)
   ).slice(0, 10); // Show only last 10
+  
+  // Check if wallet is created or needs initialization
+  const isWalletMissing = walletError?.message === "Wallet not found" || 
+    (walletError?.response && walletError?.response?.status === 404);
   
   return (
     <CustomerLayout showRefreshButton={true} onRefresh={handleRefresh}>
-      {/* Currency Selector */}
-      <CurrencySelector
-        currencies={activeCurrencies}
-        selectedCurrency={selectedCurrency}
-        onSelect={setSelectedCurrency}
-      />
-      
-      {/* Wallet Balance Card */}
-      <WalletCard
-        balance={balanceAmount}
-        currencyCode={selectedCurrency}
-        onAddMoney={() => setAddMoneyModalOpen(true)}
-        onSendMoney={() => setSendMoneyModalOpen(true)}
-        onWithdraw={() => {
-          toast({ 
-            title: "Coming Soon", 
-            description: "Withdrawal functionality is coming soon" 
-          })
-        }}
-        onRefresh={handleRefresh}
-        loading={refreshing || isLoadingWallet}
-      />
+      {isWalletMissing ? (
+        // Show wallet initialization card
+        <div className="my-8">
+          <InitializeWalletCard onSuccess={refreshAllData} />
+        </div>
+      ) : (
+        <>
+          {/* Currency Selector */}
+          <CurrencySelector
+            currencies={activeCurrencies}
+            selectedCurrency={selectedCurrency}
+            onSelect={setSelectedCurrency}
+          />
+          
+          {/* Wallet Balance Card */}
+          <WalletCard
+            balance={balanceAmount}
+            currencyCode={selectedCurrency}
+            onAddMoney={() => setAddMoneyModalOpen(true)}
+            onSendMoney={() => setSendMoneyModalOpen(true)}
+            onWithdraw={() => {
+              toast({ 
+                title: "Coming Soon", 
+                description: "Withdrawal functionality is coming soon" 
+              });
+            }}
+            onRefresh={handleRefresh}
+            loading={refreshing || isLoadingWallet}
+          />
+        </>
+      )}
       
       {/* Bulk Transfer Action */}
       <div className="mt-4 flex justify-end">

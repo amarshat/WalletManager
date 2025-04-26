@@ -198,31 +198,61 @@ export class PhantomPayClient {
       
       // Ensure we're working with an integer amount (no decimals)
       // Use Math.round to handle any decimal points
-      const amountInInteger = Math.round(amount);
+      let amountInInteger;
+      try {
+        amountInInteger = Math.round(Number(amount));
+        if (isNaN(amountInInteger)) {
+          throw new Error(`Cannot convert "${amount}" to a number`);
+        }
+      } catch (err) {
+        console.error(`Error converting amount: ${amount} of type ${typeof amount} to integer`);
+        throw new Error(`Invalid amount: ${amount}. Must be a valid number.`);
+      }
+      
       console.log('Processing deposit amount:', { 
         original: data.amount, 
         parsed: amount,
-        final: amountInInteger 
+        final: amountInInteger,
+        finalType: typeof amountInInteger
       });
       
-      // Update account balance
+      // Update account balance - ensure we're using numbers not strings
+      const currentBalance = Number(account.balance || 0);
+      const newBalance = currentBalance + amountInInteger;
+      
+      console.log('Balance calculation:', {
+        currentBalance,
+        amountToAdd: amountInInteger,
+        newBalance,
+        currentBalanceType: typeof currentBalance,
+        newBalanceType: typeof newBalance
+      });
+      
       await db.update(phantomAccounts)
-        .set({ balance: (account.balance || 0) + amountInInteger })
+        .set({ balance: newBalance })
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
       // Create transaction record
       const transactionId = this.generateId('tx');
+      console.log('Creating transaction with amount:', {
+        amount: amountInInteger,
+        type: typeof amountInInteger
+      });
+      
+      // Create the values object with strict typing
+      const transactionValues = {
+        transactionId,
+        destinationAccountId: account.id,
+        amount: amountInInteger,
+        currencyCode: data.currencyCode,
+        type: 'DEPOSIT' as const,
+        note: data.description || 'Deposit',
+        status: 'COMPLETED' as const
+      };
+      
       await db.insert(phantomTransactions)
-        .values({
-          transactionId,
-          destinationAccountId: account.id,
-          amount: amountInInteger,
-          currencyCode: data.currencyCode,
-          type: 'DEPOSIT',
-          note: data.description || 'Deposit',
-          status: 'COMPLETED'
-        })
+        .values(transactionValues)
         .execute();
       
       return {

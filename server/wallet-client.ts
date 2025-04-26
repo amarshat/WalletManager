@@ -41,7 +41,15 @@ export class WalletClient {
     
     if (isPhantom) {
       console.log('[WalletClient] Using PhantomPay for wallet creation');
-      return phantomPayClient.createWallet(data);
+      // Add the userId to the customer object 
+      const phantomData = {
+        ...data,
+        customer: {
+          ...data.customer,
+          id: userId.toString() // Add the userId as a string to ensure it's passed to PhantomPay
+        }
+      };
+      return phantomPayClient.createWallet(phantomData);
     } else {
       console.log('[WalletClient] Using Paysafe API for wallet creation');
       return paysafeClient.createWallet(data);

@@ -32,16 +32,31 @@ export class PhantomPayClient {
   /**
    * Create a new PhantomPay wallet for a user
    */
-  async createWallet(data: { customer: { firstName: string, lastName: string, email: string, dateOfBirth?: string, nationalId?: string, id?: string } }): Promise<any> {
+  async createWallet(data: { customer: { firstName: string, lastName: string, email?: string, dateOfBirth?: string, nationalId?: string, id?: string } }): Promise<any> {
     try {
       // We would normally validate the customer data here
 
       // Generate a wallet ID
       const walletId = this.generateId('wallet');
       
-      // Find the user from the email if provided
+      // We need a userId for the wallet creation
+      // In the wallet-client.ts, we're passing an explicit userId from routes.ts
+      // which we'll extract from the customer.id field
       let userId: number;
-      if (data.customer.email) {
+      if (data.customer.id) {
+        // If an ID is provided (from wallet-client.ts), use it
+        userId = parseInt(data.customer.id);
+        
+        // Update the user to mark as phantom user
+        await db.update(users)
+          .set({ 
+            isPhantomUser: true,
+            phantomUserId: walletId
+          })
+          .where(eq(users.id, userId))
+          .execute();
+      } else if (data.customer.email) {
+        // Legacy path - find by email if provided
         const user = await db.query.users.findFirst({
           where: eq(users.email, data.customer.email)
         });
@@ -59,7 +74,7 @@ export class PhantomPayClient {
           .where(eq(users.id, userId))
           .execute();
       } else {
-        throw new Error('Email is required for wallet creation');
+        throw new Error('Either user ID or email is required for wallet creation');
       }
       
       // Create the phantom wallet

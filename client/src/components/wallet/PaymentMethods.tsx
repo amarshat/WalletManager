@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getQueryFn } from '@/lib/queryClient';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { getQueryFn, apiRequest, queryClient } from '@/lib/queryClient';
 import { Card } from '@shared/schema';
 import { Button } from '@/components/ui/button';
 import { Card as CardUI, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Plus, CreditCard } from 'lucide-react';
+import { Loader2, Plus, CreditCard, Trash } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import AddCardModal from './AddCardModal';
 
 function getCardLogoSvg(cardType: string) {
@@ -61,6 +62,7 @@ function getCardLogoSvg(cardType: string) {
 
 export default function PaymentMethods() {
   const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
+  const { toast } = useToast();
   
   const { data: cards, isLoading } = useQuery<Card[]>({
     queryKey: ['/api/cards'],

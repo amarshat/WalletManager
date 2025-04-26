@@ -131,7 +131,7 @@ export class PhantomPayClient {
         accounts: accounts.map(account => ({
           id: account.accountId,
           currencyCode: account.currencyCode,
-          balance: account.balance / 100, // Convert from cents to dollars
+          balance: (account.balance || 0) / 100, // Convert from cents to dollars
           status: 'ACTIVE'
         }))
       };

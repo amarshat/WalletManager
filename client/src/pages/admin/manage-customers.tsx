@@ -8,18 +8,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { User, insertUserSchema, supportedCurrencies } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { UserPlus, Trash2, Edit, Search } from "lucide-react";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 // Create new customer schema
 const createUserSchema = insertUserSchema.extend({
-  confirmPassword: z.string().min(1, "Please confirm password")
+  confirmPassword: z.string().min(1, "Please confirm password"),
+  usePhantomPay: z.boolean().default(false) // Add PhantomPay toggle option
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
@@ -105,6 +107,7 @@ export default function ManageCustomers() {
       email: "",
       country: "",
       defaultCurrency: "USD",
+      usePhantomPay: false,
     }
   });
   
@@ -375,6 +378,27 @@ export default function ManageCustomers() {
                       <Input type="password" placeholder="Confirm password" {...field} />
                     </FormControl>
                     <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="usePhantomPay"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Use PhantomPay</FormLabel>
+                      <FormDescription>
+                        Create customer with PhantomPay mock system instead of real Paysafe API
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
                   </FormItem>
                 )}
               />

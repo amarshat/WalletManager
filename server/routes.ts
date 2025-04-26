@@ -89,7 +89,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", ensureAdmin, async (req, res) => {
     try {
       // Create user
-      let userData = {
+      let userData: {
+        username: string;
+        password: string;
+        fullName: string;
+        email?: string;
+        country?: string;
+        defaultCurrency: string;
+        isAdmin: boolean;
+        isPhantomUser?: boolean;
+      } = {
         username: req.body.username,
         password: req.body.password, // Will be hashed in auth.ts createUser
         fullName: req.body.fullName,

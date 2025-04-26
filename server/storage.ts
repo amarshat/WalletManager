@@ -37,6 +37,7 @@ export interface IStorage {
   // Card operations
   getCardsByUserId(userId: number): Promise<Card[]>;
   addCard(card: InsertCard): Promise<Card>;
+  updateCard(id: number, data: Partial<InsertCard>): Promise<Card | undefined>;
   deleteCard(id: number): Promise<boolean>;
   
   // Logs operations
@@ -174,6 +175,15 @@ export class DatabaseStorage implements IStorage {
       .values(card)
       .returning();
     return created;
+  }
+  
+  async updateCard(id: number, data: Partial<InsertCard>): Promise<Card | undefined> {
+    const [updated] = await db
+      .update(cards)
+      .set(data)
+      .where(eq(cards.id, id))
+      .returning();
+    return updated;
   }
   
   async deleteCard(id: number): Promise<boolean> {

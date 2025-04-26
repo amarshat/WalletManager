@@ -413,6 +413,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: req.user!.id
       });
       
+      // If this is the default card, unset other default cards
+      if (cardData.isDefault) {
+        const userCards = await storage.getCardsByUserId(req.user!.id);
+        for (const card of userCards) {
+          if (card.isDefault) {
+            await storage.updateCard(card.id, { isDefault: false });
+          }
+        }
+      }
+      
       const card = await storage.addCard(cardData);
       
       await logApiCall(req, "Add card", 201, card);

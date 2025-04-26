@@ -64,7 +64,7 @@ export default function PaymentMethods() {
   
   const { data: cards, isLoading } = useQuery<Card[]>({
     queryKey: ['/api/cards'],
-    queryFn: getQueryFn(),
+    queryFn: getQueryFn({ on401: 'returnNull' }),
   });
 
   const handleAddCard = () => {

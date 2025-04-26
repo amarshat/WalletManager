@@ -154,7 +154,7 @@ export default function TroubleshootingWizard() {
                     variant="default"
                     onClick={() => {
                       if (window.confirm('Navigate to contact admin page?')) {
-                        setLocation('/admin/contact');
+                        setLocation('/admin');
                       }
                     }}
                   >

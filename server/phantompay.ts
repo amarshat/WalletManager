@@ -177,7 +177,7 @@ export class PhantomPayClient {
       
       // Update account balance
       await db.update(phantomAccounts)
-        .set({ balance: account.balance + amountInCents })
+        .set({ balance: (account.balance || 0) + amountInCents })
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
@@ -273,19 +273,19 @@ export class PhantomPayClient {
       const amountInCents = Math.round(data.amount * 100);
       
       // Check if source has enough balance
-      if (sourceAccount.balance < amountInCents) {
+      if ((sourceAccount.balance || 0) < amountInCents) {
         throw new Error('Insufficient funds for transfer');
       }
       
       // Update source account balance
       await db.update(phantomAccounts)
-        .set({ balance: sourceAccount.balance - amountInCents })
+        .set({ balance: (sourceAccount.balance || 0) - amountInCents })
         .where(eq(phantomAccounts.id, sourceAccount.id))
         .execute();
       
       // Update destination account balance
       await db.update(phantomAccounts)
-        .set({ balance: destAccount.balance + amountInCents })
+        .set({ balance: (destAccount.balance || 0) + amountInCents })
         .where(eq(phantomAccounts.id, destAccount.id))
         .execute();
       
@@ -362,13 +362,13 @@ export class PhantomPayClient {
       const amountInCents = Math.round(data.amount * 100);
       
       // Check if account has enough balance
-      if (account.balance < amountInCents) {
+      if ((account.balance || 0) < amountInCents) {
         throw new Error('Insufficient funds for withdrawal');
       }
       
       // Update account balance
       await db.update(phantomAccounts)
-        .set({ balance: account.balance - amountInCents })
+        .set({ balance: (account.balance || 0) - amountInCents })
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       

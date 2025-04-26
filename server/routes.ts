@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import { insertBrandSettingsSchema, insertCardSchema } from "@shared/schema";
-import { PaysafeClient } from "./paysafe";
+import { walletClient } from "./wallet-client";
 
 // Middleware to ensure user is authenticated
 const ensureAuth = (req: Request, res: Response, next: any) => {
@@ -50,9 +50,6 @@ import {
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
-  
-  // Paysafe client
-  const paysafeClient = new PaysafeClient();
 
   // Brand Settings Routes
   app.get("/api/brand", async (req, res) => {
@@ -92,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/users", ensureAdmin, async (req, res) => {
     try {
       // Create user
-      const userData = {
+      let userData = {
         username: req.body.username,
         password: req.body.password, // Will be hashed in auth.ts createUser
         fullName: req.body.fullName,
@@ -108,8 +105,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Username already exists" });
       }
       
-      // Create wallet in Paysafe
-      const walletResponse = await paysafeClient.createWallet({
+      // Check if phantom pay is requested
+      const isPhantom = !!req.body.usePhantomPay;
+      
+      // Update user data with phantom flag if needed
+      if (isPhantom) {
+        userData = {
+          ...userData,
+          isPhantomUser: true
+        };
+      }
+      
+      // Create user in our system
+      const user = await storage.createUser(userData);
+      
+      // Now create wallet
+      const walletResponse = await walletClient.createWallet(user.id, {
         accounts: [{
           currencyCode: userData.defaultCurrency,
           externalId: userData.username
@@ -128,9 +139,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!walletResponse || !walletResponse.accounts?.[0]?.customerId) {
         return res.status(500).json({ error: "Failed to create wallet" });
       }
-      
-      // Create user in our system
-      const user = await storage.createUser(userData);
       
       // Create wallet record
       const wallet = await storage.createWallet({
@@ -203,8 +211,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Get wallet accounts
       const accounts = await storage.getWalletAccounts(wallet.id);
       
-      // Get balances from Paysafe
-      const balances = await paysafeClient.getBalances(wallet.customerId);
+      // Get balances using wallet client
+      const balances = await walletClient.getBalances(wallet.customerId);
       
       await logApiCall(req, "Get wallet balances", 200, balances);
       res.json({ wallet, accounts, balances });
@@ -229,7 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Wallet not found" });
       }
       
-      const depositResponse = await paysafeClient.depositMoney({
+      const depositResponse = await walletClient.depositMoney({
         amount,
         currencyCode,
         customerId: wallet.customerId,
@@ -273,7 +281,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Recipient wallet not found" });
       }
       
-      const transferResponse = await paysafeClient.transferMoney({
+      const transferResponse = await walletClient.transferMoney({
         amount,
         currencyCode,
         sourceCustomerId: senderWallet.customerId,
@@ -303,7 +311,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Wallet not found" });
       }
       
-      const withdrawResponse = await paysafeClient.withdrawMoney({
+      const withdrawResponse = await walletClient.withdrawMoney({
         amount,
         currencyCode,
         customerId: wallet.customerId,
@@ -326,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Wallet not found" });
       }
       
-      const transactions = await paysafeClient.getTransactions(wallet.customerId);
+      const transactions = await walletClient.getTransactions(wallet.customerId);
       
       await logApiCall(req, "Get transactions", 200, transactions);
       res.json(transactions);
@@ -439,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          const transferResponse = await paysafeClient.transferMoney({
+          const transferResponse = await walletClient.transferMoney({
             amount,
             currencyCode,
             sourceCustomerId: wallet.customerId,

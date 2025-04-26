@@ -1,8 +1,11 @@
-import { paysafeClient } from './paysafe';
+import { PaysafeClient } from './paysafe';
 import { phantomPayClient } from './phantompay';
 import { db } from './db';
 import { users } from '@shared/schema';
 import { eq } from 'drizzle-orm';
+
+// Create a singleton instance of the Paysafe client
+const paysafeClient = new PaysafeClient();
 
 /**
  * WalletClient - A unified client that works with both Paysafe and PhantomPay

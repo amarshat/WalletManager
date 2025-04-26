@@ -7,6 +7,7 @@ import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
 import { z } from "zod";
+import { walletClient } from "./wallet-client";
 
 declare global {
   namespace Express {
@@ -106,6 +107,47 @@ export function setupAuth(app: Express) {
         ...validatedData,
         password: await hashPassword(validatedData.password),
       });
+
+      // Create wallet for the new user
+      try {
+        const walletResponse = await walletClient.createWallet(user.id, {
+          customer: {
+            firstName: user.fullName.split(' ')[0],
+            lastName: user.fullName.split(' ').slice(1).join(' ') || user.fullName.split(' ')[0],
+            email: user.email || `${user.username}@example.com`,
+            id: user.id.toString()
+          }
+        });
+        
+        // Create a local wallet record
+        if (walletResponse.id) {
+          await storage.createWallet({
+            userId: user.id,
+            customerId: walletResponse.id,
+            externalReference: walletResponse.externalReference || null,
+            status: walletResponse.status || 'ACTIVE'
+          });
+          
+          // Create accounts for the wallet if needed
+          if (walletResponse.accounts && Array.isArray(walletResponse.accounts)) {
+            const wallet = await storage.getWalletByUserId(user.id);
+            if (wallet) {
+              for (const account of walletResponse.accounts) {
+                await storage.addWalletAccount({
+                  walletId: wallet.id,
+                  accountId: account.id,
+                  currencyCode: account.currencyCode,
+                  externalId: account.externalId || null,
+                  hasVirtualInstrument: account.hasVirtualInstrument || false
+                });
+              }
+            }
+          }
+        }
+      } catch (walletError) {
+        console.error("Error creating wallet for user:", walletError);
+        // Continue with login even if wallet creation fails
+      }
 
       req.login(user, (err) => {
         if (err) return next(err);

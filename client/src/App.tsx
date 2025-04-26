@@ -1,5 +1,6 @@
 import { AuthProvider } from "./hooks/use-auth";
 import { BrandProvider } from "./hooks/use-brand";
+import { BudgetProvider } from "./hooks/use-budget";
 import { Route, Switch } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -26,6 +27,7 @@ import Transactions from "@/pages/customer/transactions";
 import Cards from "@/pages/customer/cards";
 import Profile from "@/pages/customer/profile";
 import PaymentMethodsPage from "@/pages/customer/payment-methods-page";
+import BudgetPage from "@/pages/customer/budget";
 
 import SplashScreen from "@/components/ui/splash-screen";
 import { useState, useEffect } from "react";
@@ -117,6 +119,11 @@ function Router() {
         component={PaymentMethodsPage} 
         redirectTo="/auth" 
       />
+      <ProtectedRoute 
+        path="/budget" 
+        component={BudgetPage} 
+        redirectTo="/auth" 
+      />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
@@ -142,8 +149,10 @@ function App() {
         <TooltipProvider>
           <AuthProvider>
             <BrandProvider>
-              <Toaster />
-              {loading ? <SplashScreen /> : <Router />}
+              <BudgetProvider>
+                <Toaster />
+                {loading ? <SplashScreen /> : <Router />}
+              </BudgetProvider>
             </BrandProvider>
           </AuthProvider>
         </TooltipProvider>

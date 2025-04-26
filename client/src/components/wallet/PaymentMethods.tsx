@@ -71,6 +71,33 @@ export default function PaymentMethods() {
     setIsAddCardModalOpen(true);
   };
 
+  const deleteCardMutation = useMutation({
+    mutationFn: async (cardId: number) => {
+      const res = await apiRequest('DELETE', `/api/cards/${cardId}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Card Removed",
+        description: "Your payment method has been removed successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/cards'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to remove card",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteCard = (cardId: number) => {
+    if (confirm("Are you sure you want to delete this payment method?")) {
+      deleteCardMutation.mutate(cardId);
+    }
+  };
+
   const renderCardItem = (card: Card) => {
     return (
       <CardUI key={card.id} className="overflow-hidden">
@@ -88,11 +115,26 @@ export default function PaymentMethods() {
                 <p className="text-sm text-gray-500">{card.cardholderName}</p>
               </div>
             </div>
-            {card.isDefault && (
-              <div className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                Default
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              {card.isDefault && (
+                <div className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                  Default
+                </div>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => handleDeleteCard(card.id)}
+                disabled={deleteCardMutation.isPending}
+                className="text-gray-500 hover:text-red-500"
+              >
+                {deleteCardMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </CardUI>

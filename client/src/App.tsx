@@ -24,6 +24,7 @@ import CustomerDashboard from "@/pages/customer/dashboard";
 import Transactions from "@/pages/customer/transactions";
 import Cards from "@/pages/customer/cards";
 import Profile from "@/pages/customer/profile";
+import PaymentMethodsPage from "@/pages/customer/payment-methods-page";
 
 import SplashScreen from "@/components/ui/splash-screen";
 import { useState, useEffect } from "react";
@@ -102,6 +103,11 @@ function Router() {
       <ProtectedRoute 
         path="/profile" 
         component={Profile} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
+        path="/payment-methods" 
+        component={PaymentMethodsPage} 
         redirectTo="/auth" 
       />
       

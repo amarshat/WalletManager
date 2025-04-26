@@ -37,7 +37,7 @@ export default function AddMoneyModal({
       queryClient.invalidateQueries({ queryKey: ["/api/transactions"] });
       toast({
         title: "Deposit successful",
-        description: `Added ${currencyCode} ${parseInt(amount) / 100} to your wallet`,
+        description: `Added ${currencyCode} ${parseFloat(amount).toFixed(2)} to your wallet`,
       });
       handleClose();
     },

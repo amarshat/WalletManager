@@ -120,6 +120,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Update specific brand settings fields (patch)
+  app.patch("/api/brand", ensureAdmin, async (req, res) => {
+    try {
+      // Get current settings
+      const currentSettings = await storage.getBrandSettings();
+      if (!currentSettings) {
+        return res.status(404).json({ error: "Brand settings not found" });
+      }
+      
+      // Validate wallet config if provided
+      if (req.body.walletConfig) {
+        // Merge with existing wallet config if it exists
+        const updatedSettings = {
+          ...currentSettings,
+          walletConfig: {
+            ...(currentSettings.walletConfig || {}),
+            ...req.body.walletConfig
+          }
+        };
+        
+        const updated = await storage.updateBrandSettings(updatedSettings);
+        await logApiCall(req, "Update wallet configuration", 200, updated);
+        return res.json(updated);
+      }
+      
+      // Handle other partial updates
+      const partialUpdate = {
+        ...currentSettings,
+        ...req.body
+      };
+      
+      const updated = await storage.updateBrandSettings(partialUpdate);
+      await logApiCall(req, "Partial update brand settings", 200, updated);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating brand settings:", error);
+      res.status(400).json({ error: "Invalid brand settings data" });
+    }
+  });
+  
   // User Management Routes (Admin only)
   app.get("/api/users", ensureAdmin, async (req, res) => {
     try {

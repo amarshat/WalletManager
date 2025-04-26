@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,11 +67,11 @@ export default function WalletConfigPage() {
   });
   
   // Update form values when brand data loads
-  useState(() => {
+  useEffect(() => {
     if (brand?.walletConfig) {
       form.reset(brand.walletConfig);
     }
-  }, [brand]);
+  }, [brand, form]);
   
   // Update wallet configuration
   const updateConfigMutation = useMutation({

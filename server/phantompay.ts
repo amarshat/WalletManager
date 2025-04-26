@@ -13,7 +13,8 @@ import {
   eq, 
   desc, 
   or, 
-  sql 
+  sql,
+  inArray
 } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 
@@ -443,12 +444,19 @@ export class PhantomPayClient {
       // Get account IDs
       const accountIds = accounts.map(account => account.id);
       
+      // Use individual OR conditions for each account ID
+      let whereCondition = undefined;
+      for (const accountId of accountIds) {
+        const condition = or(
+          eq(phantomTransactions.sourceAccountId, accountId),
+          eq(phantomTransactions.destinationAccountId, accountId)
+        );
+        whereCondition = whereCondition ? or(whereCondition, condition) : condition;
+      }
+      
       // Find all transactions that involve any of these accounts
       const transactions = await db.query.phantomTransactions.findMany({
-        where: or(
-          sql`${phantomTransactions.sourceAccountId} IN (${accountIds.join(',')})`,
-          sql`${phantomTransactions.destinationAccountId} IN (${accountIds.join(',')})`
-        ),
+        where: whereCondition,
         orderBy: [desc(phantomTransactions.createdAt)],
         limit
       });

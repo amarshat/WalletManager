@@ -34,15 +34,22 @@ export function useConfigImport() {
   
   // Check for configuration parameter on initial load
   useEffect(() => {
-    if (hasChecked) return;
+    // Only run once on mount
+    const initialUrl = window.location.href;
+    const isFirstRender = !hasChecked;
     
     const importConfig = async () => {
+      if (!isFirstRender) return;  // Skip if not first render
+      
       try {
         // Parse the URL to get the config parameter
-        const url = new URL(window.location.href);
+        const url = new URL(initialUrl);
         const configParam = url.searchParams.get('config');
         
-        if (!configParam) return;
+        if (!configParam) {
+          setHasChecked(true);
+          return;
+        }
         
         // Decode the base64 config
         const decodedConfig = atob(configParam);
@@ -64,7 +71,7 @@ export function useConfigImport() {
         
         // Remove the configuration parameter from the URL to prevent reloading
         // Navigate to the same page without the parameter
-        const cleanUrl = location.split('?')[0];
+        const cleanUrl = window.location.pathname;
         setLocation(cleanUrl, { replace: true });
       } catch (error) {
         console.error('Error importing configuration:', error);
@@ -73,12 +80,15 @@ export function useConfigImport() {
           description: error instanceof Error ? error.message : 'Failed to import configuration',
           variant: 'destructive',
         });
+      } finally {
+        setHasChecked(true);
       }
     };
     
     importConfig();
-    setHasChecked(true);
-  }, [location, updateBrand, toast, setLocation, hasChecked]);
+    // Empty dependency array with eslint disable ensures this only runs once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   /**
    * Generate a shareable configuration URL from the current settings

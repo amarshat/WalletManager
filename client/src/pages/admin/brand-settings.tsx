@@ -33,6 +33,20 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Define WalletConfig type to match the schema
+type WalletConfig = {
+  transactionDisplayCount?: number;
+  allowedCurrencies?: string[];
+  maxNegativeBalance?: number;
+  enableAnalytics?: boolean;
+  enableBulkTransfers?: boolean;
+  enableTestCards?: boolean;
+  maxTestCards?: number;
+  maxTransferAmount?: number;
+  defaultCommissionRate?: number;
+  retentionPeriodDays?: number;
+};
+
 // Brand settings form schema
 const formSchema = insertBrandSettingsSchema.extend({
   logoFile: z.any().optional(),
@@ -765,12 +779,21 @@ function ShareConfigSection({ brand }: ShareConfigSectionProps) {
       setExporting(true);
       
       // Create a configuration object with all brand settings
-      const config = {
+      const config: WalletConfig = {
         name: brand.name,
         tagline: brand.tagline,
         iconUrl: brand.iconUrl,
         logo: brand.logo,
-        walletConfig: brand.walletConfig
+        transactionDisplayCount: brand.walletConfig?.transactionDisplayCount,
+        allowedCurrencies: brand.walletConfig?.allowedCurrencies,
+        maxNegativeBalance: brand.walletConfig?.maxNegativeBalance,
+        enableAnalytics: brand.walletConfig?.enableAnalytics,
+        enableBulkTransfers: brand.walletConfig?.enableBulkTransfers,
+        enableTestCards: brand.walletConfig?.enableTestCards,
+        maxTestCards: brand.walletConfig?.maxTestCards,
+        maxTransferAmount: brand.walletConfig?.maxTransferAmount,
+        defaultCommissionRate: brand.walletConfig?.defaultCommissionRate,
+        retentionPeriodDays: brand.walletConfig?.retentionPeriodDays
       };
       
       // Generate the URL with the configuration

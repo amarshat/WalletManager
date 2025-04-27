@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { useBrand } from "@/hooks/use-brand";
@@ -496,9 +497,32 @@ export default function WalletConfigPage() {
                 
                 <div>
                   <h4 className="text-sm font-semibold">URL Format</h4>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    The configuration URL format is: <code className="bg-primary-foreground px-1 rounded">https://your-domain.com/?config=base64encoded</code> where 
-                    the <code className="bg-primary-foreground px-1 rounded">config</code> parameter contains all brand settings and wallet configuration.
+                  <p className="text-sm text-muted-foreground mt-1 mb-2">
+                    The configuration URL format is:
+                  </p>
+                  
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="bg-slate-50 p-3 rounded-md border text-sm font-mono overflow-x-auto whitespace-nowrap cursor-help">
+                          https://your-domain.com/?config=<span className="text-blue-500">base64encodedConfiguration</span>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-md p-4">
+                        <h4 className="font-medium mb-1">URL Parameter Tutorial</h4>
+                        <p className="text-sm mb-2">The configuration is automatically imported when a user visits a URL with the config parameter.</p>
+                        <ol className="text-xs space-y-1 list-decimal pl-4">
+                          <li>Go to Brand Settings page</li>
+                          <li>Click "Generate Shareable URL"</li>
+                          <li>Copy and share the generated URL</li>
+                          <li>When users visit the URL, all settings will be automatically imported</li>
+                        </ol>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  
+                  <p className="text-sm text-muted-foreground mt-2">
+                    The <code className="bg-primary-foreground px-1 rounded">config</code> parameter contains all brand settings and wallet configuration in base64 encoded format.
                   </p>
                 </div>
               </div>

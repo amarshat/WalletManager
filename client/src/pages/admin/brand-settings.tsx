@@ -616,7 +616,7 @@ export default function BrandSettingsPage() {
             
             <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-4">
               <Button variant="outline" disabled className="flex items-center">
-                <MagicWand className="mr-2 h-4 w-4" />
+                <Wand2 className="mr-2 h-4 w-4" />
                 Generate Theme
               </Button>
               <TooltipProvider>

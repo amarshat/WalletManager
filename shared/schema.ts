@@ -201,7 +201,7 @@ export type BudgetAllocation = typeof budgetAllocations.$inferSelect;
 export type InsertBudgetTransaction = z.infer<typeof insertBudgetTransactionSchema>;
 export type BudgetTransaction = typeof budgetTransactions.$inferSelect;
 
-// PhantomPay Mock System Tables
+// PhantomPay-Sandbox System Tables
 
 // PhantomPay Wallets Table
 export const phantomWallets = pgTable("phantom_wallets", {

@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useBrand } from "@/hooks/use-brand";
 import { useToast } from "@/hooks/use-toast";
-import { ImageIcon, UploadCloud, AlertCircle, Save, Share2, Copy, Download } from "lucide-react";
+import { ImageIcon, UploadCloud, AlertCircle, Save, Share2, Copy, Download, Palette, CheckCircle, Wand2 } from "lucide-react";
 import { insertBrandSettingsSchema, BrandSettings } from "@shared/schema";
 import imageCompression from "browser-image-compression";
 import BrandLogo from "@/components/ui/brand-logo";
@@ -26,6 +26,12 @@ import {
   DialogFooter,
   DialogClose 
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Brand settings form schema
 const formSchema = insertBrandSettingsSchema.extend({
@@ -517,7 +523,7 @@ export default function BrandSettingsPage() {
       
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Brand Preview</CardTitle>
+          <CardTitle>Branding Preview Sandbox</CardTitle>
           <CardDescription>
             Preview how your brand will appear across the platform
           </CardDescription>
@@ -541,6 +547,93 @@ export default function BrandSettingsPage() {
               <div className="flex items-center justify-center bg-slate-50 rounded-lg p-4 h-20">
                 <span className="text-xl font-semibold">{brand?.name || "PaySage Wallet"}</span>
               </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Palette className="mr-2 h-5 w-5" />
+            Personalized Wallet Theme Generator
+          </CardTitle>
+          <CardDescription>
+            Generate a custom theme for your wallet based on your branding
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="rounded-md bg-muted p-4">
+              <h3 className="text-sm font-medium mb-3">Theme Generation Features</h3>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start">
+                  <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500" />
+                  <span>Automatic color palette generation based on your logo</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500" />
+                  <span>Custom card backgrounds and UI elements</span>
+                </li>
+                <li className="flex items-start">
+                  <CheckCircle className="h-4 w-4 mr-2 mt-0.5 text-green-500" />
+                  <span>Multiple theme options (light/dark/custom)</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-24 flex items-center justify-center">
+                  <BrandLogo className="h-12 text-white" />
+                </div>
+                <div className="p-4">
+                  <h4 className="font-medium mb-1">Modern Gradient</h4>
+                  <p className="text-sm text-muted-foreground">Vibrant color gradients with smooth transitions</p>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-slate-800 h-24 flex items-center justify-center">
+                  <BrandLogo className="h-12 text-amber-400" />
+                </div>
+                <div className="p-4">
+                  <h4 className="font-medium mb-1">Dark Professional</h4>
+                  <p className="text-sm text-muted-foreground">High-contrast dark theme for clarity</p>
+                </div>
+              </div>
+              
+              <div className="border rounded-lg overflow-hidden">
+                <div className="bg-green-50 h-24 flex items-center justify-center">
+                  <BrandLogo className="h-12 text-emerald-600" />
+                </div>
+                <div className="p-4">
+                  <h4 className="font-medium mb-1">Eco Finance</h4>
+                  <p className="text-sm text-muted-foreground">Light, sustainable-looking theme</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row sm:justify-end gap-3 mt-4">
+              <Button variant="outline" disabled className="flex items-center">
+                <MagicWand className="mr-2 h-4 w-4" />
+                Generate Theme
+              </Button>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex">
+                      <Button variant="secondary" disabled className="w-full sm:w-auto">
+                        <Save className="mr-2 h-4 w-4" />
+                        Apply Theme
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Coming in a future update</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         </CardContent>

@@ -8,18 +8,16 @@ type WalletConfig = {
   tagline?: string | null;  // Allow null to match the database type
   iconUrl?: string | null;  // Allow null to match the database type
   logo?: string | null;     // Allow null to match the database type
-  walletConfig?: {
-    transactionDisplayCount?: number;
-    allowedCurrencies?: string[];
-    maxNegativeBalance?: number;
-    enableAnalytics?: boolean;
-    enableBulkTransfers?: boolean;
-    enableTestCards?: boolean;
-    maxTestCards?: number;
-    maxTransferAmount?: number;
-    defaultCommissionRate?: number;
-    retentionPeriodDays?: number;
-  }
+  transactionDisplayCount?: number;
+  allowedCurrencies?: string[];
+  maxNegativeBalance?: number;
+  enableAnalytics?: boolean;
+  enableBulkTransfers?: boolean;
+  enableTestCards?: boolean;
+  maxTestCards?: number;
+  maxTransferAmount?: number;
+  defaultCommissionRate?: number;
+  retentionPeriodDays?: number;
 };
 
 /**

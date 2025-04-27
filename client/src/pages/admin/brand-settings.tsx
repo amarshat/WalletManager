@@ -35,6 +35,10 @@ import {
 
 // Define WalletConfig type to match the schema
 type WalletConfig = {
+  name?: string;
+  tagline?: string | null;
+  iconUrl?: string | null;
+  logo?: string | null;
   transactionDisplayCount?: number;
   allowedCurrencies?: string[];
   maxNegativeBalance?: number;
@@ -783,18 +787,38 @@ function ShareConfigSection({ brand }: ShareConfigSectionProps) {
         name: brand.name,
         tagline: brand.tagline,
         iconUrl: brand.iconUrl,
-        logo: brand.logo,
-        transactionDisplayCount: brand.walletConfig?.transactionDisplayCount,
-        allowedCurrencies: brand.walletConfig?.allowedCurrencies,
-        maxNegativeBalance: brand.walletConfig?.maxNegativeBalance,
-        enableAnalytics: brand.walletConfig?.enableAnalytics,
-        enableBulkTransfers: brand.walletConfig?.enableBulkTransfers,
-        enableTestCards: brand.walletConfig?.enableTestCards,
-        maxTestCards: brand.walletConfig?.maxTestCards,
-        maxTransferAmount: brand.walletConfig?.maxTransferAmount,
-        defaultCommissionRate: brand.walletConfig?.defaultCommissionRate,
-        retentionPeriodDays: brand.walletConfig?.retentionPeriodDays
+        logo: brand.logo
       };
+      
+      // Add wallet configuration properties if they exist
+      if (brand.walletConfig) {
+        // Parse the JSON if it's a string
+        const walletConfig = typeof brand.walletConfig === 'string' 
+          ? JSON.parse(brand.walletConfig) 
+          : brand.walletConfig;
+          
+        // Add each property to the config object
+        if (walletConfig.transactionDisplayCount !== undefined) 
+          config.transactionDisplayCount = walletConfig.transactionDisplayCount;
+        if (walletConfig.allowedCurrencies !== undefined) 
+          config.allowedCurrencies = walletConfig.allowedCurrencies;
+        if (walletConfig.maxNegativeBalance !== undefined) 
+          config.maxNegativeBalance = walletConfig.maxNegativeBalance;
+        if (walletConfig.enableAnalytics !== undefined) 
+          config.enableAnalytics = walletConfig.enableAnalytics;
+        if (walletConfig.enableBulkTransfers !== undefined) 
+          config.enableBulkTransfers = walletConfig.enableBulkTransfers;
+        if (walletConfig.enableTestCards !== undefined) 
+          config.enableTestCards = walletConfig.enableTestCards;
+        if (walletConfig.maxTestCards !== undefined) 
+          config.maxTestCards = walletConfig.maxTestCards;
+        if (walletConfig.maxTransferAmount !== undefined) 
+          config.maxTransferAmount = walletConfig.maxTransferAmount;
+        if (walletConfig.defaultCommissionRate !== undefined) 
+          config.defaultCommissionRate = walletConfig.defaultCommissionRate;
+        if (walletConfig.retentionPeriodDays !== undefined) 
+          config.retentionPeriodDays = walletConfig.retentionPeriodDays;
+      }
       
       // Generate the URL with the configuration
       const url = generateConfigUrl(config);
@@ -841,13 +865,42 @@ function ShareConfigSection({ brand }: ShareConfigSectionProps) {
     
     try {
       // Create a complete configuration object including all settings
-      const config = {
+      const config: WalletConfig = {
         name: brand.name,
         tagline: brand.tagline,
         iconUrl: brand.iconUrl,
-        logo: brand.logo,
-        walletConfig: brand.walletConfig
+        logo: brand.logo
       };
+      
+      // Add wallet configuration properties if they exist
+      if (brand.walletConfig) {
+        // Parse the JSON if it's a string
+        const walletConfig = typeof brand.walletConfig === 'string' 
+          ? JSON.parse(brand.walletConfig) 
+          : brand.walletConfig;
+          
+        // Add each property to the config object
+        if (walletConfig.transactionDisplayCount !== undefined) 
+          config.transactionDisplayCount = walletConfig.transactionDisplayCount;
+        if (walletConfig.allowedCurrencies !== undefined) 
+          config.allowedCurrencies = walletConfig.allowedCurrencies;
+        if (walletConfig.maxNegativeBalance !== undefined) 
+          config.maxNegativeBalance = walletConfig.maxNegativeBalance;
+        if (walletConfig.enableAnalytics !== undefined) 
+          config.enableAnalytics = walletConfig.enableAnalytics;
+        if (walletConfig.enableBulkTransfers !== undefined) 
+          config.enableBulkTransfers = walletConfig.enableBulkTransfers;
+        if (walletConfig.enableTestCards !== undefined) 
+          config.enableTestCards = walletConfig.enableTestCards;
+        if (walletConfig.maxTestCards !== undefined) 
+          config.maxTestCards = walletConfig.maxTestCards;
+        if (walletConfig.maxTransferAmount !== undefined) 
+          config.maxTransferAmount = walletConfig.maxTransferAmount;
+        if (walletConfig.defaultCommissionRate !== undefined) 
+          config.defaultCommissionRate = walletConfig.defaultCommissionRate;
+        if (walletConfig.retentionPeriodDays !== undefined) 
+          config.retentionPeriodDays = walletConfig.retentionPeriodDays;
+      }
       
       // Convert to JSON
       const configJson = JSON.stringify(config, null, 2);

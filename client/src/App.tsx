@@ -36,9 +36,14 @@ import { useState, useEffect } from "react";
 // This component wraps the application to handle config import
 function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
   // Using the hook will automatically check for config parameters in URL
-  useConfigImport();
+  const { ConfigConfirmDialog } = useConfigImport();
   
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <ConfigConfirmDialog />
+    </>
+  );
 }
 
 function Router() {

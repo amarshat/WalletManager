@@ -81,6 +81,25 @@ export default function BrandSettingsPage() {
     }
   }, [brand, form]);
   
+  // Helper function to check if a string is a URL
+  const isValidUrl = (str: string): boolean => {
+    try {
+      // Check if it starts with http:// or https://
+      if (str.startsWith('http://') || str.startsWith('https://')) {
+        new URL(str);
+        return true;
+      }
+      return false;
+    } catch {
+      return false;
+    }
+  };
+
+  // Helper function to check if a string is a base64 image
+  const isBase64Image = (str: string): boolean => {
+    return str.startsWith('data:image/');
+  };
+
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>, setImageState: (url: string) => void, formField: "logoFile" | "iconUrlFile") => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -118,6 +137,11 @@ export default function BrandSettingsPage() {
           setImageState(event.target.result as string);
           form.setValue(formField, event.target.result);
           
+          // Update the corresponding URL field if this is an icon
+          if (formField === "iconUrlFile") {
+            form.setValue("iconUrl", event.target.result as string);
+          }
+          
           // Success toast
           toast({
             title: "Image ready",
@@ -134,6 +158,22 @@ export default function BrandSettingsPage() {
       });
       console.error("Error compressing image:", error);
     }
+  };
+  
+  // Validate and handle URL input changes
+  const validateImageUrl = (url: string): boolean => {
+    if (!url) return true;
+    
+    if (isValidUrl(url) || isBase64Image(url)) {
+      return true;
+    }
+    
+    toast({
+      title: "Invalid URL format",
+      description: "Please enter a valid URL starting with http:// or https://",
+      variant: "destructive",
+    });
+    return false;
   };
   
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,17 +193,44 @@ export default function BrandSettingsPage() {
         name: data.name,
         tagline: data.tagline,
         walletAuthKey: data.walletAuthKey,
-        iconUrl: data.iconUrl,
       };
       
-      // If a new logo was uploaded
+      // Handle logo - prioritize direct logoFile field input if present
       if (data.logoFile && typeof data.logoFile === 'string') {
-        updateData.logo = data.logoFile;
+        // Check if it's a valid image URL or base64
+        if (isValidUrl(data.logoFile) || isBase64Image(data.logoFile)) {
+          updateData.logo = data.logoFile;
+        } else {
+          toast({
+            title: "Invalid logo format",
+            description: "The logo URL or base64 data is invalid",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
       }
       
-      // If a new icon was uploaded 
-      if (data.iconUrlFile && typeof data.iconUrlFile === 'string') {
-        updateData.iconUrl = data.iconUrlFile;
+      // Handle icon - prioritize direct iconUrl field input
+      if (data.iconUrl && typeof data.iconUrl === 'string') {
+        // Check if it's a valid image URL or base64
+        if (isValidUrl(data.iconUrl) || isBase64Image(data.iconUrl)) {
+          updateData.iconUrl = data.iconUrl;
+        } else {
+          toast({
+            title: "Invalid icon format",
+            description: "The icon URL or base64 data is invalid",
+            variant: "destructive",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      // Fallback to iconUrlFile if iconUrl is not present but iconUrlFile is
+      else if (data.iconUrlFile && typeof data.iconUrlFile === 'string') {
+        if (isValidUrl(data.iconUrlFile) || isBase64Image(data.iconUrlFile)) {
+          updateData.iconUrl = data.iconUrlFile;
+        }
       }
       
       await updateBrand(updateData);
@@ -256,6 +323,36 @@ export default function BrandSettingsPage() {
                   
                   <FormField
                     control={form.control}
+                    name="logoFile"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Logo URL or Base64</FormLabel>
+                        <FormControl>
+                          <Input 
+                            placeholder="Enter logo URL or paste base64 data" 
+                            value={field.value || ''}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // If the input is a valid URL or base64, update the preview
+                              if (validateImageUrl(e.target.value)) {
+                                setLogo(e.target.value);
+                              }
+                            }}
+                            onBlur={field.onBlur}
+                            name={field.name}
+                            ref={field.ref}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          URL to a logo or base64 image data. You can also upload a logo below.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
                     name="walletAuthKey"
                     render={({ field }) => (
                       <FormItem>
@@ -284,19 +381,26 @@ export default function BrandSettingsPage() {
                     name="iconUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Icon URL</FormLabel>
+                        <FormLabel>Icon URL or Base64</FormLabel>
                         <FormControl>
                           <Input 
-                            placeholder="Enter icon URL" 
+                            placeholder="Enter icon URL or paste base64 data" 
                             value={field.value || ''}
-                            onChange={field.onChange}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              // If the input is a valid URL or base64, update the preview
+                              if (validateImageUrl(e.target.value)) {
+                                setIcon(e.target.value);
+                                form.setValue("iconUrlFile", e.target.value);
+                              }
+                            }}
                             onBlur={field.onBlur}
                             name={field.name}
                             ref={field.ref}
                           />
                         </FormControl>
                         <FormDescription>
-                          URL to an icon that will be used for the wallet. You can also upload an icon below.
+                          URL to an icon or base64 image data. You can also upload an icon below.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

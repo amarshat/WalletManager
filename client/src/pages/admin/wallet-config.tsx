@@ -20,7 +20,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { AlertTriangle, Lock, Save, Upload, Download, Check, Wallet } from "lucide-react";
+import { AlertTriangle, Lock, Save, Upload, Download, Check, Wallet, Share2 } from "lucide-react";
 import { supportedCurrencies } from "@shared/schema";
 
 // Define the wallet configuration schema
@@ -459,13 +459,82 @@ export default function WalletConfigPage() {
         </CardContent>
       </Card>
       
+      {/* Configuration Sharing Card */}
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center">
+            <Share2 className="mr-2 h-5 w-5" />
+            Configuration Sharing
+          </CardTitle>
+          <CardDescription>
+            Export and share your wallet configuration with others
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="rounded-md bg-muted p-4">
+              <h3 className="mb-2 text-sm font-medium">How to Share Your Configuration</h3>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-sm font-semibold">Option 1: URL Parameter (Recommended)</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Go to the Brand Settings page and use the 'Share Configuration' button to generate a shareable URL.
+                    This URL contains your complete configuration encoded in the <code className="bg-primary-foreground px-1 rounded">config</code> parameter.
+                  </p>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-semibold">Option 2: JSON Import</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Either:
+                  </p>
+                  <ul className="list-disc ml-5 mt-1 text-sm text-muted-foreground">
+                    <li>Use the 'Export Configuration' button below to get your JSON configuration</li>
+                    <li>Download the configuration from the Brand Settings page</li>
+                  </ul>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-semibold">URL Format</h4>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    The configuration URL format is: <code className="bg-primary-foreground px-1 rounded">https://your-domain.com/?config=base64encoded</code> where 
+                    the <code className="bg-primary-foreground px-1 rounded">config</code> parameter contains all brand settings and wallet configuration.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => {
+                  window.location.href = "/admin/brand-settings";
+                }}
+              >
+                Go to Brand Settings
+              </Button>
+              <Button 
+                variant="secondary" 
+                className="flex-1"
+                onClick={handleExportConfig}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                Export Configuration
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
       {/* JSON Configuration Dialog */}
       <Dialog open={configDialogOpen} onOpenChange={setConfigDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Wallet Configuration JSON</DialogTitle>
             <DialogDescription>
-              View, edit, or import wallet configuration in JSON format.
+              View, edit, or import wallet configuration in JSON format. This includes wallet settings only.
+              For a complete configuration including branding settings, use the Brand Settings page.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">

@@ -567,11 +567,12 @@ function ShareConfigSection({ brand }: ShareConfigSectionProps) {
     try {
       setExporting(true);
       
-      // Create a configuration object with only what we want to share
+      // Create a configuration object with all brand settings
       const config = {
         name: brand.name,
         tagline: brand.tagline,
         iconUrl: brand.iconUrl,
+        logo: brand.logo,
         walletConfig: brand.walletConfig
       };
       
@@ -619,7 +620,7 @@ function ShareConfigSection({ brand }: ShareConfigSectionProps) {
     if (!brand) return;
     
     try {
-      // Create a configuration object with only what we want to share
+      // Create a complete configuration object including all settings
       const config = {
         name: brand.name,
         tagline: brand.tagline,

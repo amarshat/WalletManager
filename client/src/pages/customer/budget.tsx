@@ -81,23 +81,37 @@ export default function BudgetPage() {
     },
   });
   
-  // Initialize default categories if none exist
+  // Initialize default categories if none exist - with initialization tracking to prevent infinite loop
+  const [categoriesInitialized, setCategoriesInitialized] = useState(false);
+  
   useEffect(() => {
     const initializeDefaultCategories = async () => {
-      if (categories.length === 0 && !isLoading.categories) {
+      // Only proceed if:
+      // 1. Categories are empty
+      // 2. Not currently loading
+      // 3. Not already initialized (this prevents infinite re-renders)
+      if (categories.length === 0 && !isLoading.categories && !categoriesInitialized) {
+        // Set flag to prevent further initialization attempts
+        setCategoriesInitialized(true);
+        
         // Create default categories
         for (const category of DEFAULT_BUDGET_CATEGORIES) {
-          await createCategory({
-            name: category.name,
-            color: category.color,
-            icon: category.icon
-          });
+          try {
+            await createCategory({
+              name: category.name,
+              color: category.color,
+              icon: category.icon
+            });
+          } catch (error) {
+            console.error(`Failed to create category ${category.name}:`, error);
+            // Continue with other categories even if one fails
+          }
         }
       }
     };
     
     initializeDefaultCategories();
-  }, [categories, isLoading.categories, createCategory]);
+  }, [categories, isLoading.categories, createCategory, categoriesInitialized]);
   
   const onSubmit = async (data: CreateBudgetFormValues) => {
     try {

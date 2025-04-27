@@ -37,40 +37,55 @@ export function BudgetSunburst({
 
   // Format data for the chart
   useEffect(() => {
-    if (allocations.length === 0 || categories.length === 0) return;
+    // Ensure allocations and categories are properly defined and not empty
+    if (!allocations || !categories || allocations.length === 0 || categories.length === 0) {
+      setData([]);
+      setTotalBudget(0);
+      setTotalSpent(0);
+      return;
+    }
 
-    let total = 0;
-    let spent = 0;
+    try {
+      let total = 0;
+      let spent = 0;
 
-    const chartData = allocations.map(allocation => {
-      const category = categories.find(cat => cat.id === allocation.categoryId);
-      const allocatedAmount = Number(allocation.allocatedAmount);
-      const spentAmount = Number(allocation.spentAmount);
-      
-      total += allocatedAmount;
-      spent += spentAmount;
-      
-      return {
-        name: category?.name || 'Uncategorized',
-        value: allocatedAmount,
-        color: category?.color || '#6366F1',
-        id: allocation.id,
-        spent: spentAmount,
-        allocated: allocatedAmount,
-        percent: 0, // Will be calculated after we know the total
-        categoryId: allocation.categoryId
-      };
-    });
+      const chartData = allocations.map(allocation => {
+        const category = categories.find(cat => cat.id === allocation.categoryId);
+        // Safely convert to numbers with fallbacks
+        const allocatedAmount = Number(allocation.allocatedAmount) || 0;
+        const spentAmount = Number(allocation.spentAmount) || 0;
+        
+        total += allocatedAmount;
+        spent += spentAmount;
+        
+        return {
+          name: category?.name || 'Uncategorized',
+          value: allocatedAmount,
+          color: category?.color || '#6366F1',
+          id: allocation.id,
+          spent: spentAmount,
+          allocated: allocatedAmount,
+          percent: 0, // Will be calculated after we know the total
+          categoryId: allocation.categoryId
+        };
+      });
 
-    // Calculate percentages
-    const dataWithPercent = chartData.map(item => ({
-      ...item,
-      percent: total > 0 ? (item.value / total) * 100 : 0
-    }));
+      // Calculate percentages
+      const dataWithPercent = chartData.map(item => ({
+        ...item,
+        percent: total > 0 ? (item.value / total) * 100 : 0
+      }));
 
-    setData(dataWithPercent);
-    setTotalBudget(total);
-    setTotalSpent(spent);
+      setData(dataWithPercent);
+      setTotalBudget(total);
+      setTotalSpent(spent);
+    } catch (error) {
+      console.error("Error processing budget data:", error);
+      // Set safe fallback values
+      setData([]);
+      setTotalBudget(0);
+      setTotalSpent(0);
+    }
   }, [allocations, categories]);
 
   const onPieEnter = useCallback(

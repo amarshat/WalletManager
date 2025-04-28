@@ -312,12 +312,15 @@ export default function CustomerDashboard() {
         </div>
       )}
       
-      {/* Carbon Impact Card */}
+      {/* Green Parking Impact Card */}
       {!isWalletMissing && (
         <Card className="bg-white rounded-lg shadow-md overflow-hidden mt-6">
           <div className="p-4 md:p-6 border-b border-neutral-200">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-gray-900">Carbon Impact</h2>
+              <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+                <Leaf className="h-5 w-5 mr-2 text-green-600" />
+                Green Parking Impact
+              </h2>
               <Button 
                 variant="link" 
                 className="text-primary hover:text-primary-dark text-sm font-medium"
@@ -327,49 +330,118 @@ export default function CustomerDashboard() {
               </Button>
             </div>
             <p className="text-sm text-muted-foreground">
-              Track the carbon footprint of your spending and offsetting activities
+              By sharing your parking spaces, you help reduce urban congestion and carbon emissions
             </p>
           </div>
           <div className="p-4 md:p-6">
             <CarbonImpactSummary />
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-green-50 p-3 rounded-lg">
+                  <div className="text-green-700 font-medium">Emissions Reduced</div>
+                  <div className="text-2xl font-bold text-green-800 mt-1">178 kg</div>
+                  <div className="text-xs text-green-600 mt-1">Carbon dioxide equivalent</div>
+                </div>
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  <div className="text-blue-700 font-medium">Parking Hours Shared</div>
+                  <div className="text-2xl font-bold text-blue-800 mt-1">124 hrs</div>
+                  <div className="text-xs text-blue-600 mt-1">Last 30 days</div>
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  <div className="text-purple-700 font-medium">Trees Equivalent</div>
+                  <div className="text-2xl font-bold text-purple-800 mt-1">8 trees</div>
+                  <div className="text-xs text-purple-600 mt-1">Carbon sequestration</div>
+                </div>
+              </div>
+            </div>
           </div>
         </Card>
       )}
       
-      {/* Recent Transactions Card */}
+      {/* Recent Earnings Card */}
       <Card className="bg-white rounded-lg shadow-md overflow-hidden mt-6">
         <div className="p-4 md:p-6 border-b border-neutral-200">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Transactions</h2>
-            <Button variant="link" className="text-primary hover:text-primary-dark text-sm font-medium">
-              View All
+            <h2 className="text-lg font-semibold text-gray-900 flex items-center">
+              <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+              Recent Parking Earnings
+            </h2>
+            <Button variant="link" className="text-primary hover:text-primary-dark text-sm font-medium" onClick={() => window.location.href = '/transactions'}>
+              View All Earnings
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground">
+            Revenue from your parking spaces and payouts to your bank account
+          </p>
         </div>
         
         {/* Transaction List */}
         <div className="divide-y divide-neutral-200">
           {isLoadingTransactions ? (
-            <div className="p-8 text-center">Loading transactions...</div>
+            <div className="p-8 text-center">Loading earnings data...</div>
           ) : filteredTransactions.length === 0 ? (
             <div className="p-8 text-center text-neutral-500">
-              No transactions found for {selectedCurrency}
+              No earnings found for {selectedCurrency}
             </div>
           ) : (
-            filteredTransactions.map((transaction) => (
-              <TransactionItem
-                key={transaction.id}
-                type={transaction.type}
-                amount={transaction.amount}
-                currencyCode={transaction.currencyCode}
-                timestamp={transaction.timestamp}
-                status={transaction.status}
-                counterparty={transaction.counterparty}
-                note={transaction.note}
-                destCurrencyCode={transaction.destinationCurrencyCode}
-                destAmount={transaction.destinationAmount}
-              />
-            ))
+            <div>
+              {filteredTransactions.map((transaction) => (
+                <div key={transaction.id} className="p-4 hover:bg-gray-50">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      {transaction.type === 'DEPOSIT' || transaction.type === 'TRANSFER_IN' ? (
+                        <div className="bg-green-100 p-2 rounded-full mr-3">
+                          <ArrowDownIcon className="h-4 w-4 text-green-600" />
+                        </div>
+                      ) : (
+                        <div className="bg-blue-100 p-2 rounded-full mr-3">
+                          <ArrowUpRight className="h-4 w-4 text-blue-600" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-medium">
+                          {transaction.type === 'DEPOSIT' ? 'Parking Earnings' : 
+                           transaction.type === 'TRANSFER_IN' ? 'Payment Received' :
+                           transaction.type === 'WITHDRAWAL' ? 'Withdrawal to Bank' : 
+                           transaction.type === 'TRANSFER_OUT' ? 'Transfer Sent' : 
+                           transaction.type}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {transaction.note || (
+                            transaction.type === 'DEPOSIT' ? 'BingGo booking payment' : 
+                            transaction.type === 'WITHDRAWAL' ? 'Funds to connected bank account' : 
+                            transaction.counterparty || 'Transaction'
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className={`font-medium ${
+                        transaction.type === 'DEPOSIT' || transaction.type === 'TRANSFER_IN' ? 
+                        'text-green-600' : 'text-blue-600'
+                      }`}>
+                        {transaction.type === 'DEPOSIT' || transaction.type === 'TRANSFER_IN' ? '+' : '-'}
+                        ${Math.abs(transaction.amount).toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {new Date(transaction.timestamp).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="p-4 text-center border-t">
+                <Button variant="outline" size="sm" onClick={() => window.location.href = '/transactions'}>
+                  View All Earnings History
+                </Button>
+              </div>
+            </div>
           )}
         </div>
       </Card>

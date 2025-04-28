@@ -202,22 +202,21 @@ export default function CustomerLayout({
                   .filter(item => !(isEmbedMode && item.href === "/embedded-experience"))
                   .map((item) => (
                     <li key={item.href} className="px-2 py-1">
-                      <Link href={item.href}>
-                        <a
-                          className={`flex items-center px-4 py-2 rounded ${
-                            location === item.href
-                              ? "text-white font-medium"
-                              : "text-gray-100 hover:bg-gray-700"
-                          }`}
-                          style={{
-                            backgroundColor: location === item.href 
-                              ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
-                              : undefined
-                          }}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </a>
+                      <Link 
+                        href={item.href}
+                        className={`flex items-center px-4 py-2 rounded ${
+                          location === item.href
+                            ? "text-white font-medium"
+                            : "text-gray-100 hover:bg-gray-700"
+                        }`}
+                        style={{
+                          backgroundColor: location === item.href 
+                            ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
+                            : undefined
+                        }}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
                       </Link>
                     </li>
                   ))}

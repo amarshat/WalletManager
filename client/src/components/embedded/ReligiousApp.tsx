@@ -18,7 +18,7 @@ import {
   Globe,
   Home 
 } from 'lucide-react';
-import WalletTabContent from './WalletTabContent';
+import WalletTabContent from '@/components/embedded/WalletTabContent';
 
 const upcomingEvents = [
   { id: 1, title: 'Community Service Meeting', date: 'Today', time: '7:00 PM - 9:00 PM', location: 'Kingdom Hall - Central', attendees: 42 },

@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ParkingApp } from "./ParkingApp";
-import { ReligiousApp } from "./ReligiousApp";
-import { GamingApp } from "./GamingApp";
-import EmbeddingCode from "./EmbeddingCode";
+import ParkingApp from "@/components/embedded/ParkingApp";
+import ReligiousApp from "@/components/embedded/ReligiousApp";
+import GamingApp from "@/components/embedded/GamingApp";
+import EmbeddingCode from "@/components/embedded/EmbeddingCode";
 
 // Component to display embedded wallet demos
 export function EmbeddedWallet() {

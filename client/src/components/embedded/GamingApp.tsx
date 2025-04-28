@@ -18,7 +18,7 @@ import {
   Gift,
   Sword
 } from 'lucide-react';
-import WalletTabContent from './WalletTabContent';
+import WalletTabContent from '@/components/embedded/WalletTabContent';
 
 const games = [
   { id: 1, title: 'Stellar Conquest', genre: 'Strategy', level: 32, xp: 4580, lastPlayed: '2 hours ago', image: 'bg-gradient-to-br from-blue-600 to-indigo-900' },

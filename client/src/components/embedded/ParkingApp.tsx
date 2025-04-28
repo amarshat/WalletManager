@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import WalletTabContent from './WalletTabContent';
+import WalletTabContent from '@/components/embedded/WalletTabContent';
 import { Car, MapPin, Clock, CalendarDays, Wallet, Search, ShieldCheck } from 'lucide-react';
 
 const parkingSpots = [

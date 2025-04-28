@@ -11,7 +11,8 @@ import {
   LayoutDashboard,
   Wrench,
   AlertCircle,
-  Wallet
+  Wallet,
+  ExternalLink
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -71,6 +72,11 @@ export default function AdminLayout({
       href: "/admin/manage-customers", 
       label: "Manage Customers", 
       icon: <Users className="w-5 h-5 mr-3" /> 
+    },
+    { 
+      href: "/admin/embedded-wallet", 
+      label: "Embedded Wallet", 
+      icon: <ExternalLink className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/admin/system-logs", 

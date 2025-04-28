@@ -230,7 +230,7 @@ export class PhantomPayClient {
       });
       
       await db.update(phantomAccounts)
-        .set({ balance: newBalance })
+        .set({ balance: newBalance.toFixed(2) }) // Store as string with 2 decimal places
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
@@ -241,11 +241,11 @@ export class PhantomPayClient {
         type: typeof decimalAmount
       });
       
-      // Create the values object with strict typing
+      // Create the values object with strict typing - convert number to string for storage
       const transactionValues = {
         transactionId,
         destinationAccountId: account.id,
-        amount: decimalAmount,
+        amount: decimalAmount.toFixed(2), // Store as string with 2 decimal places
         currencyCode: data.currencyCode,
         type: 'DEPOSIT' as const,
         note: data.description || 'Deposit',
@@ -367,7 +367,7 @@ export class PhantomPayClient {
       // Update source account balance - ensure we're using toFixed(2) to maintain proper precision
       const newSourceBalance = parseFloat((sourceBalance - decimalAmount).toFixed(2));
       await db.update(phantomAccounts)
-        .set({ balance: newSourceBalance })
+        .set({ balance: newSourceBalance.toFixed(2) }) // Store as string
         .where(eq(phantomAccounts.id, sourceAccount.id))
         .execute();
       
@@ -375,7 +375,7 @@ export class PhantomPayClient {
       const destBalance = Number(destAccount.balance || 0);
       const newDestBalance = parseFloat((destBalance + decimalAmount).toFixed(2));
       await db.update(phantomAccounts)
-        .set({ balance: newDestBalance })
+        .set({ balance: newDestBalance.toFixed(2) }) // Store as string with 2 decimal places
         .where(eq(phantomAccounts.id, destAccount.id))
         .execute();
       
@@ -386,7 +386,7 @@ export class PhantomPayClient {
           transactionId,
           sourceAccountId: sourceAccount.id,
           destinationAccountId: destAccount.id,
-          amount: decimalAmount,
+          amount: decimalAmount.toFixed(2), // Store as string with 2 decimal places
           currencyCode: data.currencyCode,
           type: 'TRANSFER',
           note: data.note || 'Transfer',
@@ -485,7 +485,7 @@ export class PhantomPayClient {
       // Update account balance - ensure we're using toFixed(2) to maintain proper precision
       const newBalance = parseFloat((accountBalance - decimalAmount).toFixed(2));
       await db.update(phantomAccounts)
-        .set({ balance: newBalance })
+        .set({ balance: newBalance.toFixed(2) }) // Store as string with 2 decimal places
         .where(eq(phantomAccounts.id, account.id))
         .execute();
       
@@ -495,7 +495,7 @@ export class PhantomPayClient {
         .values({
           transactionId,
           sourceAccountId: account.id,
-          amount: decimalAmount,
+          amount: decimalAmount.toFixed(2), // Store as string with 2 decimal places
           currencyCode: data.currencyCode,
           type: 'WITHDRAWAL',
           note: data.description || 'Withdrawal',

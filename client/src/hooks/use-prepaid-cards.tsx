@@ -43,7 +43,7 @@ export function usePrepaidCards() {
   
   // Add a new prepaid card
   const addPrepaidCardMutation = useMutation({
-    mutationFn: async (cardData: Partial<PrepaidCard>) => {
+    mutationFn: async (cardData: Partial<PrepaidCard> & { balance: string }) => {
       const response = await apiRequest('POST', '/api/prepaid-cards', cardData);
       return await response.json();
     },

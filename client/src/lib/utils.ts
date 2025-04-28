@@ -21,3 +21,16 @@ export function formatCurrency(amount: number, currencyCode: string = 'USD'): st
     maximumFractionDigits: 2
   }).format(amount).replace(currencyCode, currency.symbol);
 }
+
+/**
+ * Format a card number with spaces for readability
+ */
+export function formatCardNumber(cardNumber: string): string {
+  // Remove any existing non-digit characters
+  const cleaned = cardNumber.replace(/\D/g, '');
+  
+  // Add a space every 4 characters
+  const formatted = cleaned.replace(/(\d{4})(?=\d)/g, '$1 ');
+  
+  return formatted;
+}

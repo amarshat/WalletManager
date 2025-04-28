@@ -129,7 +129,8 @@ export default function AddPrepaidCardModal({
   function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     
-    addPrepaidCard({
+    // Convert balance to string for the API but keep as number in the local state
+    const prepaidCardData = {
       cardholderName: data.cardholderName,
       cardNumber: cardNumber,
       last4: last4,
@@ -138,10 +139,12 @@ export default function AddPrepaidCardModal({
       cardType: "MASTERCARD", // Default as per requirements
       isDefault: data.isDefault,
       currencyCode: data.currencyCode,
-      balance: data.balance.toString(), // Convert number to string as server expects a string
+      balance: data.balance.toString(), // Server expects a string balance
       cardDesign: data.cardDesign,
       status: "ACTIVE",
-    }, {
+    };
+    
+    addPrepaidCard(prepaidCardData, {
       onSuccess: () => {
         setIsSubmitting(false);
         form.reset();

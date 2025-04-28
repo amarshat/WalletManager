@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { 
   Menu, 
@@ -24,6 +24,7 @@ interface CustomerLayoutProps {
   description?: string;
   onRefresh?: () => void;
   showRefreshButton?: boolean;
+  hideSidebar?: boolean;
 }
 
 export default function CustomerLayout({ 
@@ -31,13 +32,28 @@ export default function CustomerLayout({
   title, 
   description, 
   onRefresh,
-  showRefreshButton = false
+  showRefreshButton = false,
+  hideSidebar = false
 }: CustomerLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { brand } = useBrand();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Check for URL parameters to hide sidebar
+  const [shouldHideSidebar, setShouldHideSidebar] = useState(hideSidebar);
+  
+  useEffect(() => {
+    // Check if hideSidebar parameter is in the URL
+    const params = new URLSearchParams(window.location.search);
+    const hideSidebarParam = params.get('hideSidebar');
+    
+    // If the parameter exists and is 'true', hide the sidebar
+    if (hideSidebarParam === 'true' || hideSidebarParam === '1') {
+      setShouldHideSidebar(true);
+    }
+  }, []);
   
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
@@ -93,119 +109,127 @@ export default function CustomerLayout({
   
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="flex items-center justify-between px-4 py-4">
-          <div className="flex items-center">
-            <button
-              className="mr-2 md:hidden"
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-            >
-              <Menu className="text-neutral-700" />
-            </button>
-            <BrandLogo className="h-8" />
-          </div>
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="w-5 h-5 text-neutral-600" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full"></span>
-            </Button>
-            <div className="relative ml-2">
-              <Avatar>
-                <AvatarFallback className="bg-primary text-white">
-                  {user?.fullName ? getInitials(user.fullName) : "U"}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="flex flex-1">
-        {/* Sidebar */}
-        <aside
-          className={`w-64 bg-gray-800 text-white fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-20 md:z-0 md:relative md:translate-x-0 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-        >
-          <div className="h-16 flex items-center justify-center border-b border-gray-700">
-            <span className="font-semibold text-white">{brand?.name || "PaySage Wallet"}</span>
-          </div>
-          <div className="p-4 border-b border-gray-700">
+      {/* Header - conditionally shown based on shouldHideSidebar */}
+      {!shouldHideSidebar && (
+        <header className="bg-white shadow">
+          <div className="flex items-center justify-between px-4 py-4">
             <div className="flex items-center">
-              <Avatar className="w-10 h-10 mr-3">
-                <AvatarFallback className="bg-primary text-white">
-                  {user?.fullName ? getInitials(user.fullName) : "U"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-medium text-white">{user?.fullName}</div>
-                <div className="text-xs text-gray-300">@{user?.username}</div>
+              <button
+                className="mr-2 md:hidden"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+              >
+                <Menu className="text-neutral-700" />
+              </button>
+              <BrandLogo className="h-8" />
+            </div>
+            <div className="flex items-center">
+              <Button variant="ghost" size="icon" className="relative">
+                <Bell className="w-5 h-5 text-neutral-600" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-accent rounded-full"></span>
+              </Button>
+              <div className="relative ml-2">
+                <Avatar>
+                  <AvatarFallback className="bg-primary text-white">
+                    {user?.fullName ? getInitials(user.fullName) : "U"}
+                  </AvatarFallback>
+                </Avatar>
               </div>
             </div>
           </div>
-          <nav className="py-4 overflow-y-auto h-[calc(100%-9rem)]">
-            <ul>
-              {navItems.map((item) => (
-                <li key={item.href} className="px-2 py-1">
-                  <Link href={item.href}>
-                    <a
-                      className={`flex items-center px-4 py-2 rounded ${
-                        location === item.href
-                          ? "bg-blue-600 text-white font-medium"
-                          : "text-gray-100 hover:bg-gray-700"
-                      }`}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </a>
-                  </Link>
+        </header>
+      )}
+
+      <div className="flex flex-1">
+        {/* Sidebar - conditionally shown based on shouldHideSidebar */}
+        {!shouldHideSidebar && (
+          <aside
+            className={`w-64 bg-gray-800 text-white fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out z-20 md:z-0 md:relative md:translate-x-0 ${
+              sidebarOpen ? "translate-x-0" : "-translate-x-full"
+            }`}
+          >
+            <div className="h-16 flex items-center justify-center border-b border-gray-700">
+              <span className="font-semibold text-white">{brand?.name || "PaySage Wallet"}</span>
+            </div>
+            <div className="p-4 border-b border-gray-700">
+              <div className="flex items-center">
+                <Avatar className="w-10 h-10 mr-3">
+                  <AvatarFallback className="bg-primary text-white">
+                    {user?.fullName ? getInitials(user.fullName) : "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium text-white">{user?.fullName}</div>
+                  <div className="text-xs text-gray-300">@{user?.username}</div>
+                </div>
+              </div>
+            </div>
+            <nav className="py-4 overflow-y-auto h-[calc(100%-9rem)]">
+              <ul>
+                {navItems.map((item) => (
+                  <li key={item.href} className="px-2 py-1">
+                    <Link href={item.href}>
+                      <a
+                        className={`flex items-center px-4 py-2 rounded ${
+                          location === item.href
+                            ? "bg-blue-600 text-white font-medium"
+                            : "text-gray-100 hover:bg-gray-700"
+                        }`}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </a>
+                    </Link>
+                  </li>
+                ))}
+                <li className="px-2 py-1 mt-auto">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center px-4 py-2 text-gray-100 hover:bg-gray-700 rounded"
+                  >
+                    <LogOut className="w-5 h-5 mr-3" />
+                    <span>Logout</span>
+                  </button>
                 </li>
-              ))}
-              <li className="px-2 py-1 mt-auto">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center px-4 py-2 text-gray-100 hover:bg-gray-700 rounded"
-                >
-                  <LogOut className="w-5 h-5 mr-3" />
-                  <span>Logout</span>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </aside>
+              </ul>
+            </nav>
+          </aside>
+        )}
 
         {/* Main Content */}
-        <main className="flex-1 overflow-y-auto bg-neutral-100 p-4 md:p-6">
-          <div className="mb-6 flex justify-between items-start">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">
-                {title || `Welcome back, ${user?.fullName?.split(' ')[0] || 'User'}!`}
-              </h1>
-              <p className="text-neutral-600">
-                {description || "Here's your wallet overview"}
-              </p>
-              {user?.isPhantomUser && (
-                <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                  PhantomPay-Sandbox
-                </div>
+        <main className={`flex-1 overflow-y-auto bg-neutral-100 ${shouldHideSidebar ? 'p-0' : 'p-4 md:p-6'}`}>
+          {!shouldHideSidebar && (
+            <div className="mb-6 flex justify-between items-start">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">
+                  {title || `Welcome back, ${user?.fullName?.split(' ')[0] || 'User'}!`}
+                </h1>
+                <p className="text-neutral-600">
+                  {description || "Here's your wallet overview"}
+                </p>
+                {user?.isPhantomUser && (
+                  <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    PhantomPay-Sandbox
+                  </div>
+                )}
+              </div>
+              {showRefreshButton && onRefresh && (
+                <Button variant="outline" size="sm" onClick={onRefresh}>
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Refresh
+                </Button>
               )}
             </div>
-            {showRefreshButton && onRefresh && (
-              <Button variant="outline" size="sm" onClick={onRefresh}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-            )}
-          </div>
+          )}
           
           {children}
         </main>
       </div>
       
-      <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-        Paysafe GenAI Showcase — powered by PaySage Wallet
-      </footer>
+      {!shouldHideSidebar && (
+        <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
+          Paysafe GenAI Showcase — powered by PaySage Wallet
+        </footer>
+      )}
     </div>
   );
 }

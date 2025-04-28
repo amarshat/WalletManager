@@ -34,6 +34,7 @@ interface CustomerLayoutProps {
   onRefresh?: () => void;
   showRefreshButton?: boolean;
   hideSidebar?: boolean;
+  appType?: string; // Name of the embedded app, e.g. "binggo"
 }
 
 export default function CustomerLayout({ 
@@ -42,7 +43,8 @@ export default function CustomerLayout({
   description, 
   onRefresh,
   showRefreshButton = false,
-  hideSidebar = false
+  hideSidebar = false,
+  appType: propAppType
 }: CustomerLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
@@ -98,34 +100,29 @@ export default function CustomerLayout({
       icon: <LayoutDashboard className="w-5 h-5 mr-3" /> 
     },
     { 
-      href: "/parking-spaces", 
-      label: "My Parking Spaces", 
-      icon: <ParkingCircle className="w-5 h-5 mr-3" /> 
-    },
-    { 
       href: "/transactions", 
-      label: "Earnings & Payouts", 
+      label: "Transactions", 
       icon: <RefreshCw className="w-5 h-5 mr-3" /> 
     },
     { 
-      href: "/analytics", 
-      label: "Performance Analytics", 
-      icon: <BarChart3 className="w-5 h-5 mr-3" /> 
-    },
-    { 
-      href: "/calendar", 
-      label: "Availability Calendar", 
-      icon: <CalendarDays className="w-5 h-5 mr-3" /> 
+      href: "/budget", 
+      label: "Budget", 
+      icon: <PieChart className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/carbon-impact", 
-      label: "Green Impact", 
+      label: "Carbon Impact", 
       icon: <Leaf className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/payment-methods", 
       label: "Payment Methods", 
       icon: <CreditCard className="w-5 h-5 mr-3" /> 
+    },
+    {
+      href: "/embedded-experience",
+      label: "Embedded Apps",
+      icon: <Layers className="w-5 h-5 mr-3" />
     },
     { 
       href: "/profile", 

@@ -13,7 +13,8 @@ import {
   Wallet,
   Gamepad2,
   BookOpen,
-  Car
+  Car,
+  Leaf
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -102,6 +103,11 @@ export default function CustomerLayout({
       href: "/budget", 
       label: "Budget", 
       icon: <PieChart className="w-5 h-5 mr-3" /> 
+    },
+    { 
+      href: "/carbon-impact", 
+      label: "Carbon Impact", 
+      icon: <Leaf className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/payment-methods", 

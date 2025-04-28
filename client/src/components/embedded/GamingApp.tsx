@@ -92,7 +92,7 @@ export const GamingApp: React.FC = () => {
           <TabsContent value="home" className="space-y-4">
             <Card className="bg-gray-800 border-gray-700">
               <CardHeader>
-                <CardTitle className="text-white">Welcome back, Dragon Knight!</CardTitle>
+                <CardTitle className="text-white">Welcome back, {user?.fullName || "Gamer"}!</CardTitle>
                 <CardDescription className="text-gray-400">
                   Your gaming stats and activities
                 </CardDescription>
@@ -339,10 +339,11 @@ export const GamingApp: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-center gap-6 pb-6 border-b border-gray-700">
                     <div className="h-24 w-24 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center text-white text-3xl font-bold">
-                      DK
+                      {getInitials(user?.fullName)}
                     </div>
                     <div className="text-center md:text-left">
-                      <h3 className="text-2xl font-bold text-white">Dragon Knight</h3>
+                      <h3 className="text-2xl font-bold text-white">{user?.fullName || "Gamer"}</h3>
+                      <p className="text-gray-400">{user?.email || "No email provided"}</p>
                       <p className="text-gray-400">Premium Member</p>
                       <div className="flex items-center justify-center md:justify-start mt-2 space-x-2">
                         <Badge className="bg-amber-600">Pro Gamer</Badge>

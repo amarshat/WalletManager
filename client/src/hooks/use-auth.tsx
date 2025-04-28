@@ -7,6 +7,7 @@ import {
 import { insertUserSchema, User as SelectUser, InsertUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAppBranding } from "@/hooks/use-app-branding";
 import { Loader2 } from "lucide-react";
 
 type AuthContextType = {
@@ -115,9 +116,20 @@ export function useAuth() {
 }
 
 export function AuthLoadingScreen() {
+  const { branding, appType } = useAppBranding();
+  const spinnerColor = appType ? branding.primaryColor : undefined;
+  
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <Loader2 className="h-8 w-8 animate-spin text-border" />
+    <div 
+      className="flex items-center justify-center min-h-screen"
+      style={{ 
+        background: appType && branding.theme === 'dark' ? '#1f2937' : undefined
+      }}
+    >
+      <Loader2 
+        className="h-8 w-8 animate-spin" 
+        style={{ color: spinnerColor }}
+      />
     </div>
   );
 }

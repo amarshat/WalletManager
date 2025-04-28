@@ -1,6 +1,7 @@
 import { AuthProvider } from "./hooks/use-auth";
 import { BrandProvider } from "./hooks/use-brand";
 import { BudgetProvider } from "./hooks/use-budget";
+import { CarbonProvider } from "./hooks/use-carbon-provider";
 import { Route, Switch } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
@@ -31,6 +32,7 @@ import Cards from "@/pages/customer/cards";
 import Profile from "@/pages/customer/profile";
 import PaymentMethodsPage from "@/pages/customer/payment-methods-page";
 import BudgetPage from "@/pages/customer/budget";
+import CarbonImpactPage from "@/pages/customer/carbon-impact";
 
 import SplashScreen from "@/components/ui/splash-screen";
 import React, { useState, useEffect, Suspense } from "react";
@@ -147,6 +149,11 @@ function Router() {
         redirectTo="/auth" 
       />
       <ProtectedRoute 
+        path="/carbon-impact" 
+        component={CarbonImpactPage} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
         path="/embedded-experience" 
         component={CustomerEmbeddedWallet}
         redirectTo="/auth" 
@@ -178,8 +185,10 @@ function App() {
             <BrandProvider>
               <ConfigImportWrapper>
                 <BudgetProvider>
-                  <Toaster />
-                  {loading ? <SplashScreen /> : <Router />}
+                  <CarbonProvider>
+                    <Toaster />
+                    {loading ? <SplashScreen /> : <Router />}
+                  </CarbonProvider>
                 </BudgetProvider>
               </ConfigImportWrapper>
             </BrandProvider>

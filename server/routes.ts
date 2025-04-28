@@ -446,11 +446,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Recipient not found" });
       }
       
+      // Check that user is not transferring to themselves
+      if (recipientUser.id === req.user!.id) {
+        return res.status(400).json({ error: "Cannot transfer to yourself" });
+      }
+      
       // Get recipient wallet
       const recipientWallet = await storage.getWalletByUserId(recipientUser.id);
       
       if (!recipientWallet) {
         return res.status(404).json({ error: "Recipient wallet not found" });
+      }
+      
+      // Check if sender has enough balance
+      try {
+        const balances = await walletClient.getBalances(senderWallet.customerId);
+        const accountWithCurrency = balances.accounts.find((acc: any) => acc.currencyCode === currencyCode);
+        
+        if (!accountWithCurrency) {
+          return res.status(400).json({ error: `You don't have an account with currency ${currencyCode}` });
+        }
+        
+        const availableBalance = parseFloat(accountWithCurrency.balance);
+        if (availableBalance < amount) {
+          return res.status(400).json({ 
+            error: `Insufficient funds. Available balance: ${availableBalance} ${currencyCode}`,
+            availableBalance
+          });
+        }
+        
+        console.log(`Balance check passed: ${availableBalance} >= ${amount}`);
+      } catch (error) {
+        console.error("Error checking balance:", error);
+        return res.status(500).json({ error: "Failed to check balance" });
       }
       
       console.log('Transfer amount after processing:', { 
@@ -460,19 +488,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         valueAsJson: JSON.stringify(amount)
       });
       
+      // Include recipient's name in the note if not provided
+      const transferNote = note || `Transfer to ${recipientUser.fullName}`;
+      
       const transferResponse = await walletClient.transferMoney({
         amount,
         currencyCode,
         sourceCustomerId: senderWallet.customerId,
         destinationCustomerId: recipientWallet.customerId,
-        note: note || "Transfer"
+        note: transferNote
       });
       
       await logApiCall(req, "Transfer money", 200, transferResponse);
-      res.json(transferResponse);
+      
+      // Include recipient info in the response for better UI display
+      res.json({
+        ...transferResponse,
+        recipient: {
+          username: recipientUser.username,
+          fullName: recipientUser.fullName,
+        }
+      });
     } catch (error) {
       console.error("Error transferring money:", error);
-      res.status(500).json({ error: "Failed to transfer money" });
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to transfer money" 
+      });
     }
   });
   
@@ -525,6 +566,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Wallet not found" });
       }
       
+      // Check if user has enough balance for withdrawal
+      try {
+        const balances = await walletClient.getBalances(wallet.customerId);
+        const accountWithCurrency = balances.accounts.find((acc: any) => acc.currencyCode === currencyCode);
+        
+        if (!accountWithCurrency) {
+          return res.status(400).json({ error: `You don't have an account with currency ${currencyCode}` });
+        }
+        
+        const availableBalance = parseFloat(accountWithCurrency.balance);
+        if (availableBalance < amount) {
+          return res.status(400).json({ 
+            error: `Insufficient funds. Available balance: ${availableBalance} ${currencyCode}`,
+            availableBalance
+          });
+        }
+        
+        console.log(`Balance check passed for withdrawal: ${availableBalance} >= ${amount}`);
+      } catch (error) {
+        console.error("Error checking balance for withdrawal:", error);
+        return res.status(500).json({ error: "Failed to check balance" });
+      }
+      
       console.log('Withdrawal amount after processing:', { 
         rawAmount, 
         processedAmount: amount, 
@@ -543,7 +607,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(withdrawResponse);
     } catch (error) {
       console.error("Error withdrawing money:", error);
-      res.status(500).json({ error: "Failed to withdraw money" });
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to withdraw money" 
+      });
     }
   });
   
@@ -655,9 +721,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Wallet not found" });
       }
       
+      // Get current balances for all currencies to validate transfers
+      const balancesResponse = await walletClient.getBalances(wallet.customerId);
+      // Create a map of currency -> balance for quick lookup
+      const balancesByCurrency = new Map<string, number>();
+      for (const account of balancesResponse.accounts) {
+        balancesByCurrency.set(account.currencyCode, parseFloat(account.balance));
+      }
+      
+      // Organize transfers by currency to track running balances
+      const transfersByCurrency = new Map<string, number>();
+      
       const results = [];
       const errors = [];
       
+      // First validate all transfers without executing them
       for (const transfer of transfers) {
         try {
           const recipientUsername = transfer.recipientUsername;
@@ -698,11 +776,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
+          // Check if user has the currency account
+          if (!balancesByCurrency.has(currencyCode)) {
+            errors.push({ transfer, error: `You don't have an account with currency ${currencyCode}` });
+            continue;
+          }
+          
           // Get recipient user
           const recipientUser = await storage.getUserByUsername(recipientUsername);
           
           if (!recipientUser) {
             errors.push({ transfer, error: "Recipient not found" });
+            continue;
+          }
+          
+          // Check that user is not transferring to themselves
+          if (recipientUser.id === req.user!.id) {
+            errors.push({ transfer, error: "Cannot transfer to yourself" });
             continue;
           }
           
@@ -714,19 +804,87 @@ export async function registerRoutes(app: Express): Promise<Server> {
             continue;
           }
           
-          console.log('Bulk transfer amount after processing:', { amount, type: typeof amount });
+          // Track running total for this currency
+          const currentTotal = transfersByCurrency.get(currencyCode) || 0;
+          transfersByCurrency.set(currencyCode, currentTotal + amount);
+          
+          // Check if running total exceeds available balance
+          const runningTotal = transfersByCurrency.get(currencyCode) || 0;
+          const availableBalance = balancesByCurrency.get(currencyCode) || 0;
+          
+          if (runningTotal > availableBalance) {
+            errors.push({ 
+              transfer, 
+              error: `Insufficient funds. Available balance: ${availableBalance} ${currencyCode}, total transfers so far: ${runningTotal} ${currencyCode}`
+            });
+            // Revert the running total so further transfers can still be validated
+            transfersByCurrency.set(currencyCode, currentTotal);
+            continue;
+          }
+          
+          // If we got here, the transfer is valid
+          transfer.amount = amount; // Normalize the amount for the actual transfer
+          transfer.recipientUser = recipientUser; // Store user for the actual transfer
+          transfer.recipientWallet = recipientWallet; // Store wallet for the actual transfer
+        } catch (error) {
+          errors.push({ transfer, error: error instanceof Error ? error.message : "Transfer validation failed" });
+        }
+      }
+      
+      // If there were any errors in validation, return them without performing any transfers
+      if (errors.length > 0) {
+        return res.status(400).json({ 
+          errors,
+          message: "Validation failed. No transfers were processed." 
+        });
+      }
+      
+      // Perform all the validated transfers
+      for (const transfer of transfers) {
+        try {
+          const amount = transfer.amount;
+          const currencyCode = transfer.currencyCode;
+          const recipientUser = transfer.recipientUser;
+          const recipientWallet = transfer.recipientWallet;
+          const note = transfer.note || `Bulk transfer to ${recipientUser.fullName}`;
+          
+          console.log('Processing bulk transfer:', { 
+            amount, 
+            currencyCode, 
+            recipient: recipientUser.username
+          });
           
           const transferResponse = await walletClient.transferMoney({
             amount,
             currencyCode,
             sourceCustomerId: wallet.customerId,
             destinationCustomerId: recipientWallet.customerId,
-            note: note || "Bulk Transfer"
+            note
           });
           
-          results.push({ transfer, result: transferResponse });
+          results.push({ 
+            transfer: {
+              amount,
+              currencyCode,
+              recipientUsername: recipientUser.username
+            }, 
+            result: {
+              ...transferResponse,
+              recipient: {
+                username: recipientUser.username,
+                fullName: recipientUser.fullName,
+              }
+            }
+          });
         } catch (error) {
-          errors.push({ transfer, error: "Transfer failed" });
+          errors.push({ 
+            transfer: {
+              amount: transfer.amount,
+              currencyCode: transfer.currencyCode,
+              recipientUsername: transfer.recipientUser.username
+            }, 
+            error: error instanceof Error ? error.message : "Transfer failed" 
+          });
         }
       }
       
@@ -734,7 +892,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ results, errors });
     } catch (error) {
       console.error("Error processing bulk transfer:", error);
-      res.status(500).json({ error: "Failed to process bulk transfer" });
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process bulk transfer" 
+      });
     }
   });
   

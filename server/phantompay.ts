@@ -542,8 +542,17 @@ export class PhantomPayClient {
         return { transactions: [] };
       }
       
-      // Get account IDs
+      // Get account IDs - make sure we only get transactions for THIS user's accounts
       const accountIds = accounts.map(account => account.id);
+      
+      // Safety check - if no account IDs, return empty array
+      if (accountIds.length === 0) {
+        console.warn(`No accounts found for wallet ID: ${wallet.id}, returning empty transactions`);
+        return { transactions: [] };
+      }
+      
+      // Log the accounts we're checking for
+      console.log(`Getting transactions for wallet ID: ${wallet.id}, accounts:`, accountIds);
       
       // Use individual OR conditions for each account ID
       let whereCondition = undefined;
@@ -557,10 +566,12 @@ export class PhantomPayClient {
       
       // Find all transactions that involve any of these accounts
       const transactions = await db.query.phantomTransactions.findMany({
-        where: whereCondition,
+        where: whereCondition, 
         orderBy: [desc(phantomTransactions.createdAt)],
         limit
       });
+      
+      console.log(`Found ${transactions.length} transactions for wallet ID: ${wallet.id}`);
       
       // Create a map of account IDs to account details for quick lookup
       const accountMap = new Map<number, PhantomAccount>();
@@ -568,11 +579,62 @@ export class PhantomPayClient {
         accountMap.set(account.id, account);
       }
       
+      // Get all wallet data for proper recipient info display
+      const allWallets = await db.query.phantomWallets.findMany({});
+      const walletMap = new Map<number, PhantomWallet>();
+      for (const w of allWallets) {
+        walletMap.set(w.id, w);
+      }
+      
+      // Get user data for display names
+      const userIds = allWallets.map(w => w.userId);
+      const allUsers = await db.query.users.findMany({
+        where: inArray(users.id, userIds)
+      });
+      const userMap = new Map<number, { username: string, fullName: string }>();
+      for (const user of allUsers) {
+        userMap.set(user.id, { username: user.username, fullName: user.fullName });
+      }
+      
       return {
         transactions: await Promise.all(transactions.map(async tx => {
           // Get account details for display
           const sourceAccount = tx.sourceAccountId ? accountMap.get(tx.sourceAccountId) : undefined;
           const destAccount = tx.destinationAccountId ? accountMap.get(tx.destinationAccountId) : undefined;
+          
+          // Get wallet and user info for transfer display
+          let sourceUserInfo = undefined;
+          let destUserInfo = undefined;
+          
+          if (sourceAccount) {
+            // Find which wallet this account belongs to
+            const sourceWallet = allWallets.find(w => w.id === sourceAccount.phantomWalletId);
+            if (sourceWallet) {
+              const sourceUser = userMap.get(sourceWallet.userId);
+              if (sourceUser) {
+                sourceUserInfo = {
+                  userId: sourceWallet.userId,
+                  username: sourceUser.username,
+                  fullName: sourceUser.fullName
+                };
+              }
+            }
+          }
+          
+          if (destAccount) {
+            // Find which wallet this account belongs to
+            const destWallet = allWallets.find(w => w.id === destAccount.phantomWalletId);
+            if (destWallet) {
+              const destUser = userMap.get(destWallet.userId);
+              if (destUser) {
+                destUserInfo = {
+                  userId: destWallet.userId,
+                  username: destUser.username,
+                  fullName: destUser.fullName
+                };
+              }
+            }
+          }
           
           return {
             id: tx.transactionId,
@@ -582,6 +644,8 @@ export class PhantomPayClient {
             currencyCode: tx.currencyCode,
             sourceAccountId: sourceAccount?.accountId,
             destinationAccountId: destAccount?.accountId,
+            sourceUser: sourceUserInfo,
+            destinationUser: destUserInfo,
             note: tx.note,
             createdAt: tx.createdAt?.toISOString()
           };

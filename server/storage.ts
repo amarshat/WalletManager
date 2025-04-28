@@ -1,13 +1,16 @@
 import { 
   users, brandSettings, customerWallets, walletAccounts, cards, prepaidCards, systemLogs,
-  budgetCategories, budgetPlans, budgetAllocations, budgetTransactions
+  budgetCategories, budgetPlans, budgetAllocations, budgetTransactions,
+  carbonImpacts, carbonOffsets, carbonCategories, carbonPreferences
 } from "@shared/schema";
 import type { 
   User, InsertUser, BrandSettings, InsertBrandSettings, 
   CustomerWallet, InsertCustomerWallet, WalletAccount, InsertWalletAccount,
   Card, InsertCard, PrepaidCard, InsertPrepaidCard, SystemLog, InsertSystemLog,
   BudgetCategory, InsertBudgetCategory, BudgetPlan, InsertBudgetPlan,
-  BudgetAllocation, InsertBudgetAllocation, BudgetTransaction, InsertBudgetTransaction
+  BudgetAllocation, InsertBudgetAllocation, BudgetTransaction, InsertBudgetTransaction,
+  CarbonImpact, InsertCarbonImpact, CarbonOffset, InsertCarbonOffset,
+  CarbonCategory, InsertCarbonCategory, CarbonPreference, InsertCarbonPreference
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, not, or } from "drizzle-orm";
@@ -78,6 +81,27 @@ export interface IStorage {
   addSystemLog(log: InsertSystemLog): Promise<SystemLog>;
   getSystemLogs(limit?: number, offset?: number): Promise<SystemLog[]>;
   getSystemLogsByUserId(userId: number, limit?: number): Promise<SystemLog[]>;
+  
+  // Carbon impact operations
+  getCarbonCategories(): Promise<CarbonCategory[]>;
+  getCarbonCategoryByName(category: string): Promise<CarbonCategory | undefined>;
+  
+  getUserCarbonPreference(userId: number): Promise<CarbonPreference | undefined>;
+  createOrUpdateCarbonPreference(userId: number, data: Partial<InsertCarbonPreference>): Promise<CarbonPreference>;
+  
+  recordCarbonImpact(impact: InsertCarbonImpact): Promise<CarbonImpact>;
+  getUserCarbonImpacts(userId: number, limit?: number): Promise<CarbonImpact[]>;
+  
+  recordCarbonOffset(offset: InsertCarbonOffset): Promise<CarbonOffset>;
+  getUserCarbonOffsets(userId: number, limit?: number): Promise<CarbonOffset[]>;
+  
+  getUserCarbonSummary(userId: number, days?: number): Promise<{
+    totalImpact: number;
+    totalOffset: number;
+    netImpact: number;
+    impactByCategory: Record<string, number>;
+    monthlyAverage: number;
+  }>;
   
   // Session store
   sessionStore: session.SessionStore;

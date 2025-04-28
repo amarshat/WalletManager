@@ -281,6 +281,81 @@ export type PhantomAccount = typeof phantomAccounts.$inferSelect;
 export type InsertPhantomTransaction = z.infer<typeof insertPhantomTransactionSchema>;
 export type PhantomTransaction = typeof phantomTransactions.$inferSelect;
 
+// Carbon Impact Tracking Table
+export const carbonImpacts = pgTable("carbon_impacts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  transactionId: text("transaction_id").notNull(), // References a wallet transaction ID
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Transaction amount
+  category: text("category").notNull(), // Purchase category (e.g., travel, food, electronics)
+  carbonFootprint: decimal("carbon_footprint", { precision: 10, scale: 4 }).notNull(), // in kg of CO2
+  carbonSavings: decimal("carbon_savings", { precision: 10, scale: 4 }).default("0"), // potential savings
+  suggestionApplied: boolean("suggestion_applied").default(false), 
+  transactionDate: timestamp("transaction_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Carbon Offset Contributions Table
+export const carbonOffsets = pgTable("carbon_offsets", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(), // Financial contribution
+  offsetAmount: decimal("offset_amount", { precision: 10, scale: 4 }).notNull(), // in kg of CO2
+  projectName: text("project_name").notNull(), // Name of the offset project
+  projectDescription: text("project_description"),
+  contributionDate: timestamp("contribution_date").notNull().defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Carbon Impact Metadata for Categories
+export const carbonCategories = pgTable("carbon_categories", {
+  id: serial("id").primaryKey(),
+  category: text("category").notNull().unique(), // e.g., "groceries", "flights", "electronics"
+  averageCarbonPerDollar: decimal("average_carbon_per_dollar", { precision: 10, scale: 6 }).notNull(), // kg CO2 per $
+  description: text("description"),
+  icon: text("icon"),
+  tips: json("tips").default([]),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// User Carbon Preferences
+export const carbonPreferences = pgTable("carbon_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id).unique(),
+  trackingEnabled: boolean("tracking_enabled").default(true),
+  showSuggestions: boolean("show_suggestions").default(true),
+  monthlyOffsetTarget: decimal("monthly_offset_target", { precision: 10, scale: 2 }), // Optional target
+  preferredCategories: json("preferred_categories").default([]), // Categories to focus on
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Schema definitions for carbon tracking inserts
+export const insertCarbonImpactSchema = createInsertSchema(carbonImpacts)
+  .omit({ id: true, createdAt: true });
+
+export const insertCarbonOffsetSchema = createInsertSchema(carbonOffsets)
+  .omit({ id: true, createdAt: true });
+
+export const insertCarbonCategorySchema = createInsertSchema(carbonCategories)
+  .omit({ id: true, createdAt: true });
+
+export const insertCarbonPreferenceSchema = createInsertSchema(carbonPreferences)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+// Types for carbon tracking inserts and selects
+export type InsertCarbonImpact = z.infer<typeof insertCarbonImpactSchema>;
+export type CarbonImpact = typeof carbonImpacts.$inferSelect;
+
+export type InsertCarbonOffset = z.infer<typeof insertCarbonOffsetSchema>;
+export type CarbonOffset = typeof carbonOffsets.$inferSelect;
+
+export type InsertCarbonCategory = z.infer<typeof insertCarbonCategorySchema>;
+export type CarbonCategory = typeof carbonCategories.$inferSelect;
+
+export type InsertCarbonPreference = z.infer<typeof insertCarbonPreferenceSchema>;
+export type CarbonPreference = typeof carbonPreferences.$inferSelect;
+
 // Other types needed for the application
 export type TransactionType = 'DEPOSIT' | 'TRANSFER' | 'WITHDRAWAL';
 

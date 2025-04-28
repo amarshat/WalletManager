@@ -12,7 +12,7 @@ import AddMoneyModal from "@/components/modals/AddMoneyModal";
 import SendMoneyModal from "@/components/modals/SendMoneyModal";
 import WithdrawModal from "@/components/modals/WithdrawModal";
 import BulkTransferModal from "@/components/modals/BulkTransferModal";
-import InitializeWalletCard from "@/components/wallet/InitializeWalletCard";
+import ActivateWalletFlow from "@/components/wallet/ActivateWalletFlow";
 import { Button } from "@/components/ui/button";
 import { ArrowDownIcon, Send, Upload } from "lucide-react";
 
@@ -97,9 +97,9 @@ export default function CustomerDashboard() {
   return (
     <CustomerLayout showRefreshButton={true} onRefresh={handleRefresh}>
       {isWalletMissing ? (
-        // Show wallet initialization card
+        // Show wallet activation and KYC flow
         <div className="my-8">
-          <InitializeWalletCard onSuccess={refreshAllData} />
+          <ActivateWalletFlow onSuccess={refreshAllData} />
         </div>
       ) : (
         <>

@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import WalletTabContent from '@/components/embedded/WalletTabContent';
 import { Car, MapPin, Clock, CalendarDays, Wallet, Search, ShieldCheck } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 const parkingSpots = [
   { id: 1, location: 'Downtown Center', price: 2.50, available: 12, distance: '0.3 mi' },
@@ -22,6 +23,16 @@ const reservations = [
 
 export const ParkingApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('find');
+  const { user } = useAuth();
+  
+  // Get user's initials for the avatar
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    return name.split(' ')
+      .map(part => part.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
@@ -33,9 +44,9 @@ export const ParkingApp: React.FC = () => {
             <h1 className="text-2xl font-bold">BingGo Parking</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">John Doe</span>
+            <span className="hidden md:inline">{user?.fullName || "Guest"}</span>
             <div className="h-8 w-8 rounded-full bg-blue-400 flex items-center justify-center text-sm font-medium">
-              JD
+              {getInitials(user?.fullName)}
             </div>
           </div>
         </div>
@@ -177,12 +188,12 @@ export const ParkingApp: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                     <div className="h-20 w-20 rounded-full bg-blue-400 flex items-center justify-center text-white text-2xl font-medium">
-                      JD
+                      {getInitials(user?.fullName)}
                     </div>
                     <div>
-                      <h3 className="text-xl font-medium">John Doe</h3>
-                      <p className="text-gray-500">john.doe@example.com</p>
-                      <p className="text-gray-500">Member since January 2023</p>
+                      <h3 className="text-xl font-medium">{user?.fullName || "Guest User"}</h3>
+                      <p className="text-gray-500">{user?.email || "No email provided"}</p>
+                      <p className="text-gray-500">Member since {new Date().getFullYear()}</p>
                       <div className="flex items-center mt-2">
                         <ShieldCheck className="h-5 w-5 text-green-500 mr-1" />
                         <span className="text-green-500">Verified Account</span>

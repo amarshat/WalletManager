@@ -9,10 +9,15 @@ import {
   LayoutDashboard, 
   RefreshCw,
   PieChart,
-  Layers
+  Layers,
+  Wallet,
+  Gamepad2,
+  BookOpen,
+  Car
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
+import { useAppBranding } from "@/hooks/use-app-branding";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
@@ -38,11 +43,12 @@ export default function CustomerLayout({
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { brand } = useBrand();
+  const { branding, appType, isEmbedded } = useAppBranding();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Check for URL parameters to hide sidebar
-  const [shouldHideSidebar, setShouldHideSidebar] = useState(hideSidebar);
+  const [shouldHideSidebar, setShouldHideSidebar] = useState(hideSidebar || isEmbedded);
   
   useEffect(() => {
     // Check if hideSidebar parameter is in the URL
@@ -147,8 +153,13 @@ export default function CustomerLayout({
               sidebarOpen ? "translate-x-0" : "-translate-x-full"
             }`}
           >
-            <div className="h-16 flex items-center justify-center border-b border-gray-700">
-              <span className="font-semibold text-white">{brand?.name || "PaySage Wallet"}</span>
+            <div className="h-16 flex items-center justify-center border-b border-gray-700" 
+                 style={{ 
+                   background: appType ? branding.secondaryColor : undefined 
+                 }}>
+              <span className="font-semibold text-white">
+                {appType ? branding.name : (brand?.name || "PaySage Wallet")}
+              </span>
             </div>
             <div className="p-4 border-b border-gray-700">
               <div className="flex items-center">
@@ -171,9 +182,14 @@ export default function CustomerLayout({
                       <a
                         className={`flex items-center px-4 py-2 rounded ${
                           location === item.href
-                            ? "bg-blue-600 text-white font-medium"
+                            ? "text-white font-medium"
                             : "text-gray-100 hover:bg-gray-700"
                         }`}
+                        style={{
+                          backgroundColor: location === item.href 
+                            ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
+                            : undefined
+                        }}
                       >
                         {item.icon}
                         <span>{item.label}</span>
@@ -196,15 +212,28 @@ export default function CustomerLayout({
         )}
 
         {/* Main Content */}
-        <main className={`flex-1 overflow-y-auto bg-neutral-100 ${shouldHideSidebar ? 'p-0' : 'p-4 md:p-6'}`}>
+        <main 
+          className={`flex-1 overflow-y-auto ${shouldHideSidebar ? 'p-0' : 'p-4 md:p-6'}`}
+          style={{ 
+            background: appType && branding.theme === 'dark' ? '#1f2937' : 'var(--background)',
+            color: appType && branding.theme === 'dark' ? 'white' : 'inherit'
+          }}
+        >
           {!shouldHideSidebar && (
             <div className="mb-6 flex justify-between items-start">
               <div>
-                <h1 className="text-2xl font-bold text-gray-800">
-                  {title || `Welcome back, ${user?.fullName?.split(' ')[0] || 'User'}!`}
+                <h1 
+                  className="text-2xl font-bold"
+                  style={{ 
+                    color: appType ? (branding.theme === 'dark' ? 'white' : 'var(--foreground)') : 'var(--foreground)'
+                  }}
+                >
+                  {title || `Welcome to ${appType ? branding.name : 'PaySage Wallet'}, ${user?.fullName?.split(' ')[0] || 'User'}!`}
                 </h1>
-                <p className="text-neutral-600">
-                  {description || "Here's your wallet overview"}
+                <p 
+                  className={appType && branding.theme === 'dark' ? 'text-gray-300' : 'text-neutral-600'}
+                >
+                  {description || "Access your financial services here"}
                 </p>
                 {user?.isPhantomUser && (
                   <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -213,7 +242,15 @@ export default function CustomerLayout({
                 )}
               </div>
               {showRefreshButton && onRefresh && (
-                <Button variant="outline" size="sm" onClick={onRefresh}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={onRefresh}
+                  style={{ 
+                    borderColor: appType ? branding.accentColor : undefined,
+                    color: appType ? branding.accentColor : undefined
+                  }}
+                >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   Refresh
                 </Button>
@@ -226,8 +263,17 @@ export default function CustomerLayout({
       </div>
       
       {!shouldHideSidebar && (
-        <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-          Paysafe GenAI Showcase — powered by PaySage Wallet
+        <footer 
+          className="border-t py-4 px-6 text-center text-sm"
+          style={{ 
+            background: appType && branding.theme === 'dark' ? '#111827' : 'white',
+            borderColor: appType && branding.theme === 'dark' ? '#374151' : 'var(--border)',
+            color: appType && branding.theme === 'dark' ? '#9CA3AF' : 'var(--muted-foreground)'
+          }}
+        >
+          {appType 
+            ? `${branding.name} — powered by PaySage Wallet` 
+            : "Paysafe GenAI Showcase — powered by PaySage Wallet"}
         </footer>
       )}
     </div>

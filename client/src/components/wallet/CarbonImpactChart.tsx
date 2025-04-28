@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { useCarbon, CarbonSummary } from "@/hooks/use-carbon";
+import { CarbonSummary } from "@/hooks/use-carbon";
+import { useCarbonContext } from "@/hooks/use-carbon-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Legend,
@@ -29,22 +30,22 @@ const getColorForCategory = (category: string, index: number) => {
 type ChartType = 'pie' | 'bar';
 
 export function CarbonImpactChart() {
-  const { summary, isLoading } = useCarbon();
+  const { carbonSummary, isLoadingSummary } = useCarbonContext();
   const [chartData, setChartData] = useState<any[]>([]);
   const [chartType, setChartType] = useState<ChartType>('pie');
   
   useEffect(() => {
-    if (summary && summary.impactByCategory) {
-      const data = Object.entries(summary.impactByCategory).map(([category, value], index) => ({
+    if (carbonSummary && carbonSummary.impactByCategory) {
+      const data = Object.entries(carbonSummary.impactByCategory).map(([category, value], index) => ({
         name: category,
         value: Number(value),
         color: getColorForCategory(category, index),
       }));
       setChartData(data);
     }
-  }, [summary]);
+  }, [carbonSummary]);
   
-  if (isLoading) {
+  if (isLoadingSummary) {
     return (
       <Card className="p-6">
         <Skeleton className="h-[300px] w-full" />
@@ -52,7 +53,7 @@ export function CarbonImpactChart() {
     );
   }
   
-  if (!summary || !chartData.length) {
+  if (!carbonSummary || !chartData.length) {
     return (
       <Card className="p-6 text-center">
         <p>No carbon impact data available yet.</p>
@@ -76,7 +77,7 @@ export function CarbonImpactChart() {
           <p className="font-medium">{payload[0].name}</p>
           <p>{formatCO2(payload[0].value)}</p>
           <p className="text-xs text-muted-foreground">
-            {((payload[0].value / summary.totalImpact) * 100).toFixed(1)}% of total
+            {((payload[0].value / carbonSummary.totalImpact) * 100).toFixed(1)}% of total
           </p>
         </div>
       );
@@ -161,11 +162,11 @@ export function CarbonImpactChart() {
       <div className="grid grid-cols-2 gap-4 mt-6">
         <div className="bg-muted p-4 rounded-lg">
           <p className="text-sm text-muted-foreground">Total Carbon Impact</p>
-          <p className="text-xl font-semibold">{formatCO2(summary.totalImpact)}</p>
+          <p className="text-xl font-semibold">{formatCO2(carbonSummary.totalImpact)}</p>
         </div>
         <div className="bg-muted p-4 rounded-lg">
           <p className="text-sm text-muted-foreground">Total Carbon Offset</p>
-          <p className="text-xl font-semibold">{formatCO2(summary.totalOffset)}</p>
+          <p className="text-xl font-semibold">{formatCO2(carbonSummary.totalOffset)}</p>
         </div>
       </div>
     </Card>

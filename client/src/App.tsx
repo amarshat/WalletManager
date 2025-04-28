@@ -145,6 +145,14 @@ function Router() {
         component={BudgetPage} 
         redirectTo="/auth" 
       />
+      <ProtectedRoute 
+        path="/embedded-experience" 
+        component={() => {
+          const CustomerEmbeddedWallet = require('@/pages/customer/embedded-wallet-page').default;
+          return <CustomerEmbeddedWallet />;
+        }}
+        redirectTo="/auth" 
+      />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

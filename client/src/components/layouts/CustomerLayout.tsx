@@ -8,7 +8,8 @@ import {
   CreditCard, 
   LayoutDashboard, 
   RefreshCw,
-  PieChart
+  PieChart,
+  Layers
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -77,6 +78,11 @@ export default function CustomerLayout({
       href: "/payment-methods", 
       label: "Payment Methods", 
       icon: <CreditCard className="w-5 h-5 mr-3" /> 
+    },
+    {
+      href: "/embedded-experience",
+      label: "Embedded Apps",
+      icon: <Layers className="w-5 h-5 mr-3" />
     },
     { 
       href: "/profile", 

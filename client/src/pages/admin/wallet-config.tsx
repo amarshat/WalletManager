@@ -35,7 +35,8 @@ const walletConfigSchema = z.object({
   maxTestCards: z.number().min(0).max(20),
   maxTransferAmount: z.number().min(0),
   defaultCommissionRate: z.number().min(0).max(20),
-  retentionPeriodDays: z.number().min(1).max(90)
+  retentionPeriodDays: z.number().min(1).max(90),
+  maxPrepaidCards: z.number().min(0).max(10).default(3)
 });
 
 type WalletConfig = z.infer<typeof walletConfigSchema>;
@@ -58,7 +59,8 @@ export default function WalletConfigPage() {
     maxTestCards: 5,
     maxTransferAmount: 1000000, // 10,000 in cents
     defaultCommissionRate: 0.5,
-    retentionPeriodDays: 7
+    retentionPeriodDays: 7,
+    maxPrepaidCards: 3
   };
   
   // Setup form with wallet configuration
@@ -362,6 +364,28 @@ export default function WalletConfigPage() {
                           </FormControl>
                           <FormDescription>
                             Default commission percentage for transfers and exchanges
+                          </FormDescription>
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="maxPrepaidCards"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Maximum Prepaid Cards per User</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min={0}
+                              max={10}
+                              value={field.value}
+                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                            />
+                          </FormControl>
+                          <FormDescription>
+                            Maximum number of prepaid cards a user can add to their wallet (0 to disable prepaid cards)
                           </FormDescription>
                         </FormItem>
                       )}

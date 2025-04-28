@@ -171,6 +171,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Admin endpoint to get all users with their wallet details
+  app.get("/api/admin/users-with-wallets", ensureAdmin, async (req, res) => {
+    try {
+      // Get all non-admin users
+      const users = await storage.listUsers(false);
+      
+      // Enhance each user with wallet info
+      const enhancedUsers = await Promise.all(users.map(async (user) => {
+        // Get the user's wallet
+        const wallet = await storage.getWalletByUserId(user.id);
+        
+        // Default response with no wallet
+        const userWithWallet = {
+          ...user,
+          hasWallet: false,
+          wallet: null,
+          balances: null
+        };
+        
+        // If wallet exists, get balances
+        if (wallet) {
+          userWithWallet.hasWallet = true;
+          userWithWallet.wallet = wallet;
+          
+          try {
+            const balances = await walletClient.getBalances(wallet.customerId);
+            userWithWallet.balances = balances;
+          } catch (error) {
+            console.error(`Failed to get balances for user ${user.id}:`, error);
+            userWithWallet.balances = { error: "Failed to fetch balances" };
+          }
+        }
+        
+        return userWithWallet;
+      }));
+      
+      res.json(enhancedUsers);
+    } catch (error) {
+      console.error("Error getting users with wallets:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get users with wallets" 
+      });
+    }
+  });
+  
+  // Admin endpoint to get transactions for a specific user
+  app.get("/api/admin/user/:userId/transactions", ensureAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      // Verify user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Get wallet
+      const wallet = await storage.getWalletByUserId(userId);
+      if (!wallet) {
+        return res.status(404).json({ error: "User doesn't have a wallet" });
+      }
+      
+      // Get transactions
+      const transactions = await walletClient.getTransactions(wallet.customerId);
+      
+      res.json({
+        user: {
+          id: user.id,
+          username: user.username,
+          fullName: user.fullName
+        },
+        wallet: {
+          id: wallet.id,
+          customerId: wallet.customerId,
+          status: wallet.status
+        },
+        transactions
+      });
+    } catch (error) {
+      console.error(`Error getting transactions for user:`, error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to get user transactions" 
+      });
+    }
+  });
+  
   app.post("/api/users", ensureAdmin, async (req, res) => {
     try {
       // Create user

@@ -3,6 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/hooks/use-auth';
 import {
   Trophy,
   Gamepad2,
@@ -47,6 +48,16 @@ const recentTransactions = [
 
 export const GamingApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const { user } = useAuth();
+  
+  // Get user's initials for the avatar
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    return name.split(' ')
+      .map(part => part.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-900 text-gray-200">
@@ -61,7 +72,7 @@ export const GamingApp: React.FC = () => {
             <Bell className="h-5 w-5 cursor-pointer hover:text-red-300" />
             <MessageSquare className="h-5 w-5 cursor-pointer hover:text-red-300" />
             <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center text-sm font-medium">
-              DK
+              {getInitials(user?.fullName)}
             </div>
           </div>
         </div>

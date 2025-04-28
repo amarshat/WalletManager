@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePrepaidCards } from "@/hooks/use-prepaid-cards";
 import { useAuth } from "@/hooks/use-auth";
+import { useBrand } from "@/hooks/use-brand";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,19 +34,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, CreditCard } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const FormSchema = z.object({
   cardholderName: z.string().min(1, "Cardholder name is required"),
-  cardNumber: z.string()
-    .min(16, "Card number must be 16 digits")
-    .max(16, "Card number must be 16 digits")
-    .regex(/^\d+$/, "Card number must contain only digits"),
-  expiryMonth: z.string().min(1, "Expiry month is required"),
-  expiryYear: z.string().min(1, "Expiry year is required"),
-  cvv: z.string()
-    .min(3, "CVV must be 3-4 digits")
-    .max(4, "CVV must be 3-4 digits")
-    .regex(/^\d+$/, "CVV must contain only digits"),
   currencyCode: z.string().min(1, "Currency is required"),
   balance: z.preprocess(
     (val) => (val === "" ? 0 : Number(val)),
@@ -67,17 +59,66 @@ export default function AddPrepaidCardModal({
   onOpenChange,
 }: AddPrepaidCardModalProps) {
   const { user } = useAuth();
+  const { brand } = useBrand();
   const { addPrepaidCard, isAddingPrepaidCard, prepaidCardLimit, prepaidCards } = usePrepaidCards();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Generate a Mastercard number that starts with 5 (Mastercard BIN range)
+  const generateMastercardNumber = () => {
+    // Mastercard numbers start with 51-55
+    const prefix = "53"; // Using 53 as our PaySage Mastercard BIN prefix
+    // Generate 14 more random digits
+    const randomPart = Math.floor(Math.random() * 10000000000000000).toString().slice(0, 14);
+    return prefix + randomPart;
+  };
+  
+  // Generate CVV (3 digits for Mastercard)
+  const generateCVV = () => {
+    return Math.floor(Math.random() * 900 + 100).toString(); // 100-999
+  };
+  
+  // Generate expiry date (between 3-5 years in the future)
+  const generateExpiryDate = () => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-based
+    const currentYear = currentDate.getFullYear();
+    
+    // Generate a date 3-5 years in the future
+    const yearsToAdd = Math.floor(Math.random() * 3) + 3; // 3-5 years
+    const expiryYear = currentYear + yearsToAdd;
+    const expiryMonth = currentMonth.toString().padStart(2, "0");
+    
+    return {
+      month: expiryMonth,
+      year: expiryYear.toString()
+    };
+  };
+  
+  // Generate card details when modal opens
+  const [cardNumber, setCardNumber] = useState("");
+  const [last4, setLast4] = useState("");
+  const [cvv, setCVV] = useState("");
+  const [expiryDate, setExpiryDate] = useState({ month: "", year: "" });
+  
+  useEffect(() => {
+    if (open) {
+      // Generate new card details when modal opens
+      const newCardNumber = generateMastercardNumber();
+      const newLast4 = newCardNumber.slice(-4);
+      const newCVV = generateCVV();
+      const newExpiryDate = generateExpiryDate();
+      
+      setCardNumber(newCardNumber);
+      setLast4(newLast4);
+      setCVV(newCVV);
+      setExpiryDate(newExpiryDate);
+    }
+  }, [open]);
   
   const form = useForm<FormValues>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       cardholderName: user?.fullName || "",
-      cardNumber: "",
-      expiryMonth: "",
-      expiryYear: "",
-      cvv: "",
       currencyCode: user?.defaultCurrency || "USD",
       balance: 0,
       isDefault: prepaidCards.length === 0, // Default to true if this is the first card
@@ -88,21 +129,12 @@ export default function AddPrepaidCardModal({
   function onSubmit(data: FormValues) {
     setIsSubmitting(true);
     
-    // Format card number to show only last 4 digits
-    const last4 = data.cardNumber.slice(-4);
-    
-    // Generate a random card number if the user didn't enter one
-    // This is just for display purposes
-    if (!data.cardNumber || data.cardNumber.length < 16) {
-      data.cardNumber = "4" + Math.floor(Math.random() * 1000000000000000).toString().padStart(15, "0");
-    }
-    
     addPrepaidCard({
       cardholderName: data.cardholderName,
-      cardNumber: data.cardNumber,
-      last4,
-      expiryMonth: data.expiryMonth,
-      expiryYear: data.expiryYear,
+      cardNumber: cardNumber,
+      last4: last4,
+      expiryMonth: expiryDate.month,
+      expiryYear: expiryDate.year,
       cardType: "MASTERCARD", // Default as per requirements
       isDefault: data.isDefault,
       currencyCode: data.currencyCode,
@@ -120,25 +152,9 @@ export default function AddPrepaidCardModal({
       },
     });
   }
-
-  // Generate months for dropdown
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const month = i + 1;
-    return { 
-      value: month.toString().padStart(2, "0"), 
-      label: month.toString().padStart(2, "0") 
-    };
-  });
-
-  // Generate years for dropdown (current year + 10 years)
-  const currentYear = new Date().getFullYear();
-  const years = Array.from({ length: 10 }, (_, i) => {
-    const year = currentYear + i;
-    return { 
-      value: year.toString(), 
-      label: year.toString() 
-    };
-  });
+  
+  // Brand name for card branding
+  const brandName = brand?.name || "PaySage";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -165,102 +181,38 @@ export default function AddPrepaidCardModal({
               )}
             />
             
-            <FormField
-              control={form.control}
-              name="cardNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Card Number</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="1234 5678 9012 3456" 
-                      maxLength={16}
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    16-digit card number with no spaces.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="expiryMonth"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Month</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="MM" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {months.map((month) => (
-                          <SelectItem key={month.value} value={month.value}>
-                            {month.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="expiryYear"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Year</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="YYYY" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {years.map((year) => (
-                          <SelectItem key={year.value} value={year.value}>
-                            {year.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="cvv"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CVV</FormLabel>
-                    <FormControl>
-                      <Input 
-                        placeholder="123" 
-                        maxLength={4}
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <Alert className="bg-slate-50 border border-slate-200 shadow-sm">
+              <CreditCard className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-sm font-semibold">Card Information</AlertTitle>
+              <AlertDescription className="text-xs">
+                <div className="mt-2 space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="font-semibold text-muted-foreground">Card Network</p>
+                      <p>Mastercard</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-muted-foreground">Card Issuer</p>
+                      <p>{brandName}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-muted-foreground">Card Number</p>
+                    <p className="font-mono">•••• •••• •••• {last4}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <p className="font-semibold text-muted-foreground">Expiry Date</p>
+                      <p>{expiryDate.month}/{expiryDate.year.slice(-2)}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold text-muted-foreground">CVV</p>
+                      <p>{cvv}</p>
+                    </div>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
             
             <FormField
               control={form.control}

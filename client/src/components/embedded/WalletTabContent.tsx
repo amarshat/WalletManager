@@ -16,7 +16,8 @@ import {
   Landmark,
   AlertCircle,
   DownloadCloud,
-  Copy
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 
 // PaySage Wallet Demo component that can be embedded in various apps
@@ -122,10 +123,14 @@ const WalletTabContent: React.FC<WalletTabContentProps> = ({
       
       <CardContent>
         <Tabs value={walletTab} onValueChange={setWalletTab} className="w-full">
-          <TabsList className={`grid grid-cols-3 w-full mb-4 ${colors.tabsList}`}>
+          <TabsList className={`grid grid-cols-4 w-full mb-4 ${colors.tabsList}`}>
             <TabsTrigger value="balance" className={colors.tabsTrigger}>Balance</TabsTrigger>
             <TabsTrigger value="cards" className={colors.tabsTrigger}>Payment Methods</TabsTrigger>
             <TabsTrigger value="transactions" className={colors.tabsTrigger}>Transactions</TabsTrigger>
+            <TabsTrigger value="real-wallet" className={colors.tabsTrigger}>
+              <Badge variant="outline" className="mr-1.5">Live</Badge>
+              Real Wallet
+            </TabsTrigger>
           </TabsList>
           
           <TabsContent value="balance" className="space-y-4">
@@ -299,6 +304,42 @@ const WalletTabContent: React.FC<WalletTabContentProps> = ({
                 <div className="flex justify-end space-x-2 mt-4">
                   <Button variant="outline">Cancel</Button>
                   <Button className={colors.primary}>Save Card</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="real-wallet" className="space-y-4">
+            <Card className={colors.innerCard}>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                  <CardTitle className={colors.heading}>Live PaySage Wallet</CardTitle>
+                  <CardDescription className={colors.description}>
+                    Access your actual wallet directly from {appName}
+                  </CardDescription>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center" 
+                  onClick={() => window.open('/dashboard', '_blank')}
+                >
+                  <ExternalLink className="w-3 h-3 mr-1.5" />
+                  Open Full Wallet
+                </Button>
+              </CardHeader>
+              <CardContent className="p-0 overflow-hidden">
+                <div className="relative bg-white rounded-md overflow-hidden" style={{ height: '480px' }}>
+                  <iframe 
+                    src="/dashboard"
+                    title="PaySage Wallet Dashboard"
+                    className="absolute top-0 left-0 w-full h-full border-0" 
+                    style={{ 
+                      transform: 'scale(0.95)', 
+                      transformOrigin: 'top left',
+                      borderRadius: '0 0 8px 8px'
+                    }}
+                  />
                 </div>
               </CardContent>
             </Card>

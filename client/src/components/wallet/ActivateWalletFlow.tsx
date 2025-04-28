@@ -82,57 +82,74 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
   
   const simulateSelfieScan = () => {
     setIsLoading(true);
-    // Simulate upload progress
+    // Simulate upload progress with faster speed
     let currentProgress = 0;
     const interval = setInterval(() => {
-      currentProgress += 10;
+      currentProgress += 20; // Faster progress (20% increments)
       setProgress(currentProgress);
       if (currentProgress >= 100) {
         clearInterval(interval);
-        setIsLoading(false);
-        goToNextStep();
-        
-        // When selfie is complete, start "processing" simulation
-        simulateProcessing();
+        // Go directly to processing step when selfie is complete
+        setTimeout(() => {
+          setIsLoading(false);
+          setCurrentStep("processing");
+          simulateProcessing();
+        }, 200);
       }
-    }, 300);
+    }, 200); // Faster interval
   };
   
   const simulateProcessing = () => {
     setIsLoading(true);
     
-    // First show "Identity validation" for 2 seconds
+    // Set a definite timeout to move to the next step, no matter what happens with DOM manipulation
+    const finalTimeout = setTimeout(() => {
+      setIsLoading(false);
+      goToNextStep();
+    }, 4000);
+    
+    // First show "Identity validation" for 1 second
     setTimeout(() => {
-      // Update the UI to show progress (but we won't change isLoading yet)
-      const processingElement = document.getElementById('identity-validation-item');
-      if (processingElement) {
-        processingElement.innerHTML = `
-          <div class="flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-            <span>Identity validation</span>
-          </div>
-        `;
+      try {
+        // Update the UI to show progress (but we won't change isLoading yet)
+        const processingElement = document.getElementById('identity-validation-item');
+        if (processingElement) {
+          processingElement.innerHTML = `
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              <span>Identity validation</span>
+            </div>
+          `;
+        }
+      } catch (error) {
+        console.error("Error updating identity validation UI:", error);
       }
       
       // Then show "Fraud detection" for 1 more second
       setTimeout(() => {
-        const fraudElement = document.getElementById('fraud-detection-item');
-        if (fraudElement) {
-          fraudElement.innerHTML = `
-            <div class="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-              <span>Fraud detection analysis</span>
-            </div>
-          `;
+        try {
+          const fraudElement = document.getElementById('fraud-detection-item');
+          if (fraudElement) {
+            fraudElement.innerHTML = `
+              <div class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <span>Fraud detection analysis</span>
+              </div>
+            `;
+          }
+          
+          // Move to the next step after a brief delay
+          setTimeout(() => {
+            clearTimeout(finalTimeout); // Clear the failsafe timeout since we're proceeding normally
+            setIsLoading(false);
+            goToNextStep();
+          }, 500);
+        } catch (error) {
+          console.error("Error updating fraud detection UI:", error);
+          // If we encountered an error, we still rely on the finalTimeout to proceed
         }
-        
-        // Finally, move to the next step after a brief delay
-        setTimeout(() => {
-          setIsLoading(false);
-          goToNextStep();
-        }, 1000);
       }, 1000);
-    }, 2000);
+    }, 1000);
   };
   
   const handleActivateWallet = async () => {
@@ -421,6 +438,19 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
             <p className="text-sm text-muted-foreground">
               This process usually takes less than a minute. Please don't close this window.
             </p>
+            
+            {/* Hidden auto-advance button for debugging/testing */}
+            <Button 
+              variant="link" 
+              size="sm" 
+              className="text-xs opacity-0 absolute" 
+              onClick={() => {
+                setIsLoading(false);
+                goToNextStep();
+              }}
+            >
+              Continue
+            </Button>
           </div>
         )}
         

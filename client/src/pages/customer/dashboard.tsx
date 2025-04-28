@@ -12,9 +12,12 @@ import AddMoneyModal from "@/components/modals/AddMoneyModal";
 import SendMoneyModal from "@/components/modals/SendMoneyModal";
 import WithdrawModal from "@/components/modals/WithdrawModal";
 import BulkTransferModal from "@/components/modals/BulkTransferModal";
+import AddPrepaidCardModal from "@/components/modals/AddPrepaidCardModal";
 import ActivateWalletFlow from "@/components/wallet/ActivateWalletFlow";
 import { Button } from "@/components/ui/button";
-import { ArrowDownIcon, Send, Upload } from "lucide-react";
+import { usePrepaidCards } from "@/hooks/use-prepaid-cards";
+import PrepaidCard from "@/components/ui/prepaid-card";
+import { AlertCircle, ArrowDownIcon, CreditCard, Plus, Send, Upload } from "lucide-react";
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -25,6 +28,7 @@ export default function CustomerDashboard() {
   const [sendMoneyModalOpen, setSendMoneyModalOpen] = useState(false);
   const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
   const [bulkTransferModalOpen, setBulkTransferModalOpen] = useState(false);
+  const [addPrepaidCardModalOpen, setAddPrepaidCardModalOpen] = useState(false);
   
   const { 
     wallet,
@@ -37,6 +41,16 @@ export default function CustomerDashboard() {
     walletError,
     refreshAllData
   } = usePaysafe();
+  
+  const {
+    prepaidCards,
+    prepaidCardLimit,
+    canAddMorePrepaidCards,
+    isLoadingPrepaidCards,
+    updatePrepaidCard,
+    deletePrepaidCard,
+    refetchPrepaidCards
+  } = usePrepaidCards();
   
   // Set initial currency based on user preference
   useEffect(() => {
@@ -64,10 +78,12 @@ export default function CustomerDashboard() {
     try {
       // Do an initial refresh
       await refreshAllData();
+      await refetchPrepaidCards();
       
       // Wait a moment and do a second refresh to ensure we have the latest data
       setTimeout(async () => {
         await refreshAllData();
+        await refetchPrepaidCards();
         setRefreshing(false);
       }, 1000);
       

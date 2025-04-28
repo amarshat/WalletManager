@@ -574,6 +574,162 @@ export class DatabaseStorage implements IStorage {
 
     return created;
   }
+
+  // Carbon Impact operations
+  async getCarbonCategories(): Promise<CarbonCategory[]> {
+    return db.select().from(carbonCategories);
+  }
+  
+  async getCarbonCategoryByName(category: string): Promise<CarbonCategory | undefined> {
+    const [found] = await db
+      .select()
+      .from(carbonCategories)
+      .where(eq(carbonCategories.category, category));
+    return found;
+  }
+  
+  async getUserCarbonPreference(userId: number): Promise<CarbonPreference | undefined> {
+    const [preference] = await db
+      .select()
+      .from(carbonPreferences)
+      .where(eq(carbonPreferences.userId, userId));
+    return preference;
+  }
+  
+  async createOrUpdateCarbonPreference(userId: number, data: Partial<InsertCarbonPreference>): Promise<CarbonPreference> {
+    // Try to find existing preference
+    const existingPreference = await this.getUserCarbonPreference(userId);
+    
+    if (existingPreference) {
+      // Update existing preference
+      const [updated] = await db
+        .update(carbonPreferences)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(carbonPreferences.userId, userId))
+        .returning();
+      return updated;
+    } else {
+      // Create new preference
+      const [created] = await db
+        .insert(carbonPreferences)
+        .values({ ...data, userId } as InsertCarbonPreference)
+        .returning();
+      return created;
+    }
+  }
+  
+  async recordCarbonImpact(impact: InsertCarbonImpact): Promise<CarbonImpact> {
+    const [created] = await db
+      .insert(carbonImpacts)
+      .values(impact)
+      .returning();
+    return created;
+  }
+  
+  async getUserCarbonImpacts(userId: number, limit: number = 50): Promise<CarbonImpact[]> {
+    return db
+      .select()
+      .from(carbonImpacts)
+      .where(eq(carbonImpacts.userId, userId))
+      .orderBy(desc(carbonImpacts.transactionDate))
+      .limit(limit);
+  }
+  
+  async recordCarbonOffset(offset: InsertCarbonOffset): Promise<CarbonOffset> {
+    const [created] = await db
+      .insert(carbonOffsets)
+      .values(offset)
+      .returning();
+    return created;
+  }
+  
+  async getUserCarbonOffsets(userId: number, limit: number = 50): Promise<CarbonOffset[]> {
+    return db
+      .select()
+      .from(carbonOffsets)
+      .where(eq(carbonOffsets.userId, userId))
+      .orderBy(desc(carbonOffsets.contributionDate))
+      .limit(limit);
+  }
+  
+  async getUserCarbonSummary(userId: number, days: number = 30): Promise<{
+    totalImpact: number;
+    totalOffset: number;
+    netImpact: number;
+    impactByCategory: Record<string, number>;
+    monthlyAverage: number;
+  }> {
+    // Calculate date range
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Get all carbon impacts in date range
+    const impacts = await db
+      .select()
+      .from(carbonImpacts)
+      .where(
+        and(
+          eq(carbonImpacts.userId, userId),
+          gte(carbonImpacts.transactionDate, startDate)
+        )
+      );
+    
+    // Get all carbon offsets in date range
+    const offsets = await db
+      .select()
+      .from(carbonOffsets)
+      .where(
+        and(
+          eq(carbonOffsets.userId, userId),
+          gte(carbonOffsets.contributionDate, startDate)
+        )
+      );
+    
+    // Calculate totals
+    const totalImpact = impacts.reduce((sum, impact) => sum + Number(impact.carbonFootprint), 0);
+    const totalOffset = offsets.reduce((sum, offset) => sum + Number(offset.offsetAmount), 0);
+    const netImpact = totalImpact - totalOffset;
+    
+    // Calculate impact by category
+    const impactByCategory: Record<string, number> = {};
+    impacts.forEach(impact => {
+      if (!impactByCategory[impact.category]) {
+        impactByCategory[impact.category] = 0;
+      }
+      impactByCategory[impact.category] += Number(impact.carbonFootprint);
+    });
+    
+    // Calculate monthly average (based on entire history)
+    const allImpacts = await db
+      .select()
+      .from(carbonImpacts)
+      .where(eq(carbonImpacts.userId, userId));
+    
+    let monthlyAverage = 0;
+    if (allImpacts.length > 0) {
+      const oldestImpact = allImpacts.reduce((oldest, current) => 
+        current.transactionDate < oldest.transactionDate ? current : oldest
+      );
+      
+      const oldestDate = new Date(oldestImpact.transactionDate);
+      const currentDate = new Date();
+      const monthsDiff = (currentDate.getFullYear() - oldestDate.getFullYear()) * 12 + 
+                         (currentDate.getMonth() - oldestDate.getMonth());
+      
+      const totalHistoricalImpact = allImpacts.reduce((sum, impact) => 
+        sum + Number(impact.carbonFootprint), 0);
+      
+      monthlyAverage = monthsDiff > 0 ? totalHistoricalImpact / monthsDiff : totalHistoricalImpact;
+    }
+    
+    return {
+      totalImpact,
+      totalOffset,
+      netImpact,
+      impactByCategory,
+      monthlyAverage
+    };
+  }
 }
 
 export const storage = new DatabaseStorage();

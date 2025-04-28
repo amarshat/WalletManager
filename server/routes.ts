@@ -3,7 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
-import { insertBrandSettingsSchema, insertCardSchema, insertPrepaidCardSchema } from "@shared/schema";
+import { 
+  insertBrandSettingsSchema, insertCardSchema, insertPrepaidCardSchema,
+  insertCarbonImpactSchema, insertCarbonOffsetSchema, insertCarbonPreferenceSchema
+} from "@shared/schema";
 import { walletClient } from "./wallet-client";
 import { errorHandler } from "./diagnostics/error-tracking";
 
@@ -1545,6 +1548,115 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       await logApiCall(req, 'Get Budget Transactions', 500, { error: error.message });
       res.status(500).json({ error: 'Failed to retrieve budget transactions' });
+    }
+  });
+  
+  // Carbon Impact API endpoints
+  
+  // Get all carbon categories
+  app.get('/api/carbon/categories', async (req, res) => {
+    try {
+      const categories = await storage.getCarbonCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error('Error fetching carbon categories:', error);
+      res.status(500).json({ error: 'Failed to retrieve carbon categories' });
+    }
+  });
+  
+  // Get user carbon preferences
+  app.get('/api/carbon/preferences', ensureAuth, async (req, res) => {
+    try {
+      const preferences = await storage.getUserCarbonPreference(req.user!.id);
+      res.json(preferences || { trackingEnabled: false, offsetEnabled: false });
+    } catch (error) {
+      console.error('Error fetching carbon preferences:', error);
+      res.status(500).json({ error: 'Failed to retrieve carbon preferences' });
+    }
+  });
+  
+  // Create or update user carbon preferences
+  app.post('/api/carbon/preferences', ensureAuth, async (req, res) => {
+    try {
+      const preferences = await storage.createOrUpdateCarbonPreference(req.user!.id, req.body);
+      await logApiCall(req, 'Update Carbon Preferences', 200, preferences);
+      res.json(preferences);
+    } catch (error) {
+      console.error('Error updating carbon preferences:', error);
+      await logApiCall(req, 'Update Carbon Preferences', 400, { error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(400).json({ error: 'Failed to update carbon preferences' });
+    }
+  });
+  
+  // Record a carbon impact
+  app.post('/api/carbon/impact', ensureAuth, async (req, res) => {
+    try {
+      const validatedData = insertCarbonImpactSchema.parse({
+        ...req.body,
+        userId: req.user!.id
+      });
+      
+      const impact = await storage.recordCarbonImpact(validatedData);
+      await logApiCall(req, 'Record Carbon Impact', 201, impact);
+      res.status(201).json(impact);
+    } catch (error) {
+      console.error('Error recording carbon impact:', error);
+      await logApiCall(req, 'Record Carbon Impact', 400, { error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(400).json({ error: 'Failed to record carbon impact' });
+    }
+  });
+  
+  // Get user's carbon impacts
+  app.get('/api/carbon/impacts', ensureAuth, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const impacts = await storage.getUserCarbonImpacts(req.user!.id, limit);
+      res.json(impacts);
+    } catch (error) {
+      console.error('Error fetching carbon impacts:', error);
+      res.status(500).json({ error: 'Failed to retrieve carbon impacts' });
+    }
+  });
+  
+  // Record a carbon offset
+  app.post('/api/carbon/offset', ensureAuth, async (req, res) => {
+    try {
+      const validatedData = insertCarbonOffsetSchema.parse({
+        ...req.body,
+        userId: req.user!.id
+      });
+      
+      const offset = await storage.recordCarbonOffset(validatedData);
+      await logApiCall(req, 'Record Carbon Offset', 201, offset);
+      res.status(201).json(offset);
+    } catch (error) {
+      console.error('Error recording carbon offset:', error);
+      await logApiCall(req, 'Record Carbon Offset', 400, { error: error instanceof Error ? error.message : 'Unknown error' });
+      res.status(400).json({ error: 'Failed to record carbon offset' });
+    }
+  });
+  
+  // Get user's carbon offsets
+  app.get('/api/carbon/offsets', ensureAuth, async (req, res) => {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const offsets = await storage.getUserCarbonOffsets(req.user!.id, limit);
+      res.json(offsets);
+    } catch (error) {
+      console.error('Error fetching carbon offsets:', error);
+      res.status(500).json({ error: 'Failed to retrieve carbon offsets' });
+    }
+  });
+  
+  // Get user's carbon summary
+  app.get('/api/carbon/summary', ensureAuth, async (req, res) => {
+    try {
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      const summary = await storage.getUserCarbonSummary(req.user!.id, days);
+      res.json(summary);
+    } catch (error) {
+      console.error('Error fetching carbon summary:', error);
+      res.status(500).json({ error: 'Failed to retrieve carbon summary' });
     }
   });
 

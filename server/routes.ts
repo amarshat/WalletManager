@@ -216,6 +216,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Admin bulk transfer endpoint
+  app.post("/api/admin/bulk-transfer", ensureAdmin, async (req, res) => {
+    try {
+      const { sourceUserName, currencyCode, transfers } = req.body;
+      
+      if (!sourceUserName || !currencyCode || !transfers || !Array.isArray(transfers)) {
+        return res.status(400).json({ error: "Invalid request data" });
+      }
+      
+      // Get source user
+      const sourceUser = await storage.getUserByUsername(sourceUserName);
+      if (!sourceUser) {
+        return res.status(404).json({ error: "Source user not found" });
+      }
+      
+      // Get source wallet
+      const sourceWallet = await storage.getWalletByUserId(sourceUser.id);
+      if (!sourceWallet) {
+        return res.status(404).json({ error: "Source wallet not found" });
+      }
+      
+      // Check source user balances and validate total amount
+      const sourceBalances = await walletClient.getBalances(sourceWallet.customerId);
+      const sourceAccount = sourceBalances.accounts.find((acc: any) => acc.currencyCode === currencyCode);
+      
+      if (!sourceAccount) {
+        return res.status(400).json({ error: `Source user doesn't have an account with currency ${currencyCode}` });
+      }
+      
+      const availableBalance = parseFloat(sourceAccount.balance);
+      let totalTransferAmount = 0;
+      
+      // Validate transfers
+      const validatedTransfers = [];
+      const errors = [];
+      
+      for (const transfer of transfers) {
+        const { destinationUserName, amount } = transfer;
+        
+        // Validate destination user
+        const destinationUser = await storage.getUserByUsername(destinationUserName);
+        if (!destinationUser) {
+          errors.push({ destinationUserName, error: "Destination user not found" });
+          continue;
+        }
+        
+        // Validate amount
+        let validAmount = 0;
+        try {
+          if (typeof amount === 'number') {
+            validAmount = amount;
+          } else if (typeof amount === 'string') {
+            validAmount = parseFloat(amount);
+          }
+          
+          if (isNaN(validAmount) || validAmount <= 0) {
+            errors.push({ destinationUserName, error: "Amount must be a positive number" });
+            continue;
+          }
+          
+          // Round to 2 decimal places
+          validAmount = parseFloat(validAmount.toFixed(2));
+        } catch (error) {
+          errors.push({ destinationUserName, error: "Invalid amount format" });
+          continue;
+        }
+        
+        // Check if destination user has a wallet
+        const destinationWallet = await storage.getWalletByUserId(destinationUser.id);
+        if (!destinationWallet) {
+          errors.push({ destinationUserName, error: "Destination user doesn't have a wallet" });
+          continue;
+        }
+        
+        // Add to valid transfers
+        validatedTransfers.push({
+          destinationUserName,
+          destinationUser,
+          destinationWallet,
+          amount: validAmount
+        });
+        
+        totalTransferAmount += validAmount;
+      }
+      
+      // Check if total amount exceeds available balance
+      if (totalTransferAmount > availableBalance) {
+        return res.status(400).json({ 
+          error: `Insufficient funds. Available balance: ${availableBalance} ${currencyCode}, total transfer amount: ${totalTransferAmount} ${currencyCode}`,
+          availableBalance,
+          totalTransferAmount
+        });
+      }
+      
+      // Process transfers
+      const results = [];
+      
+      for (const transfer of validatedTransfers) {
+        try {
+          const transferResponse = await walletClient.transferMoney({
+            amount: transfer.amount,
+            currencyCode,
+            sourceCustomerId: sourceWallet.customerId,
+            destinationCustomerId: transfer.destinationWallet.customerId,
+            note: `Admin transfer to ${transfer.destinationUser.fullName}`
+          });
+          
+          results.push({
+            destinationUserName: transfer.destinationUserName,
+            amount: transfer.amount,
+            status: "success",
+            transaction: transferResponse
+          });
+        } catch (error) {
+          console.error(`Error in bulk transfer to ${transfer.destinationUserName}:`, error);
+          results.push({
+            destinationUserName: transfer.destinationUserName,
+            amount: transfer.amount,
+            status: "failed",
+            error: error instanceof Error ? error.message : "Transfer failed"
+          });
+        }
+      }
+      
+      await logApiCall(req, "Admin bulk transfer", 200, {
+        sourceUserName,
+        currencyCode,
+        totalTransferAmount,
+        results
+      });
+      
+      res.json({
+        success: true,
+        sourceUserName,
+        currencyCode,
+        totalTransferAmount,
+        results,
+        errors: errors.length > 0 ? errors : undefined
+      });
+    } catch (error) {
+      console.error("Error in admin bulk transfer:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to process bulk transfer" 
+      });
+    }
+  });
+  
   // Admin endpoint to get transactions for a specific user
   app.get("/api/admin/user/:userId/transactions", ensureAdmin, async (req, res) => {
     try {

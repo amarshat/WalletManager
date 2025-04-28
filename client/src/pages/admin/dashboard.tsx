@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,13 +6,15 @@ import { useBrand } from "@/hooks/use-brand";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
-import { Edit, Users, ScrollText } from "lucide-react";
+import { Edit, Users, ScrollText, CreditCard } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { User } from "@shared/schema";
+import AdminTransferModal from "@/components/modals/AdminTransferModal";
 
 export default function AdminDashboard() {
   const { brand } = useBrand();
   const { toast } = useToast();
+  const [transferModalOpen, setTransferModalOpen] = useState(false);
   
   // Fetch customers (non-admin users)
   const { 
@@ -224,12 +226,22 @@ export default function AdminDashboard() {
           <div className="p-4 md:p-6 border-b border-neutral-200">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-secondary">Customers</h2>
-              <Link href="/admin/manage-customers">
-                <Button className="flex items-center">
-                  <Users className="mr-1 w-4 h-4" />
-                  Manage Customers
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  className="flex items-center"
+                  onClick={() => setTransferModalOpen(true)}
+                >
+                  <CreditCard className="mr-1 w-4 h-4" />
+                  Admin Transfer
                 </Button>
-              </Link>
+                <Link href="/admin/manage-customers">
+                  <Button className="flex items-center">
+                    <Users className="mr-1 w-4 h-4" />
+                    Manage Customers
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
           
@@ -281,6 +293,12 @@ export default function AdminDashboard() {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Admin Transfer Modal */}
+      <AdminTransferModal
+        open={transferModalOpen}
+        onOpenChange={setTransferModalOpen}
+      />
     </AdminLayout>
   );
 }

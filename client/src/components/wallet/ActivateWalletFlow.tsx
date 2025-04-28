@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { 
   Loader2, 
   ArrowRight, 
@@ -10,7 +8,6 @@ import {
   CheckCircle2, 
   Camera, 
   Shield, 
-  AlertCircle, 
   Info,
   UserCheck
 } from "lucide-react";
@@ -67,87 +64,86 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
   
   const simulateDocumentScan = () => {
     setIsLoading(true);
-    // Simulate upload progress
-    let currentProgress = 0;
+    setProgress(0);
+    
     const interval = setInterval(() => {
-      currentProgress += 10;
-      setProgress(currentProgress);
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        setIsLoading(false);
-        goToNextStep();
-      }
-    }, 500);
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsLoading(false);
+            goToNextStep();
+          }, 300);
+          return 100;
+        }
+        return prev + 10;
+      });
+    }, 300);
   };
   
   const simulateSelfieScan = () => {
     setIsLoading(true);
-    // Simulate upload progress with faster speed
-    let currentProgress = 0;
+    setProgress(0);
+    
     const interval = setInterval(() => {
-      currentProgress += 20; // Faster progress (20% increments)
-      setProgress(currentProgress);
-      if (currentProgress >= 100) {
-        clearInterval(interval);
-        // Go directly to processing step when selfie is complete
-        setTimeout(() => {
-          setIsLoading(false);
-          setCurrentStep("processing");
-          simulateProcessing();
-        }, 200);
-      }
+      setProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => {
+            setIsLoading(false);
+            // Go straight to processing step
+            setCurrentStep("processing");
+            
+            // Start the processing animation after a short delay
+            setTimeout(() => {
+              runProcessingAnimation();
+            }, 100);
+          }, 300);
+          return 100;
+        }
+        return prev + 15; // Faster progress
+      });
     }, 200); // Faster interval
   };
   
-  const simulateProcessing = () => {
-    setIsLoading(true);
-    
-    // Set a definite timeout to move to the next step, no matter what happens with DOM manipulation
-    const finalTimeout = setTimeout(() => {
-      setIsLoading(false);
-      goToNextStep();
-    }, 4000);
-    
-    // First show "Identity validation" for 1 second
+  const runProcessingAnimation = () => {
+    // Show processing step for 4 seconds total
     setTimeout(() => {
+      // First update identity validation after 1 second
       try {
-        // Update the UI to show progress (but we won't change isLoading yet)
-        const processingElement = document.getElementById('identity-validation-item');
-        if (processingElement) {
-          processingElement.innerHTML = `
+        const element = document.getElementById('identity-validation-item');
+        if (element) {
+          element.innerHTML = `
             <div class="flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
               <span>Identity validation</span>
             </div>
           `;
         }
-      } catch (error) {
-        console.error("Error updating identity validation UI:", error);
+      } catch (e) {
+        console.error("Error updating UI:", e);
       }
       
-      // Then show "Fraud detection" for 1 more second
+      // Then update fraud detection after another second
       setTimeout(() => {
         try {
-          const fraudElement = document.getElementById('fraud-detection-item');
-          if (fraudElement) {
-            fraudElement.innerHTML = `
+          const element = document.getElementById('fraud-detection-item');
+          if (element) {
+            element.innerHTML = `
               <div class="flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
                 <span>Fraud detection analysis</span>
               </div>
             `;
           }
-          
-          // Move to the next step after a brief delay
-          setTimeout(() => {
-            clearTimeout(finalTimeout); // Clear the failsafe timeout since we're proceeding normally
-            setIsLoading(false);
-            goToNextStep();
-          }, 500);
-        } catch (error) {
-          console.error("Error updating fraud detection UI:", error);
-          // If we encountered an error, we still rely on the finalTimeout to proceed
+        } catch (e) {
+          console.error("Error updating UI:", e);
         }
+        
+        // Finally, move to complete step
+        setTimeout(() => {
+          goToNextStep();
+        }, 1000);
       }, 1000);
     }, 1000);
   };
@@ -387,7 +383,7 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
                 <div className="space-y-2">
                   <div className="flex items-center justify-center">
                     <Loader2 className="animate-spin h-6 w-6 mr-2" />
-                    <span>Processing image...</span>
+                    <span>Capturing selfie...</span>
                   </div>
                   <Progress value={progress} className="h-2 max-w-xs mx-auto" />
                 </div>
@@ -439,17 +435,14 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
               This process usually takes less than a minute. Please don't close this window.
             </p>
             
-            {/* Hidden auto-advance button for debugging/testing */}
+            {/* Hidden skip button for debugging - invisible but clickable if needed */}
             <Button 
               variant="link" 
               size="sm" 
-              className="text-xs opacity-0 absolute" 
-              onClick={() => {
-                setIsLoading(false);
-                goToNextStep();
-              }}
+              className="text-xs opacity-0" 
+              onClick={() => goToNextStep()}
             >
-              Continue
+              Skip
             </Button>
           </div>
         )}

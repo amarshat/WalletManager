@@ -11,13 +11,10 @@ import {
   PieChart,
   Layers,
   Wallet,
-  ParkingCircle,
-  BarChart3,
-  Building,
+  Gamepad2,
+  BookOpen,
   Car,
-  Leaf,
-  CalendarDays,
-  MapPin
+  Leaf
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -34,7 +31,6 @@ interface CustomerLayoutProps {
   onRefresh?: () => void;
   showRefreshButton?: boolean;
   hideSidebar?: boolean;
-  appType?: string; // Name of the embedded app, e.g. "binggo"
 }
 
 export default function CustomerLayout({ 
@@ -43,14 +39,12 @@ export default function CustomerLayout({
   description, 
   onRefresh,
   showRefreshButton = false,
-  hideSidebar = false,
-  appType: propAppType
+  hideSidebar = false
 }: CustomerLayoutProps) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { brand } = useBrand();
-  const { branding, appType: contextAppType, isEmbedded } = useAppBranding();
-  const appType = propAppType || contextAppType;
+  const { branding, appType, isEmbedded } = useAppBranding();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEmbedMode, setIsEmbedMode] = useState(false);
@@ -200,21 +194,22 @@ export default function CustomerLayout({
                   .filter(item => !(isEmbedMode && item.href === "/embedded-experience"))
                   .map((item) => (
                     <li key={item.href} className="px-2 py-1">
-                      <Link 
-                        href={item.href}
-                        className={`flex items-center px-4 py-2 rounded ${
-                          location === item.href
-                            ? "text-white font-medium"
-                            : "text-gray-100 hover:bg-gray-700"
-                        }`}
-                        style={{
-                          backgroundColor: location === item.href 
-                            ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
-                            : undefined
-                        }}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
+                      <Link href={item.href}>
+                        <a
+                          className={`flex items-center px-4 py-2 rounded ${
+                            location === item.href
+                              ? "text-white font-medium"
+                              : "text-gray-100 hover:bg-gray-700"
+                          }`}
+                          style={{
+                            backgroundColor: location === item.href 
+                              ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
+                              : undefined
+                          }}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </a>
                       </Link>
                     </li>
                   ))}

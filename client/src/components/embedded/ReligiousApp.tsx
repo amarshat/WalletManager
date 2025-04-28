@@ -368,7 +368,7 @@ export const ReligiousApp: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="text-xl font-medium">{user?.fullName || "Guest User"}</h3>
-                      <p className="text-gray-500">sarah.miller@example.com</p>
+                      <p className="text-gray-500">{user?.email || "No email provided"}</p>
                       <p className="text-gray-500">Pioneer since 2019</p>
                       <p className="text-gray-500">Congregation: Kingdom Hall - Central</p>
                     </div>

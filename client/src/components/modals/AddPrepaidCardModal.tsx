@@ -138,7 +138,7 @@ export default function AddPrepaidCardModal({
       cardType: "MASTERCARD", // Default as per requirements
       isDefault: data.isDefault,
       currencyCode: data.currencyCode,
-      balance: data.balance,
+      balance: data.balance.toString(), // Convert number to string as server expects a string
       cardDesign: data.cardDesign,
       status: "ACTIVE",
     }, {

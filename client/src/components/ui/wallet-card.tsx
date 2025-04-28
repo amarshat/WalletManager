@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
-  Plus, 
-  Send, 
+  BanknoteIcon,
+  CreditCard, 
+  DollarSign,
   RefreshCw, 
   ArrowDownCircle,
-  Ban
+  PiggyBank,
+  Building,
+  ParkingCircle,
+  Plus,
+  Send,
+  PocketKnife
 } from "lucide-react";
 import { useMemo } from "react";
 import { supportedCurrencies } from "@shared/schema";
@@ -50,7 +56,7 @@ export default function WalletCard({
     <Card className="overflow-hidden shadow-md wallet-card transition-transform hover:translate-y-[-2px]">
       <div className="bg-primary text-white p-4 md:p-6">
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-sm font-medium opacity-90">Available Balance</h2>
+          <h2 className="text-sm font-medium opacity-90">Partner Earnings</h2>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -72,8 +78,8 @@ export default function WalletCard({
             className="flex flex-col items-center bg-white bg-opacity-10 rounded-lg py-2 px-1 hover:bg-opacity-20 h-auto"
             onClick={onAddMoney}
           >
-            <Plus className="h-5 w-5 mb-1" />
-            <span className="text-xs">Add Money</span>
+            <ParkingCircle className="h-5 w-5 mb-1" />
+            <span className="text-xs">Add Space</span>
           </Button>
           
           <Button 
@@ -81,8 +87,8 @@ export default function WalletCard({
             className="flex flex-col items-center bg-white bg-opacity-10 rounded-lg py-2 px-1 hover:bg-opacity-20 h-auto"
             onClick={onSendMoney}
           >
-            <Send className="h-5 w-5 mb-1" />
-            <span className="text-xs">Send Money</span>
+            <CreditCard className="h-5 w-5 mb-1" />
+            <span className="text-xs">Transfer Funds</span>
           </Button>
           
           <Button 
@@ -90,7 +96,7 @@ export default function WalletCard({
             className="flex flex-col items-center bg-white bg-opacity-10 rounded-lg py-2 px-1 hover:bg-opacity-20 h-auto"
             onClick={onWithdraw}
           >
-            <ArrowDownCircle className="h-5 w-5 mb-1" />
+            <BanknoteIcon className="h-5 w-5 mb-1" />
             <span className="text-xs">Withdraw</span>
           </Button>
         </div>

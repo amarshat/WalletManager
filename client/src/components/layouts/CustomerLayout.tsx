@@ -11,10 +11,13 @@ import {
   PieChart,
   Layers,
   Wallet,
-  Gamepad2,
-  BookOpen,
+  ParkingCircle,
+  BarChart3,
+  Building,
   Car,
-  Leaf
+  Leaf,
+  CalendarDays,
+  MapPin
 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
@@ -95,29 +98,34 @@ export default function CustomerLayout({
       icon: <LayoutDashboard className="w-5 h-5 mr-3" /> 
     },
     { 
+      href: "/parking-spaces", 
+      label: "My Parking Spaces", 
+      icon: <ParkingCircle className="w-5 h-5 mr-3" /> 
+    },
+    { 
       href: "/transactions", 
-      label: "Transactions", 
+      label: "Earnings & Payouts", 
       icon: <RefreshCw className="w-5 h-5 mr-3" /> 
     },
     { 
-      href: "/budget", 
-      label: "Budget", 
-      icon: <PieChart className="w-5 h-5 mr-3" /> 
+      href: "/analytics", 
+      label: "Performance Analytics", 
+      icon: <BarChart3 className="w-5 h-5 mr-3" /> 
+    },
+    { 
+      href: "/calendar", 
+      label: "Availability Calendar", 
+      icon: <CalendarDays className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/carbon-impact", 
-      label: "Carbon Impact", 
+      label: "Green Impact", 
       icon: <Leaf className="w-5 h-5 mr-3" /> 
     },
     { 
       href: "/payment-methods", 
       label: "Payment Methods", 
       icon: <CreditCard className="w-5 h-5 mr-3" /> 
-    },
-    {
-      href: "/embedded-experience",
-      label: "Embedded Apps",
-      icon: <Layers className="w-5 h-5 mr-3" />
     },
     { 
       href: "/profile", 

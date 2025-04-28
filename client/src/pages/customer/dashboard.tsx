@@ -3,7 +3,7 @@ import CustomerLayout from "@/components/layouts/CustomerLayout";
 import WalletCard from "@/components/ui/wallet-card";
 import TransactionItem from "@/components/ui/transaction-item";
 import CurrencySelector from "@/components/ui/currency-selector";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { usePaysafe } from "@/hooks/use-paysafe";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
@@ -16,10 +16,29 @@ import AddPrepaidCardModal from "@/components/modals/AddPrepaidCardModal";
 import ActivateWalletFlow from "@/components/wallet/ActivateWalletFlow";
 import { CarbonImpactSummary } from "@/components/wallet/CarbonImpactSummary";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { usePrepaidCards } from "@/hooks/use-prepaid-cards";
 import { useCarbonContext } from "@/hooks/use-carbon-provider";
 import PrepaidCard from "@/components/ui/prepaid-card";
-import { AlertCircle, ArrowDownIcon, CreditCard, Leaf, Plus, Send, Upload } from "lucide-react";
+import { 
+  AlertCircle, 
+  ArrowDownIcon,
+  ArrowUpRight,
+  BarChart3,
+  Car, 
+  CreditCard, 
+  CalendarDays,
+  DollarSign,
+  Leaf, 
+  MapPin,
+  ParkingCircle,
+  Plus, 
+  Send, 
+  TrendingUp,
+  Upload,
+  Users
+} from "lucide-react";
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -153,73 +172,144 @@ export default function CustomerDashboard() {
         </Button>
       </div>
       
-      {/* Prepaid Cards Section */}
+      {/* Parking Spaces Summary Section */}
       {!isWalletMissing && (
-        <Card className="bg-white rounded-lg shadow-md overflow-hidden mt-6">
-          <div className="p-4 md:p-6 border-b border-neutral-200">
-            <div className="flex items-center justify-between mb-2">
-              <h2 className="text-lg font-semibold text-gray-900">Your Prepaid Cards</h2>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center"
-                onClick={() => setAddPrepaidCardModalOpen(true)}
-                disabled={!canAddMorePrepaidCards}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Add Prepaid Card
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3 mt-6">
+          {/* Parking Spaces Card */}
+          <Card className="bg-white rounded-lg shadow-md overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <ParkingCircle className="mr-2 h-5 w-5 text-blue-600" />
+                  My Parking Spaces
+                </CardTitle>
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Active</Badge>
+              </div>
+              <CardDescription>Manage your parking locations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Total spaces:</span>
+                  <span className="text-xl font-bold">3</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Booked today:</span>
+                  <span className="text-xl font-bold text-green-600">2</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Available:</span>
+                  <span className="text-xl font-bold text-amber-500">1</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Occupancy rate:</span>
+                  <span className="text-xl font-bold">67%</span>
+                </div>
+                <Progress value={67} className="h-2 mt-2" />
+              </div>
+            </CardContent>
+            <CardFooter className="pt-0 border-t">
+              <Button variant="ghost" className="w-full flex items-center justify-center text-blue-600" onClick={() => window.location.href = '/parking-spaces'}>
+                <MapPin className="mr-2 h-4 w-4" />
+                Manage Parking Spaces
               </Button>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              {canAddMorePrepaidCards
-                ? `You can add up to ${prepaidCardLimit} prepaid cards. Currently using ${prepaidCards.length} of ${prepaidCardLimit}.`
-                : "You have reached the maximum number of prepaid cards allowed."}
-            </p>
-          </div>
-          
-          <div className="p-4 md:p-6">
-            {isLoadingPrepaidCards ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+            </CardFooter>
+          </Card>
+
+          {/* Earnings Card */}
+          <Card className="bg-white rounded-lg shadow-md overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <DollarSign className="mr-2 h-5 w-5 text-green-600" />
+                  Monthly Earnings
+                </CardTitle>
+                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">April 2025</Badge>
               </div>
-            ) : prepaidCards.length === 0 ? (
-              <div className="text-center py-8 px-4">
-                <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
-                <h3 className="text-lg font-medium mb-2">No Prepaid Cards</h3>
-                <p className="text-muted-foreground mb-4">
-                  You haven't added any prepaid cards yet. Add a prepaid card to get started.
-                </p>
-                <Button 
-                  onClick={() => setAddPrepaidCardModalOpen(true)} 
-                  disabled={!canAddMorePrepaidCards}
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Card
-                </Button>
+              <CardDescription>Your parking space revenue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Current month:</span>
+                  <span className="text-2xl font-bold">${balanceAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Previous month:</span>
+                  <span className="text-xl font-medium">$982.50</span>
+                </div>
+                <div className="flex items-center text-green-600 font-medium">
+                  <TrendingUp className="h-4 w-4 mr-1" />
+                  <span>+12.4% from last month</span>
+                </div>
+                <div className="flex justify-between items-center pt-2">
+                  <span className="text-sm font-medium">YTD Earnings:</span>
+                  <span className="text-xl font-bold">$3,478.25</span>
+                </div>
               </div>
-            ) : (
-              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {prepaidCards.map((card) => (
-                  <PrepaidCard
-                    key={card.id}
-                    card={card}
-                    onSetDefault={(id) => {
-                      updatePrepaidCard({
-                        id,
-                        data: { isDefault: true }
-                      });
-                    }}
-                    onDelete={(id) => {
-                      if (window.confirm('Are you sure you want to delete this prepaid card?')) {
-                        deletePrepaidCard(id);
-                      }
-                    }}
-                  />
-                ))}
+            </CardContent>
+            <CardFooter className="pt-0 border-t">
+              <Button variant="ghost" className="w-full flex items-center justify-center text-green-600" onClick={() => window.location.href = '/transactions'}>
+                <ArrowUpRight className="mr-2 h-4 w-4" />
+                View Earnings Details
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Bookings Card */}
+          <Card className="bg-white rounded-lg shadow-md overflow-hidden">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <CalendarDays className="mr-2 h-5 w-5 text-purple-600" />
+                  Upcoming Bookings
+                </CardTitle>
+                <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-100">Today</Badge>
               </div>
-            )}
-          </div>
-        </Card>
+              <CardDescription>Recent parking reservations</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="border rounded-md p-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 mr-2 text-purple-600" />
+                      <span className="font-medium">John D.</span>
+                    </div>
+                    <span className="text-sm">2:30 PM - 5:30 PM</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Main Street Spot #2</div>
+                </div>
+                <div className="border rounded-md p-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 mr-2 text-purple-600" />
+                      <span className="font-medium">Maria L.</span>
+                    </div>
+                    <span className="text-sm">9:00 AM - 4:00 PM</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Downtown Garage #1</div>
+                </div>
+                <div className="border rounded-md p-3">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center">
+                      <Car className="h-4 w-4 mr-2 text-purple-600" />
+                      <span className="font-medium">Alex T.</span>
+                    </div>
+                    <span className="text-sm">Tomorrow, 8:00 AM</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground mt-1">Riverside Spot #3</div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter className="pt-0 border-t">
+              <Button variant="ghost" className="w-full flex items-center justify-center text-purple-600" onClick={() => window.location.href = '/calendar'}>
+                <CalendarDays className="mr-2 h-4 w-4" />
+                View Calendar
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
       )}
       
       {/* Carbon Impact Card */}

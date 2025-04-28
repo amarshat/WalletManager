@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { z } from "zod";
-import { insertBrandSettingsSchema, insertCardSchema } from "@shared/schema";
+import { insertBrandSettingsSchema, insertCardSchema, insertPrepaidCardSchema } from "@shared/schema";
 import { walletClient } from "./wallet-client";
 import { errorHandler } from "./diagnostics/error-tracking";
 
@@ -769,6 +769,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting card:", error);
       res.status(500).json({ error: "Failed to delete card" });
+    }
+  });
+  
+  // Prepaid Card Management Routes
+  app.get("/api/prepaid-cards", ensureAuth, async (req, res) => {
+    try {
+      const cards = await storage.getPrepaidCardsByUserId(req.user!.id);
+      
+      // Get brand settings to validate against limit
+      const settings = await storage.getBrandSettings();
+      const maxPrepaidCards = settings?.walletConfig?.maxPrepaidCards || 3;
+      
+      res.json({
+        cards,
+        limit: maxPrepaidCards,
+        canAddMore: cards.length < maxPrepaidCards
+      });
+    } catch (error) {
+      console.error("Error fetching prepaid cards:", error);
+      res.status(500).json({ error: "Failed to fetch prepaid cards" });
+    }
+  });
+  
+  app.get("/api/prepaid-cards/:id", ensureAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      const card = await storage.getPrepaidCardById(cardId);
+      
+      if (!card) {
+        return res.status(404).json({ error: "Prepaid card not found" });
+      }
+      
+      // Make sure card belongs to user
+      if (card.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You do not have permission to view this card" });
+      }
+      
+      res.json(card);
+    } catch (error) {
+      console.error("Error fetching prepaid card:", error);
+      res.status(500).json({ error: "Failed to fetch prepaid card" });
+    }
+  });
+  
+  app.post("/api/prepaid-cards", ensureAuth, async (req, res) => {
+    try {
+      // Get user's existing prepaid cards
+      const existingCards = await storage.getPrepaidCardsByUserId(req.user!.id);
+      
+      // Get brand settings to validate against limit
+      const settings = await storage.getBrandSettings();
+      const maxPrepaidCards = settings?.walletConfig?.maxPrepaidCards || 3;
+      
+      // Check if limit has been reached
+      if (existingCards.length >= maxPrepaidCards) {
+        return res.status(400).json({ 
+          error: `You have reached the maximum limit of ${maxPrepaidCards} prepaid cards`
+        });
+      }
+      
+      // Validate and create card data
+      const cardData = insertPrepaidCardSchema.parse({
+        ...req.body,
+        userId: req.user!.id,
+        cardType: "MASTERCARD", // Default to Mastercard as per requirements
+        balance: req.body.balance || 0,
+        currencyCode: req.body.currencyCode || "USD"
+      });
+      
+      // If this is the default card, unset other default cards
+      if (cardData.isDefault) {
+        for (const card of existingCards) {
+          if (card.isDefault) {
+            await storage.updatePrepaidCard(card.id, { isDefault: false });
+          }
+        }
+      }
+      
+      const card = await storage.addPrepaidCard(cardData);
+      
+      await logApiCall(req, "Add prepaid card", 201, card);
+      res.status(201).json(card);
+    } catch (error) {
+      console.error("Error creating prepaid card:", error);
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ error: "Invalid prepaid card data", details: error.errors });
+      } else {
+        res.status(500).json({ error: "Failed to create prepaid card" });
+      }
+    }
+  });
+  
+  app.put("/api/prepaid-cards/:id", ensureAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      
+      // Check if card exists and belongs to user
+      const card = await storage.getPrepaidCardById(cardId);
+      if (!card) {
+        return res.status(404).json({ error: "Prepaid card not found" });
+      }
+      
+      if (card.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You do not have permission to update this card" });
+      }
+      
+      // Remove userId from update data to prevent ownership changes
+      const { userId, ...updateData } = req.body;
+      
+      const updatedCard = await storage.updatePrepaidCard(cardId, updateData);
+      
+      await logApiCall(req, "Update prepaid card", 200, updatedCard);
+      res.json(updatedCard);
+    } catch (error) {
+      console.error("Error updating prepaid card:", error);
+      res.status(500).json({ error: "Failed to update prepaid card" });
+    }
+  });
+  
+  app.delete("/api/prepaid-cards/:id", ensureAuth, async (req, res) => {
+    try {
+      const cardId = parseInt(req.params.id);
+      
+      // Check if card belongs to user
+      const card = await storage.getPrepaidCardById(cardId);
+      
+      if (!card) {
+        return res.status(404).json({ error: "Prepaid card not found" });
+      }
+      
+      if (card.userId !== req.user!.id) {
+        return res.status(403).json({ error: "You do not have permission to delete this card" });
+      }
+      
+      const success = await storage.deletePrepaidCard(cardId);
+      
+      await logApiCall(req, "Delete prepaid card", success ? 200 : 404, { success });
+      
+      if (success) {
+        res.json({ success: true });
+      } else {
+        res.status(404).json({ error: "Prepaid card not found" });
+      }
+    } catch (error) {
+      console.error("Error deleting prepaid card:", error);
+      res.status(500).json({ error: "Failed to delete prepaid card" });
     }
   });
   

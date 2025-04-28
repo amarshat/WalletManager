@@ -6,10 +6,58 @@ const CarbonContext = createContext<ReturnType<typeof useCarbon> | undefined>(un
 
 // Carbon provider component
 export function CarbonProvider({ children }: { children: ReactNode }) {
-  const carbonData = useCarbon();
+  const {
+    // Data
+    carbonCategories,
+    carbonPreferences,
+    carbonImpacts,
+    carbonOffsets,
+    carbonSummary,
+    
+    // Loading states
+    isLoadingCategories,
+    isLoadingPreferences,
+    isLoadingImpacts,
+    isLoadingOffsets,
+    isLoadingSummary,
+    
+    // Mutations
+    updateCarbonPreferences,
+    recordCarbonImpact,
+    recordCarbonOffset,
+    
+    // Mutation states
+    isUpdatingPreferences,
+    isRecordingImpact,
+    isRecordingOffset,
+  } = useCarbon();
   
   return (
-    <CarbonContext.Provider value={carbonData}>
+    <CarbonContext.Provider value={{
+      // Data
+      carbonCategories,
+      carbonPreferences,
+      carbonImpacts,
+      carbonOffsets,
+      carbonSummary,
+      
+      // Loading states
+      isLoadingCategories,
+      isLoadingPreferences,
+      isLoadingImpacts,
+      isLoadingOffsets,
+      isLoadingSummary,
+      
+      // Mutations
+      updateCarbonPreferences,
+      recordCarbonImpact,
+      recordCarbonOffset,
+      
+      // Mutation states
+      isUpdatingPreferences,
+      isRecordingImpact,
+      isRecordingOffset,
+    }}>
       {children}
     </CarbonContext.Provider>
   );

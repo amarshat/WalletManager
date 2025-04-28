@@ -34,3 +34,20 @@ export function formatCardNumber(cardNumber: string): string {
   
   return formatted;
 }
+
+/**
+ * Format a number with proper decimal places for display
+ * @param amount - The number to format
+ * @param decimals - Number of decimal places (default: 2)
+ * @returns Formatted number as string
+ */
+export function formatAmount(amount: number, decimals: number = 2): string {
+  // Ensure amount is a valid number
+  if (isNaN(amount)) return '0';
+  
+  // Format with fixed decimal places but remove trailing zeros
+  const formatted = amount.toFixed(decimals);
+  
+  // Remove trailing zeros and decimal point if needed
+  return formatted.replace(/\.?0+$/, '');
+}

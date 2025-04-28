@@ -14,10 +14,12 @@ import WithdrawModal from "@/components/modals/WithdrawModal";
 import BulkTransferModal from "@/components/modals/BulkTransferModal";
 import AddPrepaidCardModal from "@/components/modals/AddPrepaidCardModal";
 import ActivateWalletFlow from "@/components/wallet/ActivateWalletFlow";
+import { CarbonImpactSummary } from "@/components/wallet/CarbonImpactSummary";
 import { Button } from "@/components/ui/button";
 import { usePrepaidCards } from "@/hooks/use-prepaid-cards";
+import { useCarbonContext } from "@/hooks/use-carbon-provider";
 import PrepaidCard from "@/components/ui/prepaid-card";
-import { AlertCircle, ArrowDownIcon, CreditCard, Plus, Send, Upload } from "lucide-react";
+import { AlertCircle, ArrowDownIcon, CreditCard, Leaf, Plus, Send, Upload } from "lucide-react";
 
 export default function CustomerDashboard() {
   const { user } = useAuth();
@@ -216,6 +218,30 @@ export default function CustomerDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        </Card>
+      )}
+      
+      {/* Carbon Impact Card */}
+      {!isWalletMissing && (
+        <Card className="bg-white rounded-lg shadow-md overflow-hidden mt-6">
+          <div className="p-4 md:p-6 border-b border-neutral-200">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold text-gray-900">Carbon Impact</h2>
+              <Button 
+                variant="link" 
+                className="text-primary hover:text-primary-dark text-sm font-medium"
+                onClick={() => window.location.href = '/carbon-impact'}
+              >
+                View Details
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Track the carbon footprint of your spending and offsetting activities
+            </p>
+          </div>
+          <div className="p-4 md:p-6">
+            <CarbonImpactSummary />
           </div>
         </Card>
       )}

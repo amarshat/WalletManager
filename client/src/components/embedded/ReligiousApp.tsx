@@ -19,6 +19,7 @@ import {
   Home 
 } from 'lucide-react';
 import WalletTabContent from '@/components/embedded/WalletTabContent';
+import { useAuth } from '@/hooks/use-auth';
 
 const upcomingEvents = [
   { id: 1, title: 'Community Service Meeting', date: 'Today', time: '7:00 PM - 9:00 PM', location: 'Kingdom Hall - Central', attendees: 42 },
@@ -39,6 +40,16 @@ const donationOptions = [
 
 export const ReligiousApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
+  const { user } = useAuth();
+  
+  // Get user's initials for the avatar
+  const getInitials = (name?: string) => {
+    if (!name) return "U";
+    return name.split(' ')
+      .map(part => part.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 2);
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
@@ -50,9 +61,9 @@ export const ReligiousApp: React.FC = () => {
             <h1 className="text-2xl font-bold">Jehovah's Witnesses Portal</h1>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="hidden md:inline">Sarah Miller</span>
+            <span className="hidden md:inline">{user?.fullName || "Guest"}</span>
             <div className="h-8 w-8 rounded-full bg-purple-400 flex items-center justify-center text-sm font-medium">
-              SM
+              {getInitials(user?.fullName)}
             </div>
           </div>
         </div>
@@ -73,7 +84,7 @@ export const ReligiousApp: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card className="col-span-1 md:col-span-2">
                 <CardHeader>
-                  <CardTitle>Welcome, Sarah!</CardTitle>
+                  <CardTitle>Welcome, {user?.fullName?.split(' ')[0] || 'Friend'}!</CardTitle>
                   <CardDescription>
                     Your spiritual activity dashboard for April 2023
                   </CardDescription>
@@ -353,10 +364,10 @@ export const ReligiousApp: React.FC = () => {
                 <div className="space-y-6">
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
                     <div className="h-20 w-20 rounded-full bg-purple-400 flex items-center justify-center text-white text-2xl font-medium">
-                      SM
+                      {getInitials(user?.fullName)}
                     </div>
                     <div>
-                      <h3 className="text-xl font-medium">Sarah Miller</h3>
+                      <h3 className="text-xl font-medium">{user?.fullName || "Guest User"}</h3>
                       <p className="text-gray-500">sarah.miller@example.com</p>
                       <p className="text-gray-500">Pioneer since 2019</p>
                       <p className="text-gray-500">Congregation: Kingdom Hall - Central</p>

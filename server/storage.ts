@@ -34,6 +34,7 @@ export interface IStorage {
   // Wallet operations
   getWalletByUserId(userId: number): Promise<CustomerWallet | undefined>;
   createWallet(wallet: InsertCustomerWallet): Promise<CustomerWallet>;
+  updateWallet(id: number, data: Partial<InsertCustomerWallet>): Promise<CustomerWallet | undefined>;
   
   // Wallet account operations
   getWalletAccounts(walletId: number): Promise<WalletAccount[]>;
@@ -176,6 +177,15 @@ export class DatabaseStorage implements IStorage {
       .values(wallet)
       .returning();
     return created;
+  }
+  
+  async updateWallet(id: number, data: Partial<InsertCustomerWallet>): Promise<CustomerWallet | undefined> {
+    const [updated] = await db
+      .update(customerWallets)
+      .set(data)
+      .where(eq(customerWallets.id, id))
+      .returning();
+    return updated;
   }
   
   // Wallet account operations

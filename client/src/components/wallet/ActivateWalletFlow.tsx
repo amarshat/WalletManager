@@ -408,11 +408,11 @@ export default function ActivateWalletFlow({ onSuccess }: ActivateWalletFlowProp
                   <CheckCircle2 className="h-4 w-4 text-green-500 mr-2" />
                   <span>Biometric verification</span>
                 </li>
-                <li className="flex items-center">
+                <li id="identity-validation-item" className="flex items-center">
                   <Loader2 className="h-4 w-4 text-blue-500 animate-spin mr-2" />
                   <span>Identity validation</span>
                 </li>
-                <li className="flex items-center text-muted-foreground">
+                <li id="fraud-detection-item" className="flex items-center text-muted-foreground">
                   <div className="h-4 w-4 mr-2"></div>
                   <span>Fraud detection analysis</span>
                 </li>

@@ -1326,8 +1326,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let wallet = await storage.getWalletByUserId(req.user!.id);
       
       if (wallet) {
+        // If wallet exists but status is not ACTIVE, update it to ACTIVE
+        if (wallet.status !== 'ACTIVE') {
+          wallet = await storage.updateWallet(wallet.id, { status: 'ACTIVE' });
+          await logApiCall(req, "Activate existing wallet", 200, wallet);
+          
+          return res.json({ 
+            message: "Wallet activated successfully", 
+            wallet 
+          });
+        }
+        
+        // Wallet already exists and is active
         return res.json({ 
-          message: "Wallet already exists", 
+          message: "Wallet already exists and is active", 
           wallet 
         });
       }
@@ -1348,11 +1360,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: req.user!.id,
           customerId: walletResponse.id,
           externalReference: walletResponse.externalReference || null,
-          status: walletResponse.status || 'ACTIVE'
+          status: 'ACTIVE' // Always set status to ACTIVE when creating via KYC flow
         });
         
-        // Create accounts for the wallet if needed
-        if (walletResponse.accounts && Array.isArray(walletResponse.accounts)) {
+        // Create accounts for the wallet
+        // If the wallet doesn't have accounts from the API response, create a default USD account
+        if (walletResponse.accounts && Array.isArray(walletResponse.accounts) && walletResponse.accounts.length > 0) {
           for (const account of walletResponse.accounts) {
             await storage.addWalletAccount({
               walletId: wallet.id,
@@ -1362,11 +1375,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
               hasVirtualInstrument: account.hasVirtualInstrument || false
             });
           }
+        } else {
+          // Create default USD account if none exists
+          const defaultAccount = {
+            id: `account-${Date.now()}`,
+            currencyCode: req.user!.defaultCurrency || 'USD',
+            externalId: req.user!.username,
+            hasVirtualInstrument: false
+          };
+          
+          await storage.addWalletAccount({
+            walletId: wallet.id,
+            accountId: defaultAccount.id,
+            currencyCode: defaultAccount.currencyCode,
+            externalId: defaultAccount.externalId,
+            hasVirtualInstrument: defaultAccount.hasVirtualInstrument
+          });
         }
         
         await logApiCall(req, "Initialize wallet", 201, wallet);
         return res.status(201).json({
-          message: "Wallet created successfully",
+          message: "Wallet created and activated successfully",
           wallet
         });
       } else {

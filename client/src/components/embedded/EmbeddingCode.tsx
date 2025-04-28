@@ -12,7 +12,16 @@ interface EmbeddingCodeProps {
 const EmbeddingCode: React.FC<EmbeddingCodeProps> = ({ language, framework }) => {
   const [copied, setCopied] = useState(false);
 
+  const getAppName = () => {
+    if (framework === 'React') return 'BingGo Parking';
+    if (framework === 'Angular') return 'Jehovah\'s Witnesses Portal';
+    if (framework === 'Vanilla JS') return 'FusionForge Gaming';
+    return 'Your Application';
+  };
+
   const getEmbeddingCode = () => {
+    const appName = getAppName();
+    
     switch (framework) {
       case 'React':
         return `
@@ -37,7 +46,7 @@ const walletConfig = {
 function MyApp() {
   return (
     <div className="my-app">
-      <h1>Welcome to ${framework === 'React' ? 'BingGo Parking' : framework === 'Angular' ? 'Jehovah\'s Witnesses Portal' : 'FusionForge Gaming'}</h1>
+      <h1>Welcome to ${appName}</h1>
       
       {/* Other app content */}
       
@@ -67,7 +76,7 @@ import { PaySageWalletService } from '@paysage/angular';
   selector: 'app-wallet',
   template: \`
     <div class="my-app">
-      <h1>Welcome to ${framework === 'React' ? 'BingGo Parking' : framework === 'Angular' ? 'Jehovah\'s Witnesses Portal' : 'FusionForge Gaming'}</h1>
+      <h1>Welcome to ${appName}</h1>
       
       <!-- Other app content -->
       

@@ -21,6 +21,7 @@ import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
 import TroubleshootingDashboard from "@/pages/admin/troubleshooting";
+import EmbeddedWalletPage from "@/pages/embedded-wallet-page";
 
 // Customer Pages
 import CustomerDashboard from "@/pages/customer/dashboard";
@@ -98,6 +99,12 @@ function Router() {
       <ProtectedRoute 
         path="/admin/troubleshooting" 
         component={TroubleshootingDashboard} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
+        path="/admin/embedded-wallet" 
+        component={EmbeddedWalletPage} 
         requireAdmin={true} 
         redirectTo="/auth" 
       />

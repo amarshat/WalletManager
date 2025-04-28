@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tabs, TabsContent, TabsHeader, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -83,7 +83,7 @@ export const ParkingApp: React.FC = () => {
                               <span className="text-2xl font-bold text-blue-600">${spot.price.toFixed(2)}</span>
                               <span className="text-gray-500"> / hour</span>
                             </div>
-                            <Badge variant={spot.available > 10 ? "success" : spot.available > 5 ? "warning" : "destructive"}>
+                            <Badge className={spot.available > 10 ? "bg-green-500" : spot.available > 5 ? "bg-yellow-500" : "bg-red-500"}>
                               {spot.available} spots available
                             </Badge>
                           </div>

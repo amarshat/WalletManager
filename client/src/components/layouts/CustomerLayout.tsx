@@ -49,7 +49,8 @@ export default function CustomerLayout({
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
   const { brand } = useBrand();
-  const { branding, appType, isEmbedded } = useAppBranding();
+  const { branding, appType: contextAppType, isEmbedded } = useAppBranding();
+  const appType = propAppType || contextAppType;
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isEmbedMode, setIsEmbedMode] = useState(false);

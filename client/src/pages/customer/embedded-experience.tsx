@@ -9,7 +9,7 @@ import {
   UserCheck, ChevronDown, ChevronUp, Car, Zap, DollarSign, Check, MapPin
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import CarbonImpactSummary from "@/components/wallet/CarbonImpactSummary";
+import { CarbonImpactSummary } from "@/components/wallet/CarbonImpactSummary";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import {

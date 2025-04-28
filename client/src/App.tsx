@@ -33,6 +33,7 @@ import Profile from "@/pages/customer/profile";
 import PaymentMethodsPage from "@/pages/customer/payment-methods-page";
 import BudgetPage from "@/pages/customer/budget";
 import CarbonImpactPage from "@/pages/customer/carbon-impact";
+import EmbeddedExperiencePage from "@/pages/customer/embedded-experience";
 
 import SplashScreen from "@/components/ui/splash-screen";
 import React, { useState, useEffect, Suspense } from "react";
@@ -155,7 +156,7 @@ function Router() {
       />
       <ProtectedRoute 
         path="/embedded-experience" 
-        component={CustomerEmbeddedWallet}
+        component={EmbeddedExperiencePage}
         redirectTo="/auth" 
       />
       

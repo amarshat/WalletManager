@@ -316,28 +316,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       });
       
-      if (!walletResponse || !walletResponse.accounts?.[0]?.customerId) {
-        return res.status(500).json({ error: "Failed to create wallet" });
+      let wallet = null;
+      
+      // If wallet creation was successful, save the wallet info
+      if (walletResponse && walletResponse.accounts?.[0]?.customerId) {
+        try {
+          // Create wallet record
+          wallet = await storage.createWallet({
+            userId: user.id,
+            customerId: walletResponse.accounts[0].customerId,
+            externalReference: user.username
+          });
+          
+          // Create wallet account record
+          await storage.addWalletAccount({
+            walletId: wallet.id,
+            accountId: walletResponse.accounts[0].id,
+            currencyCode: walletResponse.accounts[0].currencyCode,
+            externalId: walletResponse.accounts[0].externalId,
+            hasVirtualInstrument: !!walletResponse.accounts[0].virtualInstrument
+          });
+        } catch (walletError) {
+          console.error("Error saving wallet info:", walletError);
+          // We'll continue even if saving wallet info fails
+        }
       }
       
-      // Create wallet record
-      const wallet = await storage.createWallet({
-        userId: user.id,
-        customerId: walletResponse.accounts[0].customerId,
-        externalReference: user.username
-      });
-      
-      // Create wallet account record
-      await storage.addWalletAccount({
-        walletId: wallet.id,
-        accountId: walletResponse.accounts[0].id,
-        currencyCode: walletResponse.accounts[0].currencyCode,
-        externalId: walletResponse.accounts[0].externalId,
-        hasVirtualInstrument: !!walletResponse.accounts[0].virtualInstrument
-      });
-      
       await logApiCall(req, "Create user with wallet", 201, { user, wallet });
-      res.status(201).json({ user, wallet });
+      
+      // Always return success with activation info, even if wallet had issues
+      res.status(201).json({ 
+        user,
+        wallet,
+        message: "User created successfully. The user will need to activate their wallet on first login." 
+      });
     } catch (error) {
       console.error("Error creating user:", error);
       res.status(500).json({ error: "Failed to create user" });

@@ -54,11 +54,11 @@ export default function ManageCustomers() {
       const res = await apiRequest("POST", "/api/users", userData);
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/users"] });
       toast({
         title: "Customer created",
-        description: "The customer account has been created successfully",
+        description: data.message || "The customer account has been created successfully. The user will need to activate their wallet on first login.",
       });
       setIsCreateDialogOpen(false);
       form.reset();

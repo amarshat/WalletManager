@@ -331,7 +331,7 @@ const WalletTabContent: React.FC<WalletTabContentProps> = ({
               <CardContent className="p-0 overflow-hidden">
                 <div className="relative bg-white rounded-md overflow-hidden" style={{ height: '480px' }}>
                   <iframe 
-                    src="/dashboard"
+                    src="/dashboard?hideSidebar=true"
                     title="PaySage Wallet Dashboard"
                     className="absolute top-0 left-0 w-full h-full border-0" 
                     style={{ 

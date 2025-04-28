@@ -57,6 +57,7 @@ function MyApp() {
         showHeader={true}
         allowedCurrencies={['USD', 'EUR']}
         onTransaction={(data) => console.log('Transaction:', data)}
+        hideSidebar={true} // Set to true to hide the sidebar in compact view
       />
     </div>
   );
@@ -102,6 +103,7 @@ export class WalletComponent implements OnInit {
         fontFamily: 'Roboto, sans-serif',
         borderRadius: '0.5rem'
       },
+      hideSidebar: true, // Set to true to hide the sidebar in compact view
       callbacks: {
         onTransaction: (data) => console.log('Transaction:', data)
       }
@@ -129,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
       borderRadius: '0.75rem'
     },
     showHeader: true,
+    hideSidebar: true, // Set to true to hide the sidebar in compact view
     allowedCurrencies: ['USD', 'EUR', 'GBP'],
     callbacks: {
       onTransaction: function(data) {

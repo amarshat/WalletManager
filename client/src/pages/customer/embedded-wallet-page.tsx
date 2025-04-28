@@ -74,38 +74,14 @@ export default function EmbeddedWalletPage() {
                   Access your main dashboard and wallet functionality
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <p className="mb-4">To access your full wallet functionality, please return to your main dashboard.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card className="p-4 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer" onClick={() => window.location.href = "/dashboard"}>
-                    <div className="flex items-center justify-center h-20">
-                      <LayoutDashboard className="h-8 w-8 text-blue-600" />
-                    </div>
-                    <div className="text-center mt-4">
-                      <h3 className="font-medium">Dashboard</h3>
-                      <p className="text-sm text-gray-500">View your wallet overview</p>
-                    </div>
-                  </Card>
-                  
-                  <Card className="p-4 bg-green-50 hover:bg-green-100 transition-colors cursor-pointer" onClick={() => window.location.href = "/transactions"}>
-                    <div className="flex items-center justify-center h-20">
-                      <RefreshCw className="h-8 w-8 text-green-600" />
-                    </div>
-                    <div className="text-center mt-4">
-                      <h3 className="font-medium">Transactions</h3>
-                      <p className="text-sm text-gray-500">View your transaction history</p>
-                    </div>
-                  </Card>
-                  
-                  <Card className="p-4 bg-purple-50 hover:bg-purple-100 transition-colors cursor-pointer" onClick={() => window.location.href = "/payment-methods"}>
-                    <div className="flex items-center justify-center h-20">
-                      <CreditCard className="h-8 w-8 text-purple-600" />
-                    </div>
-                    <div className="text-center mt-4">
-                      <h3 className="font-medium">Payment Methods</h3>
-                      <p className="text-sm text-gray-500">Manage your cards</p>
-                    </div>
-                  </Card>
+              <CardContent className="p-0 overflow-hidden">
+                <div className="relative bg-white rounded-md overflow-hidden" style={{ height: '680px' }}>
+                  <iframe 
+                    src="/dashboard?hideSidebar=true"
+                    title="PaySage Wallet Dashboard"
+                    className="absolute top-0 left-0 w-full h-full border-0" 
+                    style={{ width: '100%', height: '100%', borderRadius: '0 0 8px 8px' }}
+                  />
                 </div>
               </CardContent>
             </Card>

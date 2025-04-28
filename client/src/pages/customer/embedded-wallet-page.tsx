@@ -77,7 +77,7 @@ export default function EmbeddedWalletPage() {
               <CardContent className="p-0 overflow-hidden">
                 <div className="relative bg-white rounded-md overflow-hidden" style={{ height: '680px' }}>
                   <iframe 
-                    src="/dashboard?hideSidebar=true"
+                    src="/dashboard?embedMode=true"
                     title="PaySage Wallet Dashboard"
                     className="absolute top-0 left-0 w-full h-full border-0" 
                     style={{ width: '100%', height: '100%', borderRadius: '0 0 8px 8px' }}

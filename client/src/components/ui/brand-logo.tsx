@@ -1,6 +1,8 @@
 import { useBrand } from "@/hooks/use-brand";
+import { useAppBranding } from "@/hooks/use-app-branding";
 import defaultLogo from "@/assets/default-logo.svg";
 import { useState, useEffect } from "react";
+import { Wallet, Gamepad2, BookOpen, Car } from "lucide-react";
 
 interface BrandLogoProps {
   className?: string;
@@ -28,17 +30,32 @@ const isBase64Image = (str: string): boolean => {
 
 export default function BrandLogo({ className = "h-8", useIcon = false }: BrandLogoProps) {
   const { brand } = useBrand();
+  const { branding, appType } = useAppBranding();
   const [imageError, setImageError] = useState(false);
   
   // Reset error state when brand or useIcon changes
   useEffect(() => {
     setImageError(false);
-  }, [brand, useIcon]);
+  }, [brand, useIcon, appType]);
   
   // Handle image loading errors
   const handleImageError = () => {
     setImageError(true);
   };
+  
+  // If we have an app type, render the appropriate icon
+  if (appType) {
+    const iconSize = className.includes('h-8') ? 28 : className.includes('h-10') ? 36 : 24;
+    const iconColor = branding.primaryColor;
+    
+    if (appType === 'blue') {
+      return <Car size={iconSize} color={iconColor} />;
+    } else if (appType === 'purple') {
+      return <BookOpen size={iconSize} color={iconColor} />;
+    } else if (appType === 'red') {
+      return <Gamepad2 size={iconSize} color={iconColor} />;
+    }
+  }
   
   // If using icon and we have an icon URL/base64, use it
   if (useIcon && brand?.iconUrl && !imageError) {

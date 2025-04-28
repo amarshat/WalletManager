@@ -95,7 +95,7 @@ export class PhantomPayClient {
             phantomWalletId: wallet.id,
             accountId: this.generateId('acct'),
             currencyCode: currency,
-            balance: 0
+            balance: "0.00" // Initialize with string with decimal places
           })
           .execute();
       }
@@ -115,7 +115,7 @@ export class PhantomPayClient {
         accounts: currencies.map(code => ({
           id: this.generateId('acct'),
           currencyCode: code,
-          balance: 0
+          balance: "0.00" // Return as string with proper decimal format
         }))
       };
     } catch (error: any) {
@@ -147,7 +147,7 @@ export class PhantomPayClient {
         accounts: accounts.map(account => ({
           id: account.accountId,
           currencyCode: account.currencyCode,
-          balance: (account.balance || 0), // No conversion needed - keep as is
+          balance: (account.balance || "0.00"), // Use stored string format with decimals
           status: 'ACTIVE'
         }))
       };

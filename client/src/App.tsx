@@ -22,6 +22,7 @@ import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
 import TroubleshootingDashboard from "@/pages/admin/troubleshooting";
 import EmbeddedWalletPage from "@/pages/embedded-wallet-page";
+import CustomerEmbeddedWallet from "@/pages/customer/embedded-wallet-page";
 
 // Customer Pages
 import CustomerDashboard from "@/pages/customer/dashboard";
@@ -32,7 +33,7 @@ import PaymentMethodsPage from "@/pages/customer/payment-methods-page";
 import BudgetPage from "@/pages/customer/budget";
 
 import SplashScreen from "@/components/ui/splash-screen";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 
 // This component wraps the application to handle config import
 function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
@@ -147,10 +148,7 @@ function Router() {
       />
       <ProtectedRoute 
         path="/embedded-experience" 
-        component={() => {
-          const CustomerEmbeddedWallet = require('@/pages/customer/embedded-wallet-page').default;
-          return <CustomerEmbeddedWallet />;
-        }}
+        component={CustomerEmbeddedWallet}
         redirectTo="/auth" 
       />
       

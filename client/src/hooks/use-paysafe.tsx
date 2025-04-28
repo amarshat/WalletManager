@@ -117,9 +117,16 @@ export function usePaysafe() {
         if (walletData?.wallet?.customerId === transaction.sourceCustomerId) {
           type = 'TRANSFER_OUT';
           counterparty = transaction.destinationCustomerId;
-        } else {
+        } else if (walletData?.wallet?.customerId === transaction.destinationCustomerId) {
           type = 'TRANSFER_IN';
           counterparty = transaction.sourceCustomerId;
+        } else if (transaction.note && transaction.note.includes('Admin transfer')) {
+          // Fix for admin transfers - they should be displayed as TRANSFER_OUT
+          type = 'TRANSFER_OUT';
+          counterparty = transaction.destinationCustomerId || 'Customer';
+        } else {
+          type = 'TRANSFER_IN';
+          counterparty = transaction.sourceCustomerId || 'Admin';
         }
       } else if (transaction.type === 'WITHDRAWAL' || transaction.transactionType === 'WITHDRAWAL') {
         type = 'WITHDRAWAL';

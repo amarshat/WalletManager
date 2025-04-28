@@ -1,11 +1,11 @@
 import { 
-  users, brandSettings, customerWallets, walletAccounts, cards, systemLogs,
+  users, brandSettings, customerWallets, walletAccounts, cards, prepaidCards, systemLogs,
   budgetCategories, budgetPlans, budgetAllocations, budgetTransactions
 } from "@shared/schema";
 import type { 
   User, InsertUser, BrandSettings, InsertBrandSettings, 
   CustomerWallet, InsertCustomerWallet, WalletAccount, InsertWalletAccount,
-  Card, InsertCard, SystemLog, InsertSystemLog,
+  Card, InsertCard, PrepaidCard, InsertPrepaidCard, SystemLog, InsertSystemLog,
   BudgetCategory, InsertBudgetCategory, BudgetPlan, InsertBudgetPlan,
   BudgetAllocation, InsertBudgetAllocation, BudgetTransaction, InsertBudgetTransaction
 } from "@shared/schema";
@@ -44,6 +44,13 @@ export interface IStorage {
   addCard(card: InsertCard): Promise<Card>;
   updateCard(id: number, data: Partial<InsertCard>): Promise<Card | undefined>;
   deleteCard(id: number): Promise<boolean>;
+  
+  // Prepaid card operations
+  getPrepaidCardsByUserId(userId: number): Promise<PrepaidCard[]>;
+  getPrepaidCardById(id: number): Promise<PrepaidCard | undefined>;
+  addPrepaidCard(card: InsertPrepaidCard): Promise<PrepaidCard>;
+  updatePrepaidCard(id: number, data: Partial<InsertPrepaidCard>): Promise<PrepaidCard | undefined>;
+  deletePrepaidCard(id: number): Promise<boolean>;
   
   // Budget operations
   getBudgetCategories(userId?: number): Promise<BudgetCategory[]>;
@@ -216,6 +223,71 @@ export class DatabaseStorage implements IStorage {
     const [deleted] = await db
       .delete(cards)
       .where(eq(cards.id, id))
+      .returning();
+    return !!deleted;
+  }
+  
+  // Prepaid card operations
+  async getPrepaidCardsByUserId(userId: number): Promise<PrepaidCard[]> {
+    return db
+      .select()
+      .from(prepaidCards)
+      .where(eq(prepaidCards.userId, userId));
+  }
+  
+  async getPrepaidCardById(id: number): Promise<PrepaidCard | undefined> {
+    const [card] = await db
+      .select()
+      .from(prepaidCards)
+      .where(eq(prepaidCards.id, id));
+    return card;
+  }
+  
+  async addPrepaidCard(card: InsertPrepaidCard): Promise<PrepaidCard> {
+    // If setting this card as default, remove default flag from other cards
+    if (card.isDefault) {
+      await db
+        .update(prepaidCards)
+        .set({ isDefault: false })
+        .where(eq(prepaidCards.userId, card.userId));
+    }
+    
+    const [created] = await db
+      .insert(prepaidCards)
+      .values(card)
+      .returning();
+    return created;
+  }
+  
+  async updatePrepaidCard(id: number, data: Partial<InsertPrepaidCard>): Promise<PrepaidCard | undefined> {
+    // If setting this card as default, remove default flag from other cards
+    if (data.isDefault) {
+      const card = await this.getPrepaidCardById(id);
+      if (card) {
+        await db
+          .update(prepaidCards)
+          .set({ isDefault: false })
+          .where(
+            and(
+              eq(prepaidCards.userId, card.userId),
+              not(eq(prepaidCards.id, id))
+            )
+          );
+      }
+    }
+    
+    const [updated] = await db
+      .update(prepaidCards)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(prepaidCards.id, id))
+      .returning();
+    return updated;
+  }
+  
+  async deletePrepaidCard(id: number): Promise<boolean> {
+    const [deleted] = await db
+      .delete(prepaidCards)
+      .where(eq(prepaidCards.id, id))
       .returning();
     return !!deleted;
   }

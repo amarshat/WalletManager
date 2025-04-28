@@ -35,6 +35,7 @@ export const brandSettings = pgTable("brand_settings", {
     enableBulkTransfers: true,
     enableTestCards: true,
     maxTestCards: 5,
+    maxPrepaidCards: 3, // Default limit for prepaid cards
     maxTransferAmount: 10000 * 100, // in cents
     defaultCommissionRate: 0.5, // percentage
     retentionPeriodDays: 7, // for system logs
@@ -200,6 +201,30 @@ export type BudgetAllocation = typeof budgetAllocations.$inferSelect;
 
 export type InsertBudgetTransaction = z.infer<typeof insertBudgetTransactionSchema>;
 export type BudgetTransaction = typeof budgetTransactions.$inferSelect;
+
+// Prepaid Cards Table
+export const prepaidCards = pgTable("prepaid_cards", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  cardNumber: text("card_number").notNull(),
+  last4: text("last4").notNull(),
+  expiryMonth: text("expiry_month").notNull(),
+  expiryYear: text("expiry_year").notNull(),
+  cardholderName: text("cardholder_name").notNull(),
+  cardType: text("card_type").default("MASTERCARD").notNull(),
+  status: text("status").default("ACTIVE").notNull(), // ACTIVE, SUSPENDED, BLOCKED
+  balance: decimal("balance", { precision: 10, scale: 2 }).default("0").notNull(),
+  currencyCode: text("currency_code").default("USD").notNull(),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertPrepaidCardSchema = createInsertSchema(prepaidCards)
+  .omit({ id: true, createdAt: true, updatedAt: true });
+
+export type InsertPrepaidCard = z.infer<typeof insertPrepaidCardSchema>;
+export type PrepaidCard = typeof prepaidCards.$inferSelect;
 
 // PhantomPay-Sandbox System Tables
 

@@ -46,18 +46,25 @@ export default function CustomerLayout({
   const { branding, appType, isEmbedded } = useAppBranding();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isEmbedMode, setIsEmbedMode] = useState(false);
   
-  // Check for URL parameters to hide sidebar
-  const [shouldHideSidebar, setShouldHideSidebar] = useState(hideSidebar || isEmbedded);
+  // No longer hiding sidebar in embed mode, just customizing it
+  const [shouldHideSidebar, setShouldHideSidebar] = useState(hideSidebar);
   
   useEffect(() => {
-    // Check if hideSidebar parameter is in the URL
+    // Check URL parameters
     const params = new URLSearchParams(window.location.search);
     const hideSidebarParam = params.get('hideSidebar');
+    const embedModeParam = params.get('embedMode');
     
-    // If the parameter exists and is 'true', hide the sidebar
+    // If hideSidebar is true, hide the sidebar
     if (hideSidebarParam === 'true' || hideSidebarParam === '1') {
       setShouldHideSidebar(true);
+    }
+    
+    // If embedMode is true, enable embedded mode (but don't hide sidebar)
+    if (embedModeParam === 'true') {
+      setIsEmbedMode(true);
     }
   }, []);
   
@@ -176,27 +183,30 @@ export default function CustomerLayout({
             </div>
             <nav className="py-4 overflow-y-auto h-[calc(100%-9rem)]">
               <ul>
-                {navItems.map((item) => (
-                  <li key={item.href} className="px-2 py-1">
-                    <Link href={item.href}>
-                      <a
-                        className={`flex items-center px-4 py-2 rounded ${
-                          location === item.href
-                            ? "text-white font-medium"
-                            : "text-gray-100 hover:bg-gray-700"
-                        }`}
-                        style={{
-                          backgroundColor: location === item.href 
-                            ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
-                            : undefined
-                        }}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </a>
-                    </Link>
-                  </li>
-                ))}
+                {navItems
+                  // Filter out "Embedded Apps" when in embedded mode
+                  .filter(item => !(isEmbedMode && item.href === "/embedded-experience"))
+                  .map((item) => (
+                    <li key={item.href} className="px-2 py-1">
+                      <Link href={item.href}>
+                        <a
+                          className={`flex items-center px-4 py-2 rounded ${
+                            location === item.href
+                              ? "text-white font-medium"
+                              : "text-gray-100 hover:bg-gray-700"
+                          }`}
+                          style={{
+                            backgroundColor: location === item.href 
+                              ? (appType ? branding.primaryColor : "rgb(37, 99, 235)") 
+                              : undefined
+                          }}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </a>
+                      </Link>
+                    </li>
+                  ))}
                 <li className="px-2 py-1 mt-auto">
                   <button
                     onClick={handleLogout}
@@ -233,7 +243,7 @@ export default function CustomerLayout({
                 <p 
                   className={appType && branding.theme === 'dark' ? 'text-gray-300' : 'text-neutral-600'}
                 >
-                  {description || "Access your financial services here"}
+                  {description || (appType ? branding.tagline : "Access your financial services here")}
                 </p>
                 {user?.isPhantomUser && (
                   <div className="mt-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">

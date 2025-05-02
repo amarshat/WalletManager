@@ -359,6 +359,19 @@
       height: 120px;
     }
     
+    /* Wallet sections */
+    .wallet-section {
+      margin-bottom: 20px;
+      position: relative;
+    }
+    
+    .wallet-section-title {
+      margin: 10px 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
     /* Inline widgets styling */
     .inline-widget-row {
       display: flex;
@@ -461,30 +474,40 @@
           Wallet <span class="card-action">Manage</span>
         </div>
         
-        <!-- Embedded Micro Balance Widget -->
-        <div class="micro-widget-container">
-          <script src="/widget.js" data-widget="balance" data-theme="light" data-size="small" data-height="80px"></script>
+        <!-- Separate sections with headers for each widget -->
+        <div class="wallet-section">
+          <h4 class="wallet-section-title">Your Balance</h4>
+          <div class="micro-widget-container" style="min-height: 120px;">
+            <script src="/widget.js" data-widget="balance" data-theme="light" data-size="small" data-height="100px"></script>
+          </div>
         </div>
 
-        <!-- Quick Actions Section -->
-        <div class="inline-widget-row">
-          <div class="inline-widget-icon">+</div>
-          <div class="inline-widget-content">
-            <div>Add Money</div>
-            <small>Instantly fund your account</small>
+        <!-- Add Money Section -->
+        <div class="wallet-section">
+          <div class="inline-widget-row">
+            <div class="inline-widget-icon">+</div>
+            <div class="inline-widget-content">
+              <div>Add Money</div>
+              <small>Instantly fund your account</small>
+            </div>
           </div>
-          <!-- Mini Add Money Widget -->
-          <script src="/widget.js" data-widget="deposit" data-theme="light" data-size="mini" data-height="60px"></script>
+          <div class="micro-widget-container" style="min-height: 150px;">
+            <script src="/widget.js" data-widget="deposit" data-theme="light" data-size="small" data-height="120px"></script>
+          </div>
         </div>
 
-        <div class="inline-widget-row">
-          <div class="inline-widget-icon">↑</div>
-          <div class="inline-widget-content">
-            <div>Transfer Funds</div>
-            <small>Move money to others</small>
+        <!-- Transfer Section -->
+        <div class="wallet-section">
+          <div class="inline-widget-row">
+            <div class="inline-widget-icon">↑</div>
+            <div class="inline-widget-content">
+              <div>Transfer Funds</div>
+              <small>Move money to others</small>
+            </div>
           </div>
-          <!-- Mini Transfer Widget -->
-          <script src="/widget.js" data-widget="transfer" data-theme="light" data-size="mini" data-height="60px"></script>
+          <div class="micro-widget-container" style="min-height: 150px;">
+            <script src="/widget.js" data-widget="transfer" data-theme="light" data-size="small" data-height="120px"></script>
+          </div>
         </div>
       </div>
       
@@ -494,9 +517,12 @@
           Payment Methods <span class="card-action">Add New</span>
         </div>
         
-        <!-- Embedded Prepaid Cards Widget -->
-        <div class="micro-widget-container">
-          <script src="/widget.js" data-widget="prepaid-cards" data-theme="light" data-size="small" data-height="120px"></script>
+        <!-- Payment Methods Section -->
+        <div class="wallet-section">
+          <h4 class="wallet-section-title">Your Cards</h4>
+          <div class="micro-widget-container" style="min-height: 200px;">
+            <script src="/widget.js" data-widget="prepaid-cards" data-theme="light" data-size="small" data-height="180px"></script>
+          </div>
         </div>
       </div>
       

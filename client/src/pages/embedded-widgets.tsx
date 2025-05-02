@@ -20,7 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 
-type WidgetType = "balance" | "transactions" | "prepaid-cards" | "profile" | "carbon-impact" | "quick-actions";
+type WidgetType = "balance" | "transactions" | "prepaid-cards" | "profile" | "carbon-impact" | "quick-actions" | "transfer";
 type WidgetTheme = "light" | "dark";
 
 interface WidgetConfig {
@@ -120,6 +120,7 @@ export default function EmbeddedWidgets() {
                     <SelectItem value="profile">User Profile Widget</SelectItem>
                     <SelectItem value="carbon-impact">Carbon Impact Widget</SelectItem>
                     <SelectItem value="quick-actions">Quick Actions Widget</SelectItem>
+                    <SelectItem value="transfer">Transfer Widget</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

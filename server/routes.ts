@@ -1692,7 +1692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.setHeader('Content-Type', 'text/html');
     
     // Define common HTML head content
-    const headContent = `
+    let headContent = `
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>PaySage Widget</title>
@@ -2391,7 +2391,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     <div class="action-label">Deposit</div>
                   </a>
                   
-                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="action-button">
+                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/api/widget/transfer" target="_blank" class="action-button">
                     <div class="action-icon">↗️</div>
                     <div class="action-label">Send Money</div>
                   </a>
@@ -2408,6 +2408,225 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 </div>
               </div>
             </div>
+          `;
+          break;
+
+        case 'transfer':
+          // Get user's wallet
+          const transferWallet = await storage.getWalletByUserId(req.user!.id);
+          if (!transferWallet) {
+            return res.send(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                ${headContent}
+              </head>
+              <body>
+                <div class="widget-container">
+                  <div class="login-prompt">
+                    <div class="message">You don't have an active wallet</div>
+                    <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="btn">Set up your wallet</a>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `);
+          }
+          
+          // Get balances to show available funds
+          const transferBalances = await walletClient.getBalances(transferWallet.customerId);
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Send Money'}</h2>
+              </div>
+              <div class="widget-content">
+                <form id="transfer-form" class="transfer-form">
+                  <div class="form-group">
+                    <label for="recipient">Recipient</label>
+                    <input type="text" id="recipient" name="recipient" placeholder="Email or username" required>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <div class="amount-input-wrapper">
+                      <input type="number" id="amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+                      <select id="currency" name="currency">
+                        ${transferBalances.accounts.map(account => 
+                          `<option value="${account.currencyCode}">${account.currencyCode} (${parseFloat(account.balance).toLocaleString()})</option>`
+                        ).join('')}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="note">Note (Optional)</label>
+                    <input type="text" id="note" name="note" placeholder="What's this payment for?">
+                  </div>
+                  
+                  <div class="transfer-result" id="transfer-result"></div>
+                  
+                  <button type="submit" class="submit-button">Send Money</button>
+                </form>
+                
+                <script>
+                  // Handle transfer form submission
+                  document.getElementById('transfer-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const recipient = document.getElementById('recipient').value;
+                    const amount = document.getElementById('amount').value;
+                    const currency = document.getElementById('currency').value;
+                    const note = document.getElementById('note').value;
+                    const resultEl = document.getElementById('transfer-result');
+                    
+                    // Disable form during submission
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Processing...';
+                    
+                    try {
+                      // Call the transfer API
+                      const response = await fetch('/api/wallet/transfer', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          recipient,
+                          amount: parseFloat(amount),
+                          currencyCode: currency,
+                          note
+                        }),
+                        credentials: 'same-origin'
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (response.ok) {
+                        // Show success message
+                        resultEl.innerHTML = '<div class="success-message">Transfer sent successfully!</div>';
+                        // Reset form
+                        document.getElementById('recipient').value = '';
+                        document.getElementById('amount').value = '';
+                        document.getElementById('note').value = '';
+                      } else {
+                        // Show error message
+                        resultEl.innerHTML = '<div class="error-message">Error: ' + (data.error || 'Failed to send transfer') + '</div>';
+                      }
+                    } catch (error) {
+                      // Show network error
+                      resultEl.innerHTML = '<div class="error-message">Network error. Please try again.</div>';
+                    } finally {
+                      // Re-enable the button
+                      submitBtn.disabled = false;
+                      submitBtn.textContent = 'Send Money';
+                    }
+                  });
+                </script>
+              </div>
+            </div>
+          `;
+          
+          // Add specific styles for the transfer widget
+          headContent += `
+            <style>
+              .transfer-form {
+                padding: 10px 0;
+              }
+              .form-group {
+                margin-bottom: 16px;
+              }
+              .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 14px;
+                font-weight: 500;
+              }
+              .transfer-form input,
+              .transfer-form select {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                font-size: 14px;
+              }
+              .amount-input-wrapper {
+                display: flex;
+                gap: 10px;
+              }
+              .amount-input-wrapper input {
+                flex: 1;
+              }
+              .amount-input-wrapper select {
+                width: 150px;
+              }
+              .submit-button {
+                width: 100%;
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                padding: 12px;
+                font-size: 16px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background-color 0.2s;
+              }
+              .submit-button:hover {
+                background-color: #2563eb;
+              }
+              .submit-button:disabled {
+                background-color: #94a3b8;
+                cursor: not-allowed;
+              }
+              .transfer-result {
+                min-height: 30px;
+                margin-bottom: 16px;
+              }
+              .success-message {
+                padding: 10px;
+                background-color: #dcfce7;
+                border: 1px solid #86efac;
+                border-radius: 4px;
+                color: #166534;
+              }
+              .error-message {
+                padding: 10px;
+                background-color: #fee2e2;
+                border: 1px solid #fca5a5;
+                border-radius: 4px;
+                color: #b91c1c;
+              }
+              
+              /* Dark theme adjustments */
+              .dark .transfer-form input,
+              .dark .transfer-form select {
+                background-color: #1e293b;
+                border-color: #334155;
+                color: #f8fafc;
+              }
+              .dark .submit-button {
+                background-color: #3b82f6;
+              }
+              .dark .submit-button:hover {
+                background-color: #2563eb;
+              }
+              .dark .submit-button:disabled {
+                background-color: #475569;
+              }
+              .dark .success-message {
+                background-color: rgba(22, 101, 52, 0.2);
+                border-color: #16a34a;
+                color: #4ade80;
+              }
+              .dark .error-message {
+                background-color: rgba(153, 27, 27, 0.2);
+                border-color: #dc2626;
+                color: #f87171;
+              }
+            </style>
           `;
           break;
           

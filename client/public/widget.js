@@ -243,23 +243,67 @@
   
   // Initialize all widgets on the page
   function initWidgets() {
+    // First check if we've already run initialization to prevent duplicates
+    if (window.paysageWidgetsInitialized) {
+      console.log("PaySage widgets already initialized, skipping repeated initialization");
+      return;
+    }
+    
+    // Mark as initialized
+    window.paysageWidgetsInitialized = true;
+    
     // Inject global styles
     injectStyles();
     
     // Find all widget script tags and initialize them
-    // Important: Only process scripts that don't already have a widget container as a sibling
     const scripts = document.querySelectorAll(`script[src*="widget.js"][data-widget]`);
+    
+    // Create a map to track containers by id to prevent duplicates
+    const processedContainers = {};
+    
     scripts.forEach(script => {
-      // Check if this script already has a widget container as a sibling
-      const parent = script.parentNode;
-      const hasWidgetContainer = Array.from(parent.children).some(
-        child => child !== script && child.classList && child.classList.contains(WIDGET_CONTAINER_CLASS)
-      );
+      // Look for the nearest container ID
+      let containerId = null;
+      let currentNode = script.parentNode;
       
-      // Only load the widget if there isn't already a widget container
-      if (!hasWidgetContainer) {
-        loadWidget(script);
+      // Search up to 3 levels up for a container ID
+      for (let i = 0; i < 3; i++) {
+        if (currentNode && currentNode.id) {
+          containerId = currentNode.id;
+          break;
+        }
+        if (currentNode && currentNode.parentNode) {
+          currentNode = currentNode.parentNode;
+        } else {
+          break;
+        }
       }
+      
+      // If we have a container ID, use it to prevent duplicates
+      if (containerId) {
+        // Skip if we've already processed this container
+        if (processedContainers[containerId]) {
+          console.log(`Skipping duplicate widget in container ${containerId}`);
+          return;
+        }
+        
+        // Mark this container as processed
+        processedContainers[containerId] = true;
+      }
+      
+      // Check if this script already has a widget container as a next sibling
+      let nextSibling = script.nextSibling;
+      while (nextSibling) {
+        if (nextSibling.classList && nextSibling.classList.contains(WIDGET_CONTAINER_CLASS)) {
+          // Skip this one as it already has a widget container
+          console.log("Skipping widget with existing container");
+          return;
+        }
+        nextSibling = nextSibling.nextSibling;
+      }
+      
+      // Load the widget if it passed our duplicate checks
+      loadWidget(script);
     });
   }
   

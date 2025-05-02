@@ -637,11 +637,45 @@
         
         <!-- Wallet Widgets Zone - Right Side -->
         <div class="wallet-column" id="wallet-widgets-area">
-          <!-- Widget containers will be created by the initialize script -->
-          <div id="balance-widget-placeholder"></div>
-          <div id="transfer-widget-placeholder"></div>
-          <div id="deposit-widget-placeholder"></div>
-          <div id="prepaid-cards-widget-placeholder"></div>
+          <!-- Super Small Balance Widget -->
+          <div class="widget-container mini-widget draggable" draggable="true" id="balance-widget-wrapper">
+            <div class="widget-handle">• • •</div>
+            <div class="widget-refresh" title="Refresh widget data">↻</div>
+            <div class="widget-embed balance-embed" id="balance-widget-container">
+              <script src="/widget.js" data-widget="balance" data-theme="dark" data-title="Balance" data-size="mini" data-currency="USD" data-width="100%" data-height="auto"></script>
+            </div>
+            <div class="paysage-footer">PaySage Wallet</div>
+          </div>
+          
+          <!-- Transfer Widget -->
+          <div class="widget-container medium-widget draggable" draggable="true" id="transfer-widget-wrapper">
+            <div class="widget-handle">• • •</div>
+            <div class="widget-refresh" title="Refresh widget data">↻</div>
+            <div class="widget-embed" id="transfer-widget-container">
+              <script src="/widget.js" data-widget="transfer" data-theme="dark" data-title="Quick Transfer" data-width="100%" data-height="auto"></script>
+            </div>
+            <div class="paysage-footer">PaySage Wallet</div>
+          </div>
+          
+          <!-- Add Money Widget -->
+          <div class="widget-container medium-widget draggable" draggable="true" id="deposit-widget-wrapper">
+            <div class="widget-handle">• • •</div>
+            <div class="widget-refresh" title="Refresh widget data">↻</div>
+            <div class="widget-embed" id="deposit-widget-container">
+              <script src="/widget.js" data-widget="deposit" data-theme="dark" data-title="Add Money" data-width="100%" data-height="auto"></script>
+            </div>
+            <div class="paysage-footer">PaySage Wallet</div>
+          </div>
+          
+          <!-- Prepaid Cards Widget -->
+          <div class="widget-container large-widget draggable" draggable="true" id="prepaid-cards-widget-wrapper">
+            <div class="widget-handle">• • •</div>
+            <div class="widget-refresh" title="Refresh widget data">↻</div>
+            <div class="widget-embed" id="prepaid-cards-widget-container">
+              <script src="/widget.js" data-widget="prepaid-cards" data-theme="dark" data-title="My Cards" data-width="100%" data-height="auto"></script>
+            </div>
+            <div class="paysage-footer">PaySage Wallet</div>
+          </div>
         </div>
       </div>
     </div>
@@ -956,93 +990,7 @@
         container.appendChild(scriptEl);
       }
       
-      // Initialize all widgets once
-      function initializeWidgets() {
-        // Balance Widget (Mini)
-        const balanceContainer = document.getElementById('balance-widget-placeholder');
-        balanceContainer.innerHTML = `
-          <div class="widget-container mini-widget draggable" draggable="true" id="balance-widget-wrapper">
-            <div class="widget-handle">• • •</div>
-            <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div id="balance-widget-container"></div>
-          </div>
-        `;
-        
-        // Add script for balance widget
-        const balanceScript = document.createElement('script');
-        balanceScript.src = '/widget.js';
-        balanceScript.setAttribute('data-widget', 'balance');
-        balanceScript.setAttribute('data-theme', 'dark');
-        balanceScript.setAttribute('data-title', 'Balance');
-        balanceScript.setAttribute('data-size', 'mini');
-        balanceScript.setAttribute('data-currency', 'USD');
-        balanceScript.setAttribute('data-width', '100%');
-        balanceScript.setAttribute('data-height', 'auto');
-        document.getElementById('balance-widget-container').appendChild(balanceScript);
-        
-        // Transfer Widget
-        const transferContainer = document.getElementById('transfer-widget-placeholder');
-        transferContainer.innerHTML = `
-          <div class="widget-container medium-widget draggable" draggable="true" id="transfer-widget-wrapper">
-            <div class="widget-handle">• • •</div>
-            <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div id="transfer-widget-container"></div>
-          </div>
-        `;
-        
-        // Add script for transfer widget
-        const transferScript = document.createElement('script');
-        transferScript.src = '/widget.js';
-        transferScript.setAttribute('data-widget', 'transfer');
-        transferScript.setAttribute('data-theme', 'dark');
-        transferScript.setAttribute('data-title', 'Quick Transfer');
-        transferScript.setAttribute('data-width', '100%');
-        transferScript.setAttribute('data-height', 'auto');
-        document.getElementById('transfer-widget-container').appendChild(transferScript);
-        
-        // Deposit Widget (Add Money)
-        const depositContainer = document.getElementById('deposit-widget-placeholder');
-        depositContainer.innerHTML = `
-          <div class="widget-container medium-widget draggable" draggable="true" id="deposit-widget-wrapper">
-            <div class="widget-handle">• • •</div>
-            <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div id="deposit-widget-container"></div>
-          </div>
-        `;
-        
-        // Add script for deposit widget
-        const depositScript = document.createElement('script');
-        depositScript.src = '/widget.js';
-        depositScript.setAttribute('data-widget', 'deposit');
-        depositScript.setAttribute('data-theme', 'dark');
-        depositScript.setAttribute('data-title', 'Add Money');
-        depositScript.setAttribute('data-width', '100%');
-        depositScript.setAttribute('data-height', 'auto');
-        document.getElementById('deposit-widget-container').appendChild(depositScript);
-        
-        // Prepaid Cards Widget
-        const cardsContainer = document.getElementById('prepaid-cards-widget-placeholder');
-        cardsContainer.innerHTML = `
-          <div class="widget-container large-widget draggable" draggable="true" id="prepaid-cards-widget-wrapper">
-            <div class="widget-handle">• • •</div>
-            <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div id="prepaid-cards-widget-container"></div>
-          </div>
-        `;
-        
-        // Add script for prepaid cards widget
-        const cardsScript = document.createElement('script');
-        cardsScript.src = '/widget.js';
-        cardsScript.setAttribute('data-widget', 'prepaid-cards');
-        cardsScript.setAttribute('data-theme', 'dark');
-        cardsScript.setAttribute('data-title', 'My Cards');
-        cardsScript.setAttribute('data-width', '100%');
-        cardsScript.setAttribute('data-height', 'auto');
-        document.getElementById('prepaid-cards-widget-container').appendChild(cardsScript);
-      }
-      
-      // Wait for the page to fully load before initializing widgets
-      document.addEventListener('DOMContentLoaded', initializeWidgets);
+      // We no longer need separate initialization as widget.js now handles this
       
       // Wait a moment to adjust widget iframe sizes
       setTimeout(() => {

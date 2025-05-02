@@ -2231,8 +2231,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       
                       return `
                         <div class="card-item">
-                          <div class="card-network">${card.cardNetwork}</div>
-                          <div class="card-holder">${card.nameOnCard}</div>
+                          <div class="card-network">${card.cardNetwork || card.cardType || 'MASTERCARD'}</div>
+                          <div class="card-holder">${card.nameOnCard || card.cardholderName || req.user!.fullName}</div>
                           <div class="card-number">${maskedNumber}</div>
                           <div class="card-details">
                             <div>Expires ${card.expiryMonth}/${card.expiryYear}</div>

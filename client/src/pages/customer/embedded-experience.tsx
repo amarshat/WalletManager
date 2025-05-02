@@ -1,7 +1,7 @@
 import CustomerLayout from "@/components/layouts/CustomerLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Gamepad2, Car, ShoppingBag, Globe, Layout, Component, LayoutGrid } from "lucide-react";
+import { ExternalLink, Gamepad2, Car, ShoppingBag, Globe, Layout, Component, LayoutGrid, Smartphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -27,6 +27,15 @@ export default function EmbeddedExperience() {
       url: `${demoUrl}/demo/parking`,
       features: ["Parking payment", "Transaction history", "Carbon offsetting", "Profile management"],
       category: "transportation"
+    },
+    {
+      id: "mobile",
+      name: "ParKoin Mobile",
+      description: "Mobile-optimized parking app with inline micro-widgets for seamless payment experience.",
+      icon: <Smartphone className="h-12 w-12 text-primary" />,
+      url: `${demoUrl}/demo/mobile`,
+      features: ["Inline micro-widgets", "Mobile payments", "Quick access", "Space management"],
+      category: "mobile"
     }
   ];
   
@@ -34,7 +43,8 @@ export default function EmbeddedExperience() {
   const categories = [
     { id: "all", label: "All Integrations" },
     { id: "gaming", label: "Gaming" },
-    { id: "transportation", label: "Transportation" }
+    { id: "transportation", label: "Transportation" },
+    { id: "mobile", label: "Mobile" }
   ];
   
   return (

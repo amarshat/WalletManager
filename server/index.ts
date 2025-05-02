@@ -63,30 +63,13 @@ app.use((req, res, next) => {
   }
   
   // Manually register demo routes to ensure they work in production
+  // These routes will redirect to the static files in client/public/demo
   app.get('/demo/gaming', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    try {
-      // Use import.meta.dirname instead of __dirname for ESM
-      const viewPath = path.join(import.meta.dirname, 'views', 'demo-gaming.html');
-      const html = fs.readFileSync(viewPath, 'utf8');
-      res.send(html);
-    } catch (error) {
-      console.error('Error reading gaming demo HTML:', error);
-      res.status(500).send('Error loading gaming demo');
-    }
+    res.redirect('/demo/demo-gaming.html');
   });
   
   app.get('/demo/parking', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    try {
-      // Use import.meta.dirname instead of __dirname for ESM
-      const viewPath = path.join(import.meta.dirname, 'views', 'demo-parking.html');
-      const html = fs.readFileSync(viewPath, 'utf8');
-      res.send(html);
-    } catch (error) {
-      console.error('Error reading parking demo HTML:', error);
-      res.status(500).send('Error loading parking demo');
-    }
+    res.redirect('/demo/demo-parking.html');
   });
 
   // Use the error handler middleware

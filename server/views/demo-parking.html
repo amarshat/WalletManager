@@ -550,38 +550,51 @@
       const themeSelector = document.getElementById('theme-selector');
       const layoutSelector = document.getElementById('layout-selector');
       const applyButton = document.getElementById('apply-widgets');
-      const activeWidgetsContainer = document.getElementById('active-widgets');
+      const dropZones = document.querySelectorAll('.widget-drop-zone');
+      const draggableItems = document.querySelectorAll('.draggable');
       
-      // Widget selection
-      widgetOptions.forEach(option => {
-        option.addEventListener('click', () => {
-          option.classList.toggle('active');
+      let draggedItem = null;
+      
+      // Setup drag and drop functionality
+      draggableItems.forEach(item => {
+        // Drag start
+        item.addEventListener('dragstart', function(e) {
+          draggedItem = this;
+          setTimeout(() => {
+            this.classList.add('dragging');
+          }, 0);
+        });
+        
+        // Drag end
+        item.addEventListener('dragend', function() {
+          this.classList.remove('dragging');
+          draggedItem = null;
         });
       });
       
-      // Apply button functionality
-      applyButton.addEventListener('click', () => {
-        // Clear existing widgets
-        activeWidgetsContainer.innerHTML = '';
+      // Setup drop zones
+      dropZones.forEach(zone => {
+        // Drag over
+        zone.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          this.classList.add('drag-over');
+        });
         
-        // Get selected widgets and theme
-        const selectedWidgets = Array.from(document.querySelectorAll('.widget-option.active')).map(el => el.dataset.widget);
-        const selectedTheme = themeSelector.value;
-        const selectedLayout = layoutSelector.value;
+        // Drag leave
+        zone.addEventListener('dragleave', function() {
+          this.classList.remove('drag-over');
+        });
         
-        // Apply layout
-        if (selectedLayout === 'grid') {
-          activeWidgetsContainer.className = 'widget-grid';
-        } else {
-          activeWidgetsContainer.className = '';
-          activeWidgetsContainer.style.display = 'flex';
-          activeWidgetsContainer.style.flexDirection = 'column';
-          activeWidgetsContainer.style.gap = '20px';
-        }
-        
-        // Create widgets
-        if (selectedWidgets.length > 0) {
-          selectedWidgets.forEach(widget => {
+        // Drop
+        zone.addEventListener('drop', function(e) {
+          e.preventDefault();
+          this.classList.remove('drag-over');
+          
+          if (draggedItem) {
+            // Clear existing content
+            this.innerHTML = '';
+            
+            // Create container for the new widget
             const widgetContainer = document.createElement('div');
             widgetContainer.className = 'widget-container';
             
@@ -597,28 +610,32 @@
             // Create the script element
             const scriptEl = document.createElement('script');
             scriptEl.src = '/widget.js';
-            scriptEl.setAttribute('data-widget', widget);
-            scriptEl.setAttribute('data-theme', selectedTheme);
             
-            // Set appropriate title based on widget type
-            let title = '';
-            switch(widget) {
-              case 'profile': title = 'Your Profile'; break;
-              case 'balance': title = 'Your Balance'; break;
-              case 'prepaid-cards': title = 'Payment Methods'; break;
-              case 'carbon-impact': title = 'Eco-Parking Impact'; break;
-              case 'transfer': title = 'Transfer Money'; break;
-              default: title = 'Widget';
-            }
+            // Copy attributes from dragged item
+            const widgetType = draggedItem.getAttribute('data-widget');
+            const theme = draggedItem.getAttribute('data-theme');
+            const title = draggedItem.getAttribute('data-title');
+            const size = draggedItem.getAttribute('data-size') || 'normal';
+            
+            scriptEl.setAttribute('data-widget', widgetType);
+            scriptEl.setAttribute('data-theme', theme);
             scriptEl.setAttribute('data-title', title);
             
+            if (size) {
+              scriptEl.setAttribute('data-size', size);
+            }
+            
             // Add currency parameter for balance widget
-            if (widget === 'balance') {
+            if (widgetType === 'balance') {
               scriptEl.setAttribute('data-currency', 'USD');
             }
             
+            // Make widget fill the container
+            scriptEl.setAttribute('data-width', '100%');
+            
+            // Add to container and drop zone
             widgetContainer.appendChild(scriptEl);
-            activeWidgetsContainer.appendChild(widgetContainer);
+            this.appendChild(widgetContainer);
             
             // Add minimize/remove functionality
             const minimizeBtn = widgetContainer.querySelector('.widget-action[title="Minimize"]');
@@ -634,26 +651,114 @@
             });
             
             removeBtn.addEventListener('click', function() {
+              const dropZone = this.closest('.widget-drop-zone');
               this.closest('.widget-container').remove();
+              
+              // Reset drop zone to initial state
+              dropZone.innerHTML = '<p>Drag widgets here</p>';
+            });
+          }
+        });
+      });
+      
+      // Widget selection (for manual widget addition)
+      widgetOptions.forEach(option => {
+        option.addEventListener('click', () => {
+          option.classList.toggle('active');
+        });
+      });
+      
+      // Apply button functionality for manual widget addition
+      applyButton.addEventListener('click', () => {
+        // Get selected widgets and theme
+        const selectedWidgets = Array.from(document.querySelectorAll('.widget-option.active')).map(el => el.dataset.widget);
+        const selectedTheme = themeSelector.value;
+        
+        if (selectedWidgets.length > 0) {
+          // Find the first empty drop zone
+          const emptyZone = Array.from(dropZones).find(zone => !zone.querySelector('.widget-container'));
+          
+          if (emptyZone) {
+            // Clear existing content
+            emptyZone.innerHTML = '';
+            
+            // Add the first selected widget
+            const widgetType = selectedWidgets[0];
+            
+            // Create container for the new widget
+            const widgetContainer = document.createElement('div');
+            widgetContainer.className = 'widget-container';
+            
+            // Add widget actions
+            const widgetActions = document.createElement('div');
+            widgetActions.className = 'widget-actions';
+            widgetActions.innerHTML = `
+              <button class="widget-action" title="Minimize">−</button>
+              <button class="widget-action" title="Remove">×</button>
+            `;
+            widgetContainer.appendChild(widgetActions);
+            
+            // Create the script element
+            const scriptEl = document.createElement('script');
+            scriptEl.src = '/widget.js';
+            
+            // Set attributes
+            scriptEl.setAttribute('data-widget', widgetType);
+            scriptEl.setAttribute('data-theme', selectedTheme);
+            
+            // Set appropriate title based on widget type
+            let title = '';
+            switch(widgetType) {
+              case 'profile': title = 'Your Profile'; break;
+              case 'balance': title = 'Your Balance'; break;
+              case 'prepaid-cards': title = 'Payment Methods'; break;
+              case 'carbon-impact': title = 'Eco-Parking Impact'; break;
+              case 'transfer': title = 'Transfer Money'; break;
+              default: title = 'Widget';
+            }
+            scriptEl.setAttribute('data-title', title);
+            
+            // Add currency parameter for balance widget
+            if (widgetType === 'balance') {
+              scriptEl.setAttribute('data-currency', 'USD');
+              scriptEl.setAttribute('data-size', 'large');
+            }
+            
+            // Make widget fill the container
+            scriptEl.setAttribute('data-width', '100%');
+            
+            // Add to container and drop zone
+            widgetContainer.appendChild(scriptEl);
+            emptyZone.appendChild(widgetContainer);
+            
+            // Add minimize/remove functionality
+            const minimizeBtn = widgetContainer.querySelector('.widget-action[title="Minimize"]');
+            const removeBtn = widgetContainer.querySelector('.widget-action[title="Remove"]');
+            
+            minimizeBtn.addEventListener('click', function() {
+              const iframe = this.closest('.widget-container').querySelector('iframe');
+              if (iframe) {
+                iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none';
+                this.textContent = iframe.style.display === 'none' ? '+' : '−';
+                this.title = iframe.style.display === 'none' ? 'Maximize' : 'Minimize';
+              }
+            });
+            
+            removeBtn.addEventListener('click', function() {
+              const dropZone = this.closest('.widget-drop-zone');
+              this.closest('.widget-container').remove();
+              
+              // Reset drop zone to initial state
+              dropZone.innerHTML = '<p>Drag widgets here</p>';
+              
               // Deselect the corresponding option in the selector
-              const widget = this.closest('.widget-container').querySelector('script').getAttribute('data-widget');
+              const widget = widgetType;
               const option = document.querySelector(`.widget-option[data-widget="${widget}"]`);
               if (option) option.classList.remove('active');
             });
-          });
-        } else {
-          // If no widgets selected, show placeholder
-          const placeholder = document.createElement('div');
-          placeholder.className = 'widget-placeholder';
-          placeholder.innerHTML = `
-            <p>No widgets selected</p>
-            <button class="btn btn-secondary">Add Widgets</button>
-          `;
-          activeWidgetsContainer.appendChild(placeholder);
-          
-          placeholder.querySelector('button').addEventListener('click', () => {
-            document.getElementById('widget-customizer').scrollIntoView({ behavior: 'smooth' });
-          });
+          } else {
+            alert('All widget slots are filled. Remove a widget first.');
+          }
         }
       });
       
@@ -664,28 +769,6 @@
           historyTabs.forEach(t => t.classList.remove('active'));
           tab.classList.add('active');
         });
-      });
-      
-      // Add event listeners to initial widget actions
-      document.querySelectorAll('.widget-action').forEach(action => {
-        if (action.title === "Minimize") {
-          action.addEventListener('click', function() {
-            const iframe = this.closest('.widget-container').querySelector('iframe');
-            if (iframe) {
-              iframe.style.display = iframe.style.display === 'none' ? 'block' : 'none';
-              this.textContent = iframe.style.display === 'none' ? '+' : '−';
-              this.title = iframe.style.display === 'none' ? 'Maximize' : 'Minimize';
-            }
-          });
-        } else if (action.title === "Remove") {
-          action.addEventListener('click', function() {
-            this.closest('.widget-container').remove();
-            // Deselect the corresponding option
-            const widget = this.closest('.widget-container').querySelector('script').getAttribute('data-widget');
-            const option = document.querySelector(`.widget-option[data-widget="${widget}"]`);
-            if (option) option.classList.remove('active');
-          });
-        }
       });
     });
   </script>

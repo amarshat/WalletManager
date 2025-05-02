@@ -303,6 +303,16 @@
       position: relative;
       overflow: visible; /* Allow footer to be visible outside container */
     }
+    
+    /* Add specific height for deposit widget */
+    #deposit-widget-wrapper {
+      min-height: 320px; /* Increased height for Add Money widget */
+    }
+    
+    /* Add specific height for prepaid cards widget */
+    #prepaid-cards-widget-wrapper {
+      min-height: 500px; /* Increased height for My Cards widget */
+    }
     .widget-customizer {
       background: #242438;
       border-radius: 10px;
@@ -662,7 +672,7 @@
             <div class="widget-handle">• • •</div>
             <div class="widget-refresh" title="Refresh widget data">↻</div>
             <div class="widget-embed" id="deposit-widget-container">
-              <script src="/widget.js" data-widget="deposit" data-theme="dark" data-title="Add Money" data-width="100%" data-height="auto"></script>
+              <script src="/widget.js" data-widget="deposit" data-theme="dark" data-title="Add Money" data-width="100%" data-height="280px"></script>
             </div>
             <div class="paysage-footer">PaySage Wallet</div>
           </div>
@@ -672,7 +682,7 @@
             <div class="widget-handle">• • •</div>
             <div class="widget-refresh" title="Refresh widget data">↻</div>
             <div class="widget-embed" id="prepaid-cards-widget-container">
-              <script src="/widget.js" data-widget="prepaid-cards" data-theme="dark" data-title="My Cards" data-width="100%" data-height="auto"></script>
+              <script src="/widget.js" data-widget="prepaid-cards" data-theme="dark" data-title="My Cards" data-width="100%" data-height="450px"></script>
             </div>
             <div class="paysage-footer">PaySage Wallet</div>
           </div>

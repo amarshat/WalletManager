@@ -634,35 +634,34 @@
         <!-- Wallet Widgets Zone - Right Side -->
         <div class="wallet-column" id="wallet-widgets-area">
           <!-- Super Small Balance Widget -->
-          <div class="widget-container mini-widget draggable" draggable="true">
+          <div class="widget-container mini-widget draggable" draggable="true" id="balance-widget-wrapper">
             <div class="widget-handle">• • •</div>
             <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div class="widget-embed balance-embed" id="balance-widget-container">
-              <!-- Balance Widget -->
-              <script src="/widget.js" data-widget="balance" data-theme="dark" data-title="Balance" data-currency="USD" data-size="mini" data-width="100%" data-height="auto"></script>
-            </div>
+            <div class="widget-embed balance-embed" id="balance-widget-container"></div>
             <div class="paysage-footer">PaySage Wallet</div>
           </div>
           
           <!-- Transfer Widget -->
-          <div class="widget-container medium-widget draggable" draggable="true">
+          <div class="widget-container medium-widget draggable" draggable="true" id="transfer-widget-wrapper">
             <div class="widget-handle">• • •</div>
             <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div class="widget-embed" id="transfer-widget-container">
-              <!-- Transfer Widget -->
-              <script src="/widget.js" data-widget="transfer" data-theme="dark" data-title="Quick Transfer" data-width="100%" data-height="auto"></script>
-            </div>
+            <div class="widget-embed" id="transfer-widget-container"></div>
+            <div class="paysage-footer">PaySage Wallet</div>
+          </div>
+          
+          <!-- Add Money Widget -->
+          <div class="widget-container medium-widget draggable" draggable="true" id="deposit-widget-wrapper">
+            <div class="widget-handle">• • •</div>
+            <div class="widget-refresh" title="Refresh widget data">↻</div>
+            <div class="widget-embed" id="deposit-widget-container"></div>
             <div class="paysage-footer">PaySage Wallet</div>
           </div>
           
           <!-- Prepaid Cards Widget -->
-          <div class="widget-container large-widget draggable" draggable="true">
+          <div class="widget-container large-widget draggable" draggable="true" id="prepaid-cards-widget-wrapper">
             <div class="widget-handle">• • •</div>
             <div class="widget-refresh" title="Refresh widget data">↻</div>
-            <div class="widget-embed" id="prepaid-cards-widget-container">
-              <!-- Prepaid Cards Widget -->
-              <script src="/widget.js" data-widget="prepaid-cards" data-theme="dark" data-title="Payment Methods" data-width="100%" data-height="auto"></script>
-            </div>
+            <div class="widget-embed" id="prepaid-cards-widget-container"></div>
             <div class="paysage-footer">PaySage Wallet</div>
           </div>
         </div>
@@ -955,23 +954,74 @@
         }
       }
       
-      // Initialize all widgets on load
-      document.querySelectorAll('.widget-embed script').forEach(script => {
-        // Wait a moment to let the widgets load properly
-        setTimeout(() => {
-          const iframe = script.parentElement.querySelector('iframe');
-          if (iframe) {
-            // Force a load of proper size
-            iframe.style.width = '100%';
-            iframe.style.border = 'none';
-            
+      // Create widget components
+      function createWidget(containerId, widgetType, title, theme = 'dark', options = {}) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+        
+        // Clear any existing content
+        container.innerHTML = '';
+        
+        // Create script element with widget attributes
+        const scriptEl = document.createElement('script');
+        scriptEl.src = '/widget.js';
+        scriptEl.setAttribute('data-widget', widgetType);
+        scriptEl.setAttribute('data-theme', theme);
+        scriptEl.setAttribute('data-title', title);
+        
+        // Set additional options
+        Object.keys(options).forEach(key => {
+          scriptEl.setAttribute(`data-${key}`, options[key]);
+        });
+        
+        // Append to container
+        container.appendChild(scriptEl);
+      }
+      
+      // Initialize all widgets
+      // Balance Widget (Mini)
+      createWidget('balance-widget-container', 'balance', 'Balance', 'dark', { 
+        currency: 'USD', 
+        size: 'mini',
+        width: '100%',
+        height: 'auto'
+      });
+      
+      // Transfer Widget
+      createWidget('transfer-widget-container', 'transfer', 'Quick Transfer', 'dark', {
+        width: '100%',
+        height: 'auto'
+      });
+      
+      // Deposit Widget (Add Money)
+      createWidget('deposit-widget-container', 'deposit', 'Add Money', 'dark', {
+        width: '100%',
+        height: 'auto'
+      });
+      
+      // Prepaid Cards Widget
+      createWidget('prepaid-cards-widget-container', 'prepaid-cards', 'My Cards', 'dark', {
+        width: '100%',
+        height: 'auto'
+      });
+      
+      // Wait a moment to adjust widget iframe sizes
+      setTimeout(() => {
+        document.querySelectorAll('.widget-embed iframe').forEach(iframe => {
+          // Force a load of proper size
+          iframe.style.width = '100%';
+          iframe.style.border = 'none';
+          
+          // Add classes for responsive styling
+          const container = iframe.closest('.widget-container');
+          if (container) {
             // Make mini-widget extremely compact
-            if (script.getAttribute('data-size') === 'mini') {
+            if (container.classList.contains('mini-widget')) {
               iframe.style.height = '60px';
             }
           }
-        }, 1000);
-      });
+        });
+      }, 1500);
       
       // Add minimize functionality to any widget action buttons
       document.querySelectorAll('.widget-action').forEach(action => {

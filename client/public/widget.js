@@ -125,8 +125,10 @@
     const title = scriptElement.getAttribute('data-title') || null;
     const width = scriptElement.getAttribute('data-width') || DEFAULT_WIDTH;
     const height = scriptElement.getAttribute('data-height') || 
-                  (widgetType === 'transactions' || widgetType === 'prepaid-cards' ? '500px' : '300px');
+                  (widgetType === 'transactions' || widgetType === 'prepaid-cards' ? '500px' : 
+                   widgetType === 'balance' ? '200px' : '300px');
     const currency = scriptElement.getAttribute('data-currency') || null; // Optional currency filter
+    const size = scriptElement.getAttribute('data-size') || 'normal'; // Widget size (small, normal, large)
     
     // Get widget host URL from script src
     const scriptSrc = scriptElement.src;
@@ -159,6 +161,9 @@
     }
     if (currency) {
       widgetUrl += `&currency=${encodeURIComponent(currency)}`;
+    }
+    if (size) {
+      widgetUrl += `&size=${encodeURIComponent(size)}`;
     }
     
     iframe.src = widgetUrl;

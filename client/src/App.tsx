@@ -168,6 +168,11 @@ function Router() {
         redirectTo="/auth" 
       />
       <ProtectedRoute 
+        path="/embedded-wallet" 
+        component={CustomerEmbeddedWallet}
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
         path="/embedded-widgets" 
         component={CustomerEmbeddedWidgets}
         redirectTo="/auth" 

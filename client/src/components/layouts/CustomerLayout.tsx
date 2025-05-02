@@ -116,8 +116,8 @@ export default function CustomerLayout({
     },
     {
       href: "/embedded-experience",
-      label: "Embedded Apps",
-      icon: <Layers className="w-5 h-5 mr-3" />
+      label: "Partner Apps",
+      icon: <Gamepad2 className="w-5 h-5 mr-3" />
     },
     { 
       href: "/profile", 
@@ -190,7 +190,7 @@ export default function CustomerLayout({
             <nav className="py-4 overflow-y-auto h-[calc(100%-9rem)]">
               <ul>
                 {navItems
-                  // Filter out "Embedded Apps" when in embedded mode
+                  // Filter out "Partner Apps" when in embedded mode
                   .filter(item => !(isEmbedMode && item.href === "/embedded-experience"))
                   .map((item) => (
                     <li key={item.href} className="px-2 py-1">

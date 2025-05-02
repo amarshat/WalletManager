@@ -2092,6 +2092,313 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let widgetContent = '';
       
       switch (widgetType) {
+        case 'deposit':
+          // Get user's wallet and cards for deposit
+          const depositWallet = await storage.getWalletByUserId(req.user!.id);
+          const userCards = await storage.getCardsByUserId(req.user!.id);
+          
+          if (!depositWallet) {
+            return res.send(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                ${headContent}
+              </head>
+              <body>
+                <div class="widget-container">
+                  <div class="widget-header">
+                    <h2 class="widget-title">${title || 'Add Money'}</h2>
+                  </div>
+                  <div class="widget-content">
+                    <div class="empty-state">
+                      <p>Your wallet is not set up yet. Please complete your profile to add money.</p>
+                    </div>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `);
+          }
+          
+          // Get wallet balances
+          const depositBalances = await walletClient.getBalances(depositWallet.customerId);
+          
+          // Filter by currency if specified
+          const currencyParam = req.query.currency as string;
+          const depositAccounts = currencyParam ? 
+            depositBalances.accounts.filter((account: any) => account.currencyCode === currencyParam) : 
+            depositBalances.accounts;
+          
+          // Create the deposit widget content
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Add Money'}</h2>
+              </div>
+              <div class="widget-content">
+                <form id="deposit-form" class="deposit-form">
+                  <div class="form-group">
+                    <label for="amount">Amount</label>
+                    <div class="amount-input-wrapper">
+                      <input type="number" id="amount" name="amount" placeholder="0.00" min="0.01" step="0.01" required>
+                      <select id="currency" name="currency">
+                        ${depositAccounts.map((account: any) => 
+                          `<option value="${account.currencyCode}">${account.currencyCode}</option>`
+                        ).join('')}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="form-group">
+                    <label for="payment-method">Payment Method</label>
+                    <div class="payment-methods">
+                      ${userCards.length > 0 ? 
+                        userCards.map(card => `
+                          <div class="payment-method-option">
+                            <input type="radio" name="payment-method" id="card-${card.id}" value="${card.id}">
+                            <label for="card-${card.id}" class="payment-method-card">
+                              <div class="card-info">
+                                <span class="card-type">${card.cardType}</span>
+                                <span class="card-number">•••• ${card.last4}</span>
+                              </div>
+                            </label>
+                          </div>
+                        `).join('') : 
+                        `<div class="payment-method-option">
+                          <p class="no-cards-message">No cards added yet.</p>
+                          <a href="/cards" target="_blank" class="add-card-link">Add a Card</a>
+                        </div>`
+                      }
+                      
+                      <div class="payment-method-option">
+                        <input type="radio" name="payment-method" id="new-card" value="new">
+                        <label for="new-card" class="payment-method-card new-card">
+                          <div class="card-info">
+                            <span class="card-type">Add New Card</span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div id="new-card-form" class="new-card-form" style="display: none;">
+                    <div class="form-group">
+                      <label for="card-number">Card Number</label>
+                      <input type="text" id="card-number" name="card-number" placeholder="1234 5678 9012 3456">
+                    </div>
+                    <div class="form-row">
+                      <div class="form-group">
+                        <label for="expiry">Expiry (MM/YY)</label>
+                        <input type="text" id="expiry" name="expiry" placeholder="MM/YY">
+                      </div>
+                      <div class="form-group">
+                        <label for="cvv">CVV</label>
+                        <input type="text" id="cvv" name="cvv" placeholder="123">
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="name">Cardholder Name</label>
+                      <input type="text" id="name" name="name" placeholder="John Doe">
+                    </div>
+                  </div>
+                  
+                  <div class="deposit-result" id="deposit-result"></div>
+                  
+                  <button type="submit" class="submit-button">Add Money</button>
+                </form>
+                
+                <script>
+                  // Toggle new card form visibility
+                  document.querySelectorAll('input[name="payment-method"]').forEach(function(radio) {
+                    radio.addEventListener('change', function() {
+                      const newCardForm = document.getElementById('new-card-form');
+                      newCardForm.style.display = this.value === 'new' ? 'block' : 'none';
+                    });
+                  });
+                  
+                  // Handle deposit form submission
+                  document.getElementById('deposit-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const amount = document.getElementById('amount').value;
+                    const currency = document.getElementById('currency').value;
+                    const resultEl = document.getElementById('deposit-result');
+                    
+                    // Disable form during submission
+                    const submitBtn = this.querySelector('button[type="submit"]');
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Processing...';
+                    
+                    try {
+                      // Call the deposit API
+                      const response = await fetch('/api/transactions/deposit', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          amount: parseFloat(amount),
+                          currencyCode: currency
+                        }),
+                        credentials: 'same-origin'
+                      });
+                      
+                      const data = await response.json();
+                      
+                      if (response.ok) {
+                        // Show success message
+                        resultEl.innerHTML = '<div class="success-message">Money added successfully!</div>';
+                        // Reset form
+                        document.getElementById('amount').value = '';
+                      } else {
+                        // Show error message
+                        resultEl.innerHTML = '<div class="error-message">Error: ' + (data.error || 'Failed to add money') + '</div>';
+                      }
+                    } catch (error) {
+                      // Show network error
+                      resultEl.innerHTML = '<div class="error-message">Network error. Please try again.</div>';
+                    } finally {
+                      // Re-enable the button
+                      submitBtn.disabled = false;
+                      submitBtn.textContent = 'Add Money';
+                    }
+                  });
+                </script>
+              </div>
+            </div>
+          `;
+          
+          // Add specific styles for the deposit widget
+          headContent += `
+            <style>
+              .deposit-form {
+                padding: 10px 0;
+              }
+              .form-group {
+                margin-bottom: 16px;
+              }
+              .form-row {
+                display: flex;
+                gap: 10px;
+              }
+              .form-row .form-group {
+                flex: 1;
+              }
+              .form-group label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 14px;
+                font-weight: 500;
+              }
+              .deposit-form input,
+              .deposit-form select {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #e2e8f0;
+                border-radius: 4px;
+                font-size: 14px;
+              }
+              .amount-input-wrapper {
+                display: flex;
+                gap: 10px;
+              }
+              .amount-input-wrapper input {
+                flex: 3;
+              }
+              .amount-input-wrapper select {
+                flex: 1;
+              }
+              .payment-methods {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 5px;
+              }
+              .payment-method-option {
+                position: relative;
+              }
+              .payment-method-card {
+                display: block;
+                padding: 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.2s;
+              }
+              input[type="radio"]:checked + .payment-method-card {
+                border-color: #3b82f6;
+                background-color: rgba(59, 130, 246, 0.05);
+              }
+              .payment-method-option input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+              }
+              .card-info {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+              }
+              .card-type {
+                font-weight: 500;
+              }
+              .new-card-form {
+                background-color: ${theme === 'dark' ? '#1e293b' : '#f8fafc'};
+                padding: 12px;
+                border-radius: 6px;
+                margin-top: 10px;
+                margin-bottom: 10px;
+              }
+              .submit-button {
+                width: 100%;
+                padding: 12px;
+                background-color: #3b82f6;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: 500;
+                cursor: pointer;
+                transition: background-color 0.2s;
+              }
+              .submit-button:hover {
+                background-color: #2563eb;
+              }
+              .submit-button:disabled {
+                background-color: #94a3b8;
+                cursor: not-allowed;
+              }
+              .success-message {
+                background-color: #10b981;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                margin-bottom: 16px;
+              }
+              .error-message {
+                background-color: #ef4444;
+                color: white;
+                padding: 8px 12px;
+                border-radius: 4px;
+                margin-bottom: 16px;
+              }
+              .add-card-link {
+                color: #3b82f6;
+                text-decoration: none;
+                font-size: 14px;
+                display: inline-block;
+                margin-top: 5px;
+              }
+              .add-card-link:hover {
+                text-decoration: underline;
+              }
+              .no-cards-message {
+                margin: 0 0 5px 0;
+                font-size: 14px;
+                color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
+              }
+            </style>
+          `;
+          break;
+        
         case 'balance':
           // Get user's wallet and balances
           const wallet = await storage.getWalletByUserId(req.user!.id);

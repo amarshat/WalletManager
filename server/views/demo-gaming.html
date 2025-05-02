@@ -978,32 +978,47 @@
         container.appendChild(scriptEl);
       }
       
-      // Initialize all widgets
-      // Balance Widget (Mini)
-      createWidget('balance-widget-container', 'balance', 'Balance', 'dark', { 
-        currency: 'USD', 
-        size: 'mini',
-        width: '100%',
-        height: 'auto'
-      });
+      // Clear any existing widget containers before adding new ones
+      function clearExistingWidgets() {
+        document.querySelectorAll('.paysage-widget-container').forEach(container => {
+          container.remove();
+        });
+      }
       
-      // Transfer Widget
-      createWidget('transfer-widget-container', 'transfer', 'Quick Transfer', 'dark', {
-        width: '100%',
-        height: 'auto'
-      });
+      // Initialize all widgets once
+      function initializeWidgets() {
+        // First clear any existing widgets to prevent duplication
+        clearExistingWidgets();
+        
+        // Balance Widget (Mini)
+        createWidget('balance-widget-container', 'balance', 'Balance', 'dark', { 
+          currency: 'USD', 
+          size: 'mini',
+          width: '100%',
+          height: 'auto'
+        });
+        
+        // Transfer Widget
+        createWidget('transfer-widget-container', 'transfer', 'Quick Transfer', 'dark', {
+          width: '100%',
+          height: 'auto'
+        });
+        
+        // Deposit Widget (Add Money)
+        createWidget('deposit-widget-container', 'deposit', 'Add Money', 'dark', {
+          width: '100%',
+          height: 'auto'
+        });
+        
+        // Prepaid Cards Widget
+        createWidget('prepaid-cards-widget-container', 'prepaid-cards', 'My Cards', 'dark', {
+          width: '100%',
+          height: 'auto'
+        });
+      }
       
-      // Deposit Widget (Add Money)
-      createWidget('deposit-widget-container', 'deposit', 'Add Money', 'dark', {
-        width: '100%',
-        height: 'auto'
-      });
-      
-      // Prepaid Cards Widget
-      createWidget('prepaid-cards-widget-container', 'prepaid-cards', 'My Cards', 'dark', {
-        width: '100%',
-        height: 'auto'
-      });
+      // Wait for the page to fully load before initializing widgets
+      setTimeout(initializeWidgets, 300);
       
       // Wait a moment to adjust widget iframe sizes
       setTimeout(() => {

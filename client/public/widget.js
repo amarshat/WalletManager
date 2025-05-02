@@ -225,8 +225,20 @@
     injectStyles();
     
     // Find all widget script tags and initialize them
+    // Important: Only process scripts that don't already have a widget container as a sibling
     const scripts = document.querySelectorAll(`script[src*="widget.js"][data-widget]`);
-    scripts.forEach(loadWidget);
+    scripts.forEach(script => {
+      // Check if this script already has a widget container as a sibling
+      const parent = script.parentNode;
+      const hasWidgetContainer = Array.from(parent.children).some(
+        child => child !== script && child.classList && child.classList.contains(WIDGET_CONTAINER_CLASS)
+      );
+      
+      // Only load the widget if there isn't already a widget container
+      if (!hasWidgetContainer) {
+        loadWidget(script);
+      }
+    });
   }
   
   // Run initialization when DOM is loaded

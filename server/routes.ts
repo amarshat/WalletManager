@@ -1680,6 +1680,760 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(404).send('Widget not found');
     }
   });
+  
+  // Widget API endpoints to serve different widget types
+  app.get('/api/widget/:type', async (req, res) => {
+    const widgetType = req.params.type;
+    const theme = req.query.theme as string || 'light';
+    const title = req.query.title as string || null;
+    const isAuthenticated = req.isAuthenticated();
+    
+    // Set HTML content type
+    res.setHeader('Content-Type', 'text/html');
+    
+    // Define common HTML head content
+    const headContent = `
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>PaySage Widget</title>
+      <style>
+        body, html {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+          overflow: hidden;
+        }
+        body {
+          background-color: transparent;
+          color: ${theme === 'dark' ? '#ffffff' : '#1e1e2e'};
+        }
+        .widget-container {
+          padding: 16px;
+          height: calc(100% - 32px);
+          display: flex;
+          flex-direction: column;
+        }
+        .widget-header {
+          margin-bottom: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+        .widget-title {
+          font-size: 16px;
+          font-weight: 600;
+          margin: 0;
+        }
+        .widget-content {
+          flex: 1;
+          overflow: auto;
+        }
+        .widget-footer {
+          font-size: 11px;
+          text-align: center;
+          margin-top: 12px;
+          opacity: 0.7;
+        }
+        .btn {
+          background: ${theme === 'dark' ? '#3b82f6' : '#2563eb'};
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 6px 12px;
+          font-size: 14px;
+          cursor: pointer;
+          font-weight: 500;
+          transition: background-color 0.2s;
+        }
+        .btn:hover {
+          background: ${theme === 'dark' ? '#2563eb' : '#1d4ed8'};
+        }
+        .login-prompt {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          height: 100%;
+          text-align: center;
+          padding: 20px;
+        }
+        .message {
+          margin-bottom: 16px;
+        }
+        
+        /* Dark theme specific */
+        ${theme === 'dark' ? `
+          .text-muted { color: #94a3b8; }
+        ` : `
+          .text-muted { color: #64748b; }
+        `}
+        
+        /* Balance widget specific */
+        .balance-container {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+        .balance-value {
+          font-size: 32px;
+          font-weight: bold;
+          margin: 8px 0;
+        }
+        .balance-currency {
+          font-size: 14px;
+          opacity: 0.7;
+          margin-left: 4px;
+        }
+        .balance-accounts {
+          margin-top: 16px;
+        }
+        .account-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+        }
+        .account-item:last-child {
+          border-bottom: none;
+        }
+        
+        /* Transactions widget specific */
+        .transactions-list {
+          list-style-type: none;
+          padding: 0;
+          margin: 0;
+        }
+        .transaction-item {
+          display: flex;
+          padding: 12px 0;
+          border-bottom: 1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+        }
+        .transaction-icon {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: ${theme === 'dark' ? '#374151' : '#f3f4f6'};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-right: 12px;
+        }
+        .transaction-details {
+          flex: 1;
+        }
+        .transaction-title {
+          font-weight: 500;
+          margin: 0 0 4px 0;
+        }
+        .transaction-date {
+          font-size: 12px;
+          color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
+          margin: 0;
+        }
+        .transaction-amount {
+          font-weight: 500;
+        }
+        .transaction-amount.positive {
+          color: ${theme === 'dark' ? '#10b981' : '#059669'};
+        }
+        .transaction-amount.negative {
+          color: ${theme === 'dark' ? '#ef4444' : '#dc2626'};
+        }
+        
+        /* Prepaid Cards widget specific */
+        .cards-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+          gap: 16px;
+          margin-top: 8px;
+        }
+        .card-item {
+          background: linear-gradient(135deg, ${theme === 'dark' ? '#1e40af, #0f172a' : '#3b82f6, #1e40af'});
+          border-radius: 8px;
+          padding: 16px;
+          color: white;
+          position: relative;
+          min-height: 150px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .card-network {
+          position: absolute;
+          top: 16px;
+          right: 16px;
+          font-size: 12px;
+          font-weight: bold;
+          opacity: 0.8;
+        }
+        .card-number {
+          font-size: 16px;
+          letter-spacing: 2px;
+          margin: 24px 0 8px;
+        }
+        .card-details {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          margin-top: 8px;
+        }
+        .card-holder {
+          font-size: 14px;
+          font-weight: 500;
+        }
+        
+        /* Profile widget specific */
+        .profile-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+        }
+        .profile-avatar {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          background-color: ${theme === 'dark' ? '#374151' : '#f3f4f6'};
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          font-weight: bold;
+          margin-bottom: 16px;
+        }
+        .profile-name {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0 0 4px 0;
+        }
+        .profile-username {
+          font-size: 14px;
+          color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
+          margin: 0 0 16px 0;
+        }
+        .profile-details {
+          width: 100%;
+          margin-top: 16px;
+        }
+        .profile-detail {
+          display: flex;
+          padding: 8px 0;
+          border-bottom: 1px solid ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'};
+        }
+        .profile-detail-label {
+          font-size: 14px;
+          color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
+          flex: 1;
+          text-align: left;
+        }
+        .profile-detail-value {
+          font-size: 14px;
+          text-align: right;
+        }
+        
+        /* Carbon Impact widget specific */
+        .carbon-container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        .carbon-summary {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 16px;
+        }
+        .carbon-metric {
+          text-align: center;
+          flex: 1;
+        }
+        .carbon-value {
+          font-size: 24px;
+          font-weight: bold;
+          margin: 4px 0;
+        }
+        .carbon-label {
+          font-size: 12px;
+          color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
+        }
+        .carbon-chart {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+        }
+        .carbon-donut {
+          width: 120px;
+          height: 120px;
+          border-radius: 50%;
+          background: conic-gradient(
+            #10b981 0% 70%,
+            #ef4444 70% 100%
+          );
+          position: relative;
+        }
+        .carbon-donut::after {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 80px;
+          height: 80px;
+          background-color: ${theme === 'dark' ? '#1e1e2e' : '#ffffff'};
+          border-radius: 50%;
+        }
+        .carbon-legend {
+          margin-top: 16px;
+          display: flex;
+          justify-content: center;
+          gap: 16px;
+        }
+        .legend-item {
+          display: flex;
+          align-items: center;
+          font-size: 12px;
+        }
+        .legend-color {
+          width: 12px;
+          height: 12px;
+          border-radius: 2px;
+          margin-right: 4px;
+        }
+        
+        /* Quick Actions widget specific */
+        .actions-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+        .action-button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          background-color: ${theme === 'dark' ? '#2d3748' : '#f8fafc'};
+          border: 1px solid ${theme === 'dark' ? '#374151' : '#e2e8f0'};
+          border-radius: 8px;
+          padding: 16px;
+          cursor: pointer;
+          transition: all 0.2s;
+        }
+        .action-button:hover {
+          background-color: ${theme === 'dark' ? '#374151' : '#f1f5f9'};
+          transform: translateY(-2px);
+        }
+        .action-icon {
+          font-size: 24px;
+          margin-bottom: 8px;
+        }
+        .action-label {
+          font-size: 13px;
+          text-align: center;
+          font-weight: 500;
+        }
+      </style>
+    `;
+    
+    // If user is not authenticated, show login prompt
+    if (!isAuthenticated) {
+      return res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          ${headContent}
+        </head>
+        <body>
+          <div class="widget-container">
+            <div class="login-prompt">
+              <div class="message">Please log in to view your ${widgetType.replace('-', ' ')} widget</div>
+              <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/auth" target="_blank" class="btn">Log in to PaySage</a>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+    
+    try {
+      // Render different widget types based on the request
+      let widgetContent = '';
+      
+      switch (widgetType) {
+        case 'balance':
+          // Get user's wallet and balances
+          const wallet = await storage.getWalletByUserId(req.user!.id);
+          if (!wallet) {
+            return res.send(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                ${headContent}
+              </head>
+              <body>
+                <div class="widget-container">
+                  <div class="login-prompt">
+                    <div class="message">You don't have an active wallet</div>
+                    <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="btn">Set up your wallet</a>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `);
+          }
+          
+          // Get balances
+          const balances = await walletClient.getBalances(wallet.customerId);
+          const primaryAccount = balances.accounts[0];
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Your Balance'}</h2>
+              </div>
+              <div class="widget-content">
+                <div class="balance-container">
+                  <div>
+                    <div class="text-muted">Available Balance</div>
+                    <div class="balance-value">
+                      ${parseFloat(primaryAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span class="balance-currency">${primaryAccount.currencyCode}</span>
+                    </div>
+                  </div>
+                  
+                  ${balances.accounts.length > 1 ? `
+                    <div class="balance-accounts">
+                      <div class="text-muted">All Accounts</div>
+                      ${balances.accounts.map(account => `
+                        <div class="account-item">
+                          <div>${account.currencyCode} Account</div>
+                          <div>${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${account.currencyCode}</div>
+                        </div>
+                      `).join('')}
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+          
+        case 'transactions':
+          // Get user's wallet
+          const txWallet = await storage.getWalletByUserId(req.user!.id);
+          if (!txWallet) {
+            return res.send(`
+              <!DOCTYPE html>
+              <html>
+              <head>
+                ${headContent}
+              </head>
+              <body>
+                <div class="widget-container">
+                  <div class="login-prompt">
+                    <div class="message">You don't have an active wallet</div>
+                    <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="btn">Set up your wallet</a>
+                  </div>
+                </div>
+              </body>
+              </html>
+            `);
+          }
+          
+          // Get transactions
+          const transactions = await walletClient.getTransactions(txWallet.customerId, 10);
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Recent Transactions'}</h2>
+              </div>
+              <div class="widget-content">
+                ${transactions.items.length === 0 ? 
+                  `<div class="text-muted" style="text-align: center; padding: 20px;">No transactions found</div>` : 
+                  `<ul class="transactions-list">
+                    ${transactions.items.map(tx => {
+                      const isNegative = tx.transactionType === 'DEBIT' || tx.transactionType === 'WITHDRAW';
+                      const formattedAmount = parseFloat(tx.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                      const date = new Date(tx.transactionTime || tx.createdAt).toLocaleDateString();
+                      
+                      return `
+                        <li class="transaction-item">
+                          <div class="transaction-icon">
+                            ${isNegative ? '↑' : '↓'}
+                          </div>
+                          <div class="transaction-details">
+                            <h4 class="transaction-title">${tx.description || (isNegative ? 'Payment Sent' : 'Payment Received')}</h4>
+                            <p class="transaction-date">${date}</p>
+                          </div>
+                          <div class="transaction-amount ${isNegative ? 'negative' : 'positive'}">
+                            ${isNegative ? '-' : '+'}${formattedAmount} ${tx.currencyCode}
+                          </div>
+                        </li>
+                      `;
+                    }).join('')}
+                  </ul>`
+                }
+              </div>
+            </div>
+          `;
+          break;
+          
+        case 'prepaid-cards':
+          // Get user's prepaid cards
+          const prepaidCards = await storage.getPrepaidCardsByUserId(req.user!.id);
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Your Prepaid Cards'}</h2>
+              </div>
+              <div class="widget-content">
+                ${prepaidCards.length === 0 ? 
+                  `<div class="text-muted" style="text-align: center; padding: 20px;">No prepaid cards found</div>` : 
+                  `<div class="cards-grid">
+                    ${prepaidCards.map(card => {
+                      // Mask card number
+                      const lastFour = card.cardNumber.slice(-4);
+                      const maskedNumber = '•••• •••• •••• ' + lastFour;
+                      
+                      return `
+                        <div class="card-item">
+                          <div class="card-network">${card.cardNetwork}</div>
+                          <div class="card-holder">${card.nameOnCard}</div>
+                          <div class="card-number">${maskedNumber}</div>
+                          <div class="card-details">
+                            <div>Expires ${card.expiryMonth}/${card.expiryYear}</div>
+                            <div>${card.cardType}</div>
+                          </div>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>`
+                }
+              </div>
+            </div>
+          `;
+          break;
+          
+        case 'profile':
+          // User profile information
+          const user = req.user!;
+          
+          // Get user wallet if available
+          const profileWallet = await storage.getWalletByUserId(user.id);
+          const walletStatus = profileWallet ? 
+            (profileWallet.status === 'ACTIVE' ? 'Active' : profileWallet.status) : 
+            'Not Setup';
+          
+          // Get initials for avatar
+          const getInitials = (name) => {
+            return name
+              .split(' ')
+              .map(part => part.charAt(0))
+              .join('')
+              .toUpperCase()
+              .slice(0, 2);
+          };
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Your Profile'}</h2>
+              </div>
+              <div class="widget-content">
+                <div class="profile-container">
+                  <div class="profile-avatar">
+                    ${getInitials(user.fullName)}
+                  </div>
+                  <h3 class="profile-name">${user.fullName}</h3>
+                  <div class="profile-username">@${user.username}</div>
+                  
+                  <div class="profile-details">
+                    ${user.email ? `
+                      <div class="profile-detail">
+                        <div class="profile-detail-label">Email</div>
+                        <div class="profile-detail-value">${user.email}</div>
+                      </div>
+                    ` : ''}
+                    
+                    <div class="profile-detail">
+                      <div class="profile-detail-label">Wallet Status</div>
+                      <div class="profile-detail-value">${walletStatus}</div>
+                    </div>
+                    
+                    <div class="profile-detail">
+                      <div class="profile-detail-label">Default Currency</div>
+                      <div class="profile-detail-value">${user.defaultCurrency}</div>
+                    </div>
+                    
+                    ${user.country ? `
+                      <div class="profile-detail">
+                        <div class="profile-detail-label">Country</div>
+                        <div class="profile-detail-value">${user.country}</div>
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+          
+        case 'carbon-impact':
+          // Get user's carbon impact summary
+          const carbonSummary = await storage.getUserCarbonSummary(req.user!.id);
+          
+          // Calculate percentages for chart
+          const totalImpact = carbonSummary.totalImpact || 0;
+          const totalOffset = carbonSummary.totalOffset || 0;
+          const netImpact = carbonSummary.netImpact || 0;
+          
+          // Calculate offset percentage (capped at 100%)
+          const offsetPercentage = Math.min(100, totalImpact > 0 ? (totalOffset / totalImpact) * 100 : 0);
+          
+          // Create chart gradient
+          const chartGradient = `background: conic-gradient(
+            #10b981 0% ${offsetPercentage}%,
+            #ef4444 ${offsetPercentage}% 100%
+          );`;
+          
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Carbon Impact'}</h2>
+              </div>
+              <div class="widget-content">
+                <div class="carbon-container">
+                  <div class="carbon-summary">
+                    <div class="carbon-metric">
+                      <div class="carbon-label">Total Impact</div>
+                      <div class="carbon-value">${totalImpact.toFixed(1)}</div>
+                      <div class="carbon-label">kg CO₂</div>
+                    </div>
+                    
+                    <div class="carbon-metric">
+                      <div class="carbon-label">Offset</div>
+                      <div class="carbon-value">${totalOffset.toFixed(1)}</div>
+                      <div class="carbon-label">kg CO₂</div>
+                    </div>
+                    
+                    <div class="carbon-metric">
+                      <div class="carbon-label">Net Impact</div>
+                      <div class="carbon-value">${netImpact.toFixed(1)}</div>
+                      <div class="carbon-label">kg CO₂</div>
+                    </div>
+                  </div>
+                  
+                  <div class="carbon-chart">
+                    <div class="carbon-donut" style="${chartGradient}"></div>
+                  </div>
+                  
+                  <div class="carbon-legend">
+                    <div class="legend-item">
+                      <div class="legend-color" style="background-color: #10b981;"></div>
+                      <span>Offset (${offsetPercentage.toFixed(0)}%)</span>
+                    </div>
+                    <div class="legend-item">
+                      <div class="legend-color" style="background-color: #ef4444;"></div>
+                      <span>Remaining (${(100 - offsetPercentage).toFixed(0)}%)</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+          
+        case 'quick-actions':
+          // Simple quick actions widget
+          widgetContent = `
+            <div class="widget-container">
+              <div class="widget-header">
+                <h2 class="widget-title">${title || 'Quick Actions'}</h2>
+              </div>
+              <div class="widget-content">
+                <div class="actions-grid">
+                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="action-button">
+                    <div class="action-icon">💰</div>
+                    <div class="action-label">Deposit</div>
+                  </a>
+                  
+                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/dashboard" target="_blank" class="action-button">
+                    <div class="action-icon">↗️</div>
+                    <div class="action-label">Send Money</div>
+                  </a>
+                  
+                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/cards" target="_blank" class="action-button">
+                    <div class="action-icon">💳</div>
+                    <div class="action-label">View Cards</div>
+                  </a>
+                  
+                  <a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || ''}/transactions" target="_blank" class="action-button">
+                    <div class="action-icon">📊</div>
+                    <div class="action-label">Transactions</div>
+                  </a>
+                </div>
+              </div>
+            </div>
+          `;
+          break;
+          
+        default:
+          // Unknown widget type
+          return res.status(404).send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+              ${headContent}
+            </head>
+            <body>
+              <div class="widget-container">
+                <div class="login-prompt">
+                  <div class="message">Unknown widget type: ${widgetType}</div>
+                </div>
+              </div>
+            </body>
+            </html>
+          `);
+      }
+      
+      // Return the complete HTML
+      res.send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          ${headContent}
+        </head>
+        <body>
+          ${widgetContent}
+        </body>
+        </html>
+      `);
+      
+    } catch (error) {
+      console.error(`Error serving widget: ${widgetType}`, error);
+      
+      // Return error message
+      res.status(500).send(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          ${headContent}
+        </head>
+        <body>
+          <div class="widget-container">
+            <div class="login-prompt">
+              <div class="message">Error loading widget</div>
+              <div class="text-muted">Please try again later</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `);
+    }
+  });
 
   // Widget demo pages for testing
   app.get('/demo/gaming', (req, res) => {

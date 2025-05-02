@@ -112,6 +112,12 @@ function Router() {
         requireAdmin={true} 
         redirectTo="/auth" 
       />
+      <ProtectedRoute 
+        path="/admin/embedded-widgets" 
+        component={EmbeddedWidgets} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
       
       {/* Customer Routes */}
       <ProtectedRoute 

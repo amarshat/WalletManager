@@ -2085,38 +2085,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // Get balances
           const balances = await walletClient.getBalances(wallet.customerId);
-          const primaryAccount = balances.accounts[0];
           
-          widgetContent = `
-            <div class="widget-container">
-              <div class="widget-header">
-                <h2 class="widget-title">${title || 'Your Balance'}</h2>
-              </div>
-              <div class="widget-content">
-                <div class="balance-container">
-                  <div>
-                    <div class="text-muted">Available Balance</div>
-                    <div class="balance-value">
-                      ${parseFloat(primaryAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      <span class="balance-currency">${primaryAccount.currencyCode}</span>
-                    </div>
-                  </div>
-                  
-                  ${balances.accounts.length > 1 ? `
-                    <div class="balance-accounts">
-                      <div class="text-muted">All Accounts</div>
-                      ${balances.accounts.map(account => `
-                        <div class="account-item">
-                          <div>${account.currencyCode} Account</div>
-                          <div>${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${account.currencyCode}</div>
-                        </div>
-                      `).join('')}
-                    </div>
-                  ` : ''}
+          // Check if we need to filter by currency
+          const currencyFilter = req.query.currency as string | undefined;
+          let filteredAccounts = balances.accounts;
+          let primaryAccount = balances.accounts[0];
+          
+          if (currencyFilter) {
+            filteredAccounts = balances.accounts.filter(account => 
+              account.currencyCode === currencyFilter
+            );
+            
+            // If we found a matching account, use it as primary
+            if (filteredAccounts.length > 0) {
+              primaryAccount = filteredAccounts[0];
+            }
+          }
+          
+          // Special case for inline display (e.g., showing just USD balance in a header)
+          if (currencyFilter && filteredAccounts.length === 1) {
+            widgetContent = `
+              <div class="widget-container widget-minimal">
+                <div class="widget-content">
+                  ${parseFloat(primaryAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${primaryAccount.currencyCode}
                 </div>
               </div>
-            </div>
-          `;
+            `;
+          } else {
+            // Standard widget display with full details
+            widgetContent = `
+              <div class="widget-container">
+                <div class="widget-header">
+                  <h2 class="widget-title">${title || 'Your Balance'}</h2>
+                </div>
+                <div class="widget-content">
+                  <div class="balance-container">
+                    <div>
+                      <div class="text-muted">Available Balance</div>
+                      <div class="balance-value">
+                        ${parseFloat(primaryAccount.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        <span class="balance-currency">${primaryAccount.currencyCode}</span>
+                      </div>
+                    </div>
+                    
+                    ${balances.accounts.length > 1 ? `
+                      <div class="balance-accounts">
+                        <div class="text-muted">All Accounts</div>
+                        ${balances.accounts.map(account => `
+                          <div class="account-item">
+                            <div>${account.currencyCode} Account</div>
+                            <div>${parseFloat(account.balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${account.currencyCode}</div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          }
           break;
           
         case 'transactions':
@@ -2144,13 +2171,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Get transactions
           const transactions = await walletClient.getTransactions(txWallet.customerId, 10);
           
+          // Check if transactions data has the expected structure
+          const hasTransactions = transactions && 
+                                 (transactions.items || []).length > 0;
+          
           widgetContent = `
             <div class="widget-container">
               <div class="widget-header">
                 <h2 class="widget-title">${title || 'Recent Transactions'}</h2>
               </div>
               <div class="widget-content">
-                ${transactions.items.length === 0 ? 
+                ${!hasTransactions ? 
                   `<div class="text-muted" style="text-align: center; padding: 20px;">No transactions found</div>` : 
                   `<ul class="transactions-list">
                     ${transactions.items.map(tx => {
@@ -2560,6 +2591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       border-radius: 12px;
       overflow: hidden;
       transition: transform 0.3s ease, box-shadow 0.3s ease;
+      position: relative;
     }
     .game-card:hover {
       transform: translateY(-10px);
@@ -2584,12 +2616,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       font-weight: bold;
       color: #fc6767;
     }
-    .widgets-container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-top: 40px;
-      margin-bottom: 40px;
+    .game-card .game-points {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(0,0,0,0.7);
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
     }
     footer {
       background: #1a1a2e;
@@ -2597,22 +2632,97 @@ export async function registerRoutes(app: Express): Promise<Server> {
       text-align: center;
       margin-top: 60px;
     }
-    .wallet-section {
+    .game-detail {
+      display: flex;
+      margin-top: 40px;
       background: linear-gradient(135deg, #282842, #1e1e2e);
       border-radius: 15px;
+      overflow: hidden;
+    }
+    .game-media {
+      flex: 0 0 60%;
+    }
+    .game-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .game-purchase {
+      flex: 0 0 40%;
       padding: 30px;
-      margin: 40px 0;
+      display: flex;
+      flex-direction: column;
     }
-    .wallet-header {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .wallet-header h2 {
-      font-size: 1.8rem;
+    .game-purchase h2 {
+      font-size: 2rem;
+      margin-top: 0;
       margin-bottom: 10px;
     }
-    .wallet-header p {
+    .game-purchase .price {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+    }
+    .game-purchase .description {
+      margin-bottom: 20px;
       color: #ccc;
+      line-height: 1.6;
+    }
+    .game-purchase .btn {
+      margin-top: auto;
+      align-self: flex-start;
+    }
+    .header-wallet {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .header-wallet-balance {
+      background: rgba(0,0,0,0.3);
+      padding: 8px 15px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .balance-amount {
+      font-weight: bold;
+      margin-left: 5px;
+    }
+    .quick-access {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 100;
+    }
+    .quick-access-button {
+      background: linear-gradient(135deg, #fc6767, #ec008c);
+      color: white;
+      border: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+    .quick-access-button:hover {
+      transform: scale(1.1);
+    }
+    .quick-access-menu {
+      position: absolute;
+      bottom: 60px;
+      right: 0;
+      background: #1e1e2e;
+      border-radius: 10px;
+      padding: 15px;
+      width: 300px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      display: none;
+    }
+    .quick-access:hover .quick-access-menu {
+      display: block;
     }
   </style>
 </head>
@@ -2628,6 +2738,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         <li><a href="#">Support</a></li>
       </ul>
     </nav>
+    <div class="header-wallet">
+      <div class="header-wallet-balance">
+        Balance: <span class="balance-amount">
+          <!-- Embedded widget for just the USD balance -->
+          <script src="/widget.js" data-widget="balance" data-theme="dark" data-currency="USD"></script>
+        </span>
+      </div>
+      <a href="#" class="btn btn-sm">Add Credits</a>
+    </div>
   </header>
 
   <main>
@@ -2639,18 +2758,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       </div>
     </section>
 
-    <section class="wallet-section">
-      <div class="wallet-header">
-        <h2>Your Gaming Wallet</h2>
-        <p>Powered by PaySage - Play, pay, and earn rewards seamlessly</p>
+    <section class="game-detail">
+      <div class="game-media">
+        <img src="https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=800&q=80" alt="Formula Legend">
       </div>
-      
-      <div class="widgets-container">
-        <!-- Balance Widget -->
-        <script src="/widget.js" data-widget="balance" data-theme="dark" data-title="Your Gaming Balance"></script>
-        
-        <!-- Quick Actions Widget -->
-        <script src="/widget.js" data-widget="quick-actions" data-theme="dark" data-title="Quick Actions"></script>
+      <div class="game-purchase">
+        <h2>Formula Legend</h2>
+        <div class="price">$29.99</div>
+        <div class="description">
+          Experience the thrill of formula racing with realistic physics, dynamic weather, and 
+          authentic racing mechanics. Compete in championship events and earn exclusive rewards.
+        </div>
+        <a href="#" class="btn">Purchase Game</a>
       </div>
     </section>
 
@@ -2662,6 +2781,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       <div class="games-grid">
         <div class="game-card">
+          <div class="game-points">
+            <span>250 Points</span>
+          </div>
           <img src="https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?auto=format&fit=crop&w=800&q=80" alt="Night Speedway">
           <div class="game-info">
             <h3>Night Speedway</h3>
@@ -2671,6 +2793,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
         
         <div class="game-card">
+          <div class="game-points">
+            <span>180 Points</span>
+          </div>
           <img src="https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&w=800&q=80" alt="Rally Masters">
           <div class="game-info">
             <h3>Rally Masters</h3>
@@ -2680,6 +2805,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
         
         <div class="game-card">
+          <div class="game-points">
+            <span>310 Points</span>
+          </div>
           <img src="https://images.unsplash.com/photo-1511994714008-b6d68a8b32a2?auto=format&fit=crop&w=800&q=80" alt="Formula Legend">
           <div class="game-info">
             <h3>Formula Legend</h3>
@@ -2689,6 +2817,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
         
         <div class="game-card">
+          <div class="game-points">
+            <span>150 Points</span>
+          </div>
           <img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?auto=format&fit=crop&w=800&q=80" alt="Drift King">
           <div class="game-info">
             <h3>Drift King</h3>
@@ -2698,22 +2829,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         </div>
       </div>
     </section>
-
-    <section class="wallet-section">
-      <div class="wallet-header">
-        <h2>Recent Transactions</h2>
-        <p>Track your gaming purchases and earnings</p>
-      </div>
-      
-      <!-- Transactions Widget -->
-      <script src="/widget.js" data-widget="transactions" data-theme="dark" data-title="Recent Gaming Transactions"></script>
-    </section>
   </main>
 
   <footer>
     <p>&copy; 2025 PixelRacer. All rights reserved.</p>
     <p>Integrated with PaySage Wallet for secure gaming transactions</p>
   </footer>
+
+  <!-- Quick access floating button -->
+  <div class="quick-access">
+    <button class="quick-access-button">💰</button>
+    <div class="quick-access-menu">
+      <!-- Quick actions widget embedded in the floating menu -->
+      <script src="/widget.js" data-widget="quick-actions" data-theme="dark" data-title="Wallet Actions"></script>
+    </div>
+  </div>
 </body>
 </html>`);
   });

@@ -29,6 +29,7 @@ interface WidgetConfig {
   theme: WidgetTheme;
   width?: string;
   height?: string;
+  currency?: string;
 }
 
 export default function EmbeddedWidgets() {
@@ -58,6 +59,10 @@ export default function EmbeddedWidgets() {
     
     if (config.height) {
       attributes.push(`data-height="${config.height}"`);
+    }
+    
+    if (config.currency) {
+      attributes.push(`data-currency="${config.currency}"`);
     }
     
     setScriptTag(`<script src="https://wallet.amar.im/widget.js" ${attributes.join(" ")}></script>`);
@@ -144,6 +149,30 @@ export default function EmbeddedWidgets() {
                   onChange={(e) => setConfig({...config, title: e.target.value})}
                 />
               </div>
+              
+              {config.type === 'balance' && (
+                <div className="space-y-2">
+                  <Label htmlFor="widget-currency">Currency Filter (Optional)</Label>
+                  <Select
+                    value={config.currency || ''}
+                    onValueChange={(value) => setConfig({...config, currency: value || undefined})}
+                  >
+                    <SelectTrigger id="widget-currency">
+                      <SelectValue placeholder="All currencies" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Currencies</SelectItem>
+                      <SelectItem value="USD">USD</SelectItem>
+                      <SelectItem value="EUR">EUR</SelectItem>
+                      <SelectItem value="GBP">GBP</SelectItem>
+                      <SelectItem value="CAD">CAD</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Show balance for a specific currency only
+                  </p>
+                </div>
+              )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">

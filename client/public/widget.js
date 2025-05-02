@@ -126,6 +126,7 @@
     const width = scriptElement.getAttribute('data-width') || DEFAULT_WIDTH;
     const height = scriptElement.getAttribute('data-height') || 
                   (widgetType === 'transactions' || widgetType === 'prepaid-cards' ? '500px' : '300px');
+    const currency = scriptElement.getAttribute('data-currency') || null; // Optional currency filter
     
     // Get widget host URL from script src
     const scriptSrc = scriptElement.src;
@@ -155,6 +156,9 @@
     let widgetUrl = `${widgetHost}/api/widget/${widgetType}?theme=${theme}`;
     if (title) {
       widgetUrl += `&title=${encodeURIComponent(title)}`;
+    }
+    if (currency) {
+      widgetUrl += `&currency=${encodeURIComponent(currency)}`;
     }
     
     iframe.src = widgetUrl;

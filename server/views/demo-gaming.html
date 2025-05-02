@@ -198,9 +198,12 @@
       color: white;
       background-image: linear-gradient(90deg, #3b82f6, #8b5cf6);
       border-radius: 15px;
-      margin-top: 10px;
-      margin-bottom: 5px;
-      width: fit-content;
+      margin: 10px auto 10px 10px;
+      width: auto;
+      position: relative;
+      z-index: 100;
+      left: 0;
+      bottom: 0;
     }
     
     /* Drag over highlight */
@@ -295,9 +298,10 @@
     .widget-container {
       background: #1a1a2e;
       border-radius: 10px;
-      padding: 20px;
+      padding: 20px 20px 40px 20px; /* Increased bottom padding for footer */
       margin-bottom: 30px;
       position: relative;
+      overflow: visible; /* Allow footer to be visible outside container */
     }
     .widget-customizer {
       background: #242438;

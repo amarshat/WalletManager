@@ -22,9 +22,11 @@
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', sans-serif;
       position: relative;
       border-radius: 8px;
-      overflow: hidden;
+      overflow: visible; /* Changed from hidden to visible to show the badge */
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transition: all 0.3s ease;
+      padding-bottom: 10px; /* Add padding to make room for the badge */
+      margin-bottom: 20px; /* Add margin to prevent overlap with content below */
     }
     .${WIDGET_CONTAINER_CLASS}:hover {
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
@@ -97,6 +99,7 @@
       opacity: 0.7;
       text-align: right;
       font-weight: 400;
+      z-index: 50;
     }
     .paysage-powered a {
       color: inherit;
@@ -104,6 +107,19 @@
     }
     .paysage-powered a:hover {
       text-decoration: underline;
+    }
+    /* PaySage Wallet footer badge styling */
+    .paysage-wallet-badge {
+      position: absolute;
+      bottom: -25px;
+      left: 10px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      background-image: linear-gradient(90deg, #3b82f6, #8b5cf6);
+      padding: 4px 12px;
+      border-radius: 15px;
+      z-index: 50;
     }
     @keyframes paysage-spin {
       to { transform: rotate(360deg); }
@@ -186,6 +202,12 @@
     poweredBy.className = 'paysage-powered';
     poweredBy.innerHTML = 'Powered by <a href="https://paysage.ai" target="_blank">PaySage AI</a>';
     container.appendChild(poweredBy);
+    
+    // Add PaySage Wallet badge 
+    const walletBadge = document.createElement('div');
+    walletBadge.className = 'paysage-wallet-badge';
+    walletBadge.textContent = 'PaySage Wallet';
+    container.appendChild(walletBadge);
     
     // Handle timeout - show error if widget doesn't load within 15 seconds
     const timeout = setTimeout(function() {

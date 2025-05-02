@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { errorHandler } from './diagnostics/error-tracking';
 import { setupCorsForWidgets, setupSecureCookies } from './cors-middleware';
+// Import demo routes for embedded widgets will be done dynamically
 
 const app = express();
 app.use(express.json({ limit: '10mb' }));
@@ -44,6 +45,20 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Register the demo routes for embedded widgets
+  try {
+    // Use dynamic import for routes-demo.js
+    import('./routes-demo.js').then(module => {
+      const registerDemoRoutes = module.default || module;
+      registerDemoRoutes(app);
+      log('Demo routes registered successfully');
+    }).catch(err => {
+      console.error('Failed to load demo routes:', err);
+    });
+  } catch (err) {
+    console.error('Error registering demo routes:', err);
+  }
 
   // Use the error handler middleware
   app.use(errorHandler);

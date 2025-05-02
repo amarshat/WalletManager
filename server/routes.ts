@@ -1686,6 +1686,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const widgetType = req.params.type;
     const theme = req.query.theme as string || 'light';
     const title = req.query.title as string || null;
+    const size = req.query.size as string || 'normal';
     const isAuthenticated = req.isAuthenticated();
     
     // Set HTML content type
@@ -1776,14 +1777,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           height: 100%;
         }
         .balance-value {
-          font-size: 32px;
-          font-weight: bold;
+          font-size: 36px;
+          font-weight: 800;
           margin: 8px 0;
+          line-height: 1.1;
+        }
+        .widget-size-large .balance-value {
+          font-size: 48px;
+          font-weight: 900;
+        }
+        .widget-size-small .balance-value {
+          font-size: 28px;
         }
         .balance-currency {
-          font-size: 14px;
+          font-size: 16px;
           opacity: 0.7;
           margin-left: 4px;
+          font-weight: 600;
+        }
+        .widget-size-large .balance-currency {
+          font-size: 20px;
         }
         .balance-accounts {
           margin-top: 16px;
@@ -2649,6 +2662,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           `);
       }
       
+      // Apply widget size class if specified
+      const sizeSuffix = size !== 'normal' ? ` widget-size-${size}` : '';
+      
       // Return the complete HTML
       res.send(`
         <!DOCTYPE html>
@@ -2656,7 +2672,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         <head>
           ${headContent}
         </head>
-        <body>
+        <body class="${sizeSuffix}">
           ${widgetContent}
         </body>
         </html>

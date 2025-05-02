@@ -2242,14 +2242,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
                       const lastFour = card.cardNumber.slice(-4);
                       const maskedNumber = '•••• •••• •••• ' + lastFour;
                       
+                      // Ensure we have valid values for card properties
+                      const cardType = card.cardType || 'MASTERCARD';
+                      const cardHolder = card.cardholderName || req.user!.fullName || 'Card Holder';
+                      
                       return `
                         <div class="card-item">
-                          <div class="card-network">${card.cardNetwork || card.cardType || 'MASTERCARD'}</div>
-                          <div class="card-holder">${card.nameOnCard || card.cardholderName || req.user!.fullName}</div>
+                          <div class="card-network">${cardType}</div>
+                          <div class="card-holder">${cardHolder}</div>
                           <div class="card-number">${maskedNumber}</div>
                           <div class="card-details">
                             <div>Expires ${card.expiryMonth}/${card.expiryYear}</div>
-                            <div>${card.cardType}</div>
+                            <div>${cardType}</div>
                           </div>
                         </div>
                       `;
@@ -2501,13 +2505,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
                     
                     try {
                       // Call the transfer API
-                      const response = await fetch('/api/wallet/transfer', {
+                      const response = await fetch('/api/transactions/transfer', {
                         method: 'POST',
                         headers: {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                          recipient,
+                          recipientUsername: recipient,
                           amount: parseFloat(amount),
                           currencyCode: currency,
                           note

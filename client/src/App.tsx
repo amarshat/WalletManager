@@ -24,6 +24,7 @@ import DevCenter from "@/pages/admin/dev-center";
 import TroubleshootingDashboard from "@/pages/admin/troubleshooting";
 import EmbeddedWalletPage from "@/pages/embedded-wallet-page";
 import CustomerEmbeddedWallet from "@/pages/customer/embedded-wallet-page";
+import EmbeddedWidgets from "@/pages/embedded-widgets";
 
 // Customer Pages
 import CustomerDashboard from "@/pages/customer/dashboard";

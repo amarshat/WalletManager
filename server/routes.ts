@@ -1861,16 +1861,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           gap: 16px;
           margin-top: 8px;
         }
+        .card-carousel {
+          margin-top: 8px;
+          position: relative;
+          padding: 10px 0;
+        }
         .card-item {
           background: linear-gradient(135deg, ${theme === 'dark' ? '#1e40af, #0f172a' : '#3b82f6, #1e40af'});
-          border-radius: 8px;
-          padding: 16px;
+          border-radius: 12px;
+          padding: 20px;
           color: white;
           position: relative;
-          min-height: 150px;
+          min-height: 180px;
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+          margin: 0 auto;
+          max-width: 340px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        .card-counter {
+          position: absolute;
+          bottom: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 12px;
+          color: rgba(255, 255, 255, 0.7);
+          margin-top: 15px;
+          text-align: center;
         }
         .card-network {
           position: absolute;

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ParKoin - Mobile Parking App with PaySage Integration</title>
+  <style>
+    /* Reset and base styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    }
+    
+    body {
+      background-color: #f2f5f8;
+      color: #333;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+    
+    /* Mobile-specific styles */
+    .mobile-frame {
+      max-width: 414px; /* iPhone 12/13 Pro Max width */
+      margin: 20px auto;
+      background: white;
+      min-height: 100vh;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      border-radius: 25px;
+      overflow: hidden;
+      position: relative;
+      padding-bottom: 80px; /* Space for bottom nav */
+    }
+    
+    /* Status bar */
+    .status-bar {
+      height: 44px;
+      background: #f8f8f8;
+      border-bottom: 1px solid #e1e1e1;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      font-size: 14px;
+      color: #333;
+      justify-content: space-between;
+    }
+    
+    .status-bar-time {
+      font-weight: 500;
+    }
+    
+    .status-icons span {
+      margin-left: 5px;
+    }
+    
+    /* Header */
+    .app-header {
+      background: linear-gradient(135deg, #3498db, #2980b9);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      position: relative;
+    }
+    
+    .header-title {
+      font-size: 20px;
+      font-weight: 600;
+    }
+    
+    .back-button {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 24px;
+    }
+    
+    /* Main content */
+    .main-content {
+      padding: 15px;
+    }
+    
+    /* Card styles */
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+      font-weight: 600;
+      margin-bottom: 10px;
+      font-size: 18px;
+      color: #2c3e50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-action {
+      color: #3498db;
+      font-size: 14px;
+      font-weight: normal;
+    }
+    
+    /* Active session */
+    .active-session {
+      background: linear-gradient(135deg, #3a7bd5, #00d2ff);
+      color: white;
+      padding: 20px 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    
+    .session-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .session-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .session-time {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 10px 0;
+    }
+    
+    .session-location {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+    
+    .session-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 15px;
+    }
+    
+    .session-btn {
+      padding: 8px 15px;
+      border-radius: 25px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      flex: 1;
+      max-width: 48%;
+      text-align: center;
+    }
+    
+    .extend-btn {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+    
+    .end-btn {
+      background: white;
+      color: #3498db;
+    }
+    
+    /* History list */
+    .history-list {
+      list-style: none;
+    }
+    
+    .history-item {
+      display: flex;
+      padding: 12px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .history-item:last-child {
+      border-bottom: none;
+    }
+    
+    .history-icon {
+      width: 40px;
+      height: 40px;
+      background: #f2f5f8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-size: 20px;
+      color: #3498db;
+    }
+    
+    .history-details {
+      flex: 1;
+    }
+    
+    .history-title {
+      font-weight: 600;
+      color: #2c3e50;
+      margin-bottom: 2px;
+    }
+    
+    .history-meta {
+      font-size: 13px;
+      color: #7f8c8d;
+      display: flex;
+      justify-content: space-between;
+    }
+    
+    .history-amount {
+      font-weight: 600;
+      color: #e74c3c;
+    }
+    
+    /* Bottom navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 414px;
+      margin: 0 auto;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      border-top: 1px solid #e1e1e1;
+      padding: 10px 0;
+      z-index: 100;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 5px 0;
+      color: #95a5a6;
+    }
+    
+    .nav-item.active {
+      color: #3498db;
+    }
+    
+    .nav-icon {
+      font-size: 24px;
+      margin-bottom: 5px;
+    }
+    
+    .nav-label {
+      font-size: 12px;
+    }
+    
+    /* Button */
+    .primary-btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    /* Widget integration specific styles */
+    .wallet-balance {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding: 10px 0;
+    }
+    
+    .balance-label {
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    
+    .balance-amount {
+      font-size: 20px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    
+    .add-money-btn {
+      padding: 8px 12px;
+      background: #f2f5f8;
+      border: none;
+      border-radius: 20px;
+      color: #3498db;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    
+    .payment-methods {
+      margin-top: 15px;
+    }
+    
+    .payment-title {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-bottom: 10px;
+    }
+    
+    .payment-cards {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+    }
+    
+    .payment-card {
+      min-width: 80px;
+      height: 50px;
+      background: #f2f5f8;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      border: 1px solid #e1e1e1;
+    }
+    
+    .payment-card.selected {
+      border-color: #3498db;
+      background: rgba(52, 152, 219, 0.1);
+    }
+    
+    /* Embedded micro-widget containers */
+    .micro-widget-container {
+      position: relative;
+      overflow: visible;
+      margin-bottom: 20px;
+    }
+    
+    .micro-widget {
+      width: 100%;
+      border: none;
+      overflow: hidden;
+      border-radius: 8px;
+    }
+    
+    .micro-balance-widget {
+      height: 80px;
+    }
+    
+    .micro-transfer-widget {
+      height: 180px;
+    }
+    
+    .micro-prepaid-widget {
+      height: 120px;
+    }
+    
+    /* Inline widgets styling */
+    .inline-widget-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 5px 0;
+    }
+    
+    .inline-widget-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f0f4f8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      font-size: 18px;
+      color: #3498db;
+    }
+    
+    .inline-widget-content {
+      flex: 1;
+    }
+    
+    .paysage-wallet-badge {
+      font-size: 10px !important;
+      padding: 2px 8px !important;
+    }
+    
+    /* Loading state */
+    .loading-placeholder {
+      background: linear-gradient(90deg, #f0f0f0, #e0e0e0, #f0f0f0);
+      background-size: 200% 100%;
+      animation: loadingAnimation 1.5s infinite;
+      border-radius: 4px;
+      height: 20px;
+      margin-bottom: 10px;
+    }
+    
+    .loading-placeholder.title {
+      width: 60%;
+      height: 24px;
+    }
+    
+    .loading-placeholder.subtitle {
+      width: 80%;
+    }
+    
+    .loading-placeholder.button {
+      height: 36px;
+      width: 100%;
+      border-radius: 18px;
+    }
+    
+    @keyframes loadingAnimation {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="mobile-frame">
+    <!-- Status bar -->
+    <div class="status-bar">
+      <div class="status-bar-time">10:42 AM</div>
+      <div class="status-icons">
+        <span>📶</span>
+        <span>📡</span>
+        <span>🔋</span>
+      </div>
+    </div>
+    
+    <!-- App header -->
+    <div class="app-header">
+      <div class="back-button">‹</div>
+      <div class="header-title">ParKoin</div>
+    </div>
+    
+    <!-- Main content -->
+    <div class="main-content">
+      <!-- Active parking session -->
+      <div class="active-session">
+        <div class="session-info">
+          <div class="session-title">Downtown Lot A</div>
+          <div class="session-cost">$4.50/hr</div>
+        </div>
+        <div class="session-time">1:45:22</div>
+        <div class="session-location">Space #B42 • 123 Main St</div>
+        <div class="session-actions">
+          <button class="session-btn extend-btn">Extend</button>
+          <button class="session-btn end-btn">End Session</button>
+        </div>
+      </div>
+      
+      <!-- Embedded Micro-Widgets Section -->
+      <div class="card">
+        <div class="card-header">
+          Wallet <span class="card-action">Manage</span>
+        </div>
+        
+        <!-- Embedded Micro Balance Widget -->
+        <div class="micro-widget-container">
+          <script src="/widget.js" data-widget="balance" data-theme="light" data-size="small" data-height="80px"></script>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="inline-widget-row">
+          <div class="inline-widget-icon">+</div>
+          <div class="inline-widget-content">
+            <div>Add Money</div>
+            <small>Instantly fund your account</small>
+          </div>
+          <!-- Mini Add Money Widget -->
+          <script src="/widget.js" data-widget="deposit" data-theme="light" data-size="mini" data-height="60px"></script>
+        </div>
+
+        <div class="inline-widget-row">
+          <div class="inline-widget-icon">↑</div>
+          <div class="inline-widget-content">
+            <div>Transfer Funds</div>
+            <small>Move money to others</small>
+          </div>
+          <!-- Mini Transfer Widget -->
+          <script src="/widget.js" data-widget="transfer" data-theme="light" data-size="mini" data-height="60px"></script>
+        </div>
+      </div>
+      
+      <!-- Payment Methods Card with embedded widget -->
+      <div class="card">
+        <div class="card-header">
+          Payment Methods <span class="card-action">Add New</span>
+        </div>
+        
+        <!-- Embedded Prepaid Cards Widget -->
+        <div class="micro-widget-container">
+          <script src="/widget.js" data-widget="prepaid-cards" data-theme="light" data-size="small" data-height="120px"></script>
+        </div>
+      </div>
+      
+      <!-- Recent Parking History -->
+      <div class="card">
+        <div class="card-header">
+          Recent Activity <span class="card-action">View All</span>
+        </div>
+        <ul class="history-list">
+          <li class="history-item">
+            <div class="history-icon">🅿️</div>
+            <div class="history-details">
+              <div class="history-title">Downtown Lot A</div>
+              <div class="history-meta">
+                <span>Today, 9:00 AM - 11:30 AM</span>
+                <span class="history-amount">-$12.50</span>
+              </div>
+            </div>
+          </li>
+          <li class="history-item">
+            <div class="history-icon">💸</div>
+            <div class="history-details">
+              <div class="history-title">Fund Added</div>
+              <div class="history-meta">
+                <span>May 1, 2:30 PM</span>
+                <span class="history-amount" style="color: #27ae60;">+$50.00</span>
+              </div>
+            </div>
+          </li>
+          <li class="history-item">
+            <div class="history-icon">🅿️</div>
+            <div class="history-details">
+              <div class="history-title">City Center Garage</div>
+              <div class="history-meta">
+                <span>Apr 30, 1:00 PM - 3:45 PM</span>
+                <span class="history-amount">-$18.75</span>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+      
+      <!-- Find Parking Button -->
+      <button class="primary-btn">Find Parking Near Me</button>
+    </div>
+    
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-icon">🏠</div>
+        <div class="nav-label">Home</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">🔍</div>
+        <div class="nav-label">Find</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">💰</div>
+        <div class="nav-label">Wallet</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-icon">👤</div>
+        <div class="nav-label">Profile</div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Font Awesome for icons -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>

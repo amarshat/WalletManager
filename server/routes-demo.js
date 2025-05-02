@@ -14,30 +14,21 @@ const __dirname = path.dirname(__filename);
  * @param {import('express').Express} app 
  */
 export default function registerDemoRoutes(app) {
-  // Widget demo pages for testing
+  // Widget demo pages for testing - using static files in client/public/demo
   app.get('/demo/gaming', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    // Read the gaming demo HTML file
-    try {
-      const html = fs.readFileSync(path.join(__dirname, 'views/demo-gaming.html'), 'utf8');
-      res.send(html);
-    } catch (error) {
-      console.error('Error reading gaming demo HTML:', error);
-      res.status(500).send('Error loading gaming demo');
-    }
+    res.sendFile(path.join(process.cwd(), 'client/public/demo/demo-gaming.html'));
   });
 
   app.get('/demo/parking', (req, res) => {
-    res.setHeader('Content-Type', 'text/html');
-    // Read the parking demo HTML file
-    try {
-      const html = fs.readFileSync(path.join(__dirname, 'views/demo-parking.html'), 'utf8');
-      res.send(html);
-    } catch (error) {
-      console.error('Error reading parking demo HTML:', error);
-      res.status(500).send('Error loading parking demo');
-    }
+    res.sendFile(path.join(process.cwd(), 'client/public/demo/demo-parking.html'));
   });
+  
+  // Mobile demo route
+  app.get('/demo/mobile', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'client/public/demo/demo-mobile.html'));
+  });
+
+  console.log('Demo routes registered with direct file paths');
 }
 
 // Export is handled by the 'export default' above

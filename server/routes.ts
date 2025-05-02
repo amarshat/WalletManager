@@ -2236,29 +2236,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
               <div class="widget-content">
                 ${prepaidCards.length === 0 ? 
                   `<div class="text-muted" style="text-align: center; padding: 20px;">No prepaid cards found</div>` : 
-                  `<div class="cards-grid">
-                    ${prepaidCards.map(card => {
+                  `<div class="card-carousel">
+                    <!-- Show only the default card or the first card -->
+                    ${(() => {
+                      // Find default card or use first card
+                      const defaultCard = prepaidCards.find(card => card.isDefault) || prepaidCards[0];
+                      
                       // Mask card number
-                      const lastFour = card.cardNumber.slice(-4);
+                      const lastFour = defaultCard.cardNumber.slice(-4);
                       const maskedNumber = '•••• •••• •••• ' + lastFour;
                       
                       // Ensure we have valid values for card properties
-                      const cardType = card.cardType || 'MASTERCARD';
-                      const cardHolder = card.cardholderName || req.user!.fullName || 'Card Holder';
+                      const cardType = defaultCard.cardType || 'MASTERCARD';
+                      const cardHolder = defaultCard.cardholderName || req.user!.fullName || 'Card Holder';
                       
                       return `
-                        <div class="card-item">
+                        <div class="card-item" id="primary-card">
                           <div class="card-network">${cardType}</div>
                           <div class="card-holder">${cardHolder}</div>
                           <div class="card-number">${maskedNumber}</div>
                           <div class="card-details">
-                            <div>Expires ${card.expiryMonth}/${card.expiryYear}</div>
+                            <div>Expires ${defaultCard.expiryMonth}/${defaultCard.expiryYear}</div>
                             <div>${cardType}</div>
                           </div>
+                          ${prepaidCards.length > 1 ? 
+                            `<div class="card-counter">1 of ${prepaidCards.length} cards</div>` : ''}
                         </div>
                       `;
-                    }).join('')}
-                  </div>`
+                    })()}
+                  </div>`}
                 }
               </div>
             </div>

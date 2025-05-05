@@ -71,6 +71,10 @@ app.use((req, res, next) => {
   app.get('/demo/parking', (req, res) => {
     res.redirect('/demo/demo-parking.html');
   });
+  
+  app.get('/demo/mobile', (req, res) => {
+    res.redirect('/demo/demo-mobile.html');
+  });
 
   // Use the error handler middleware
   app.use(errorHandler);

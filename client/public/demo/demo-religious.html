@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jehovah's Witness Online Donation Portal</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap">
+  <script src="/widget.js" defer></script>
+  <style>
+    body {
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #333;
+      background-color: #f9f9f9;
+    }
+    
+    .header {
+      background-color: #4b6e90;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .logo {
+      font-size: 24px;
+      font-weight: bold;
+    }
+    
+    .nav-menu {
+      display: flex;
+      list-style: none;
+    }
+    
+    .nav-menu li {
+      margin-left: 20px;
+    }
+    
+    .nav-menu a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .main-container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .sidebar {
+      flex: 1;
+      min-width: 250px;
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      margin-right: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .content {
+      flex: 3;
+      min-width: 300px;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .welcome-banner {
+      background-color: #f0f4f8;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .welcome-banner h1 {
+      color: #4b6e90;
+      margin-top: 0;
+    }
+    
+    .welcome-banner p {
+      line-height: 1.6;
+    }
+    
+    .iframe-container {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      height: 650px;
+    }
+    
+    .iframe-container h2 {
+      color: #4b6e90;
+      margin-top: 0;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .wallet-iframe {
+      width: 100%;
+      height: 580px;
+      border: none;
+      border-radius: 4px;
+    }
+    
+    .sidebar h3 {
+      color: #4b6e90;
+      margin-top: 0;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 10px;
+    }
+    
+    .sidebar ul {
+      list-style: none;
+      padding: 0;
+    }
+    
+    .sidebar li {
+      margin-bottom: 10px;
+    }
+    
+    .sidebar a {
+      color: #333;
+      text-decoration: none;
+      display: block;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    
+    .sidebar a:hover {
+      background-color: #f0f4f8;
+    }
+    
+    .cta-button {
+      display: inline-block;
+      background-color: #4b6e90;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 4px;
+      text-decoration: none;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+    
+    .footer {
+      background-color: #4b6e90;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+    
+    @media (max-width: 768px) {
+      .main-container {
+        flex-direction: column;
+      }
+      
+      .sidebar {
+        margin-right: 0;
+        margin-bottom: 20px;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">JW.org</div>
+    <ul class="nav-menu">
+      <li><a href="#">Home</a></li>
+      <li><a href="#">Bible Study</a></li>
+      <li><a href="#">Publications</a></li>
+      <li><a href="#">Meeting Finder</a></li>
+      <li><a href="#" class="active">Donate</a></li>
+    </ul>
+  </div>
+  
+  <div class="main-container">
+    <div class="sidebar">
+      <h3>Donation Options</h3>
+      <ul>
+        <li><a href="#">Worldwide Work</a></li>
+        <li><a href="#">Building Projects</a></li>
+        <li><a href="#">Disaster Relief</a></li>
+        <li><a href="#">Kingdom Hall Construction</a></li>
+        <li><a href="#">Assembly Hall Maintenance</a></li>
+      </ul>
+      
+      <h3>Resources</h3>
+      <ul>
+        <li><a href="#">How Funds Are Used</a></li>
+        <li><a href="#">Payment Methods</a></li>
+        <li><a href="#">Donation FAQ</a></li>
+        <li><a href="#">Tax Information</a></li>
+      </ul>
+    </div>
+    
+    <div class="content">
+      <div class="welcome-banner">
+        <h1>Support Our Global Ministry</h1>
+        <p>"Every man should give as he has resolved in his heart, not grudgingly or under compulsion, for God loves a cheerful giver." — 2 Corinthians 9:7</p>
+        <p>Your donations help support our work in providing Bibles and Bible-based literature worldwide. Our ministry relies solely on voluntary donations.</p>
+        <a href="#" class="cta-button">Learn How Funds Are Used</a>
+      </div>
+      
+      <div class="iframe-container">
+        <h2>Secure Donation Wallet</h2>
+        <iframe src="/embedded-wallet" class="wallet-iframe" id="wallet-iframe" title="Secure Donation Wallet"></iframe>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>© 2025 Sample Religious Organization Donation Portal. This is a demonstration site only.</p>
+    <p><small>This is a demonstration site for displaying an embedded wallet experience. Not affiliated with any actual religious organization.</small></p>
+  </div>
+</body>
+</html>

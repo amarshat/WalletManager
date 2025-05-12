@@ -1,7 +1,7 @@
 import CustomerLayout from "@/components/layouts/CustomerLayout";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Gamepad2, Car, ShoppingBag, Globe, Layout, Component, LayoutGrid, Smartphone } from "lucide-react";
+import { ExternalLink, Gamepad2, Car, ShoppingBag, Globe, Layout, Component, LayoutGrid, Smartphone, Heart } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -36,6 +36,15 @@ export default function EmbeddedExperience() {
       url: `${demoUrl}/demo/mobile`,
       features: ["Inline micro-widgets", "Mobile payments", "Quick access", "Space management"],
       category: "mobile"
+    },
+    {
+      id: "religious",
+      name: "JW Donation Portal",
+      description: "Secure donation portal with full iframe wallet integration for religious organization.",
+      icon: <Heart className="h-12 w-12 text-primary" />,
+      url: `${demoUrl}/demo/religious`,
+      features: ["Full wallet integration", "Secure donations", "Account management", "Transaction history"],
+      category: "nonprofit"
     }
   ];
   
@@ -44,7 +53,8 @@ export default function EmbeddedExperience() {
     { id: "all", label: "All Integrations" },
     { id: "gaming", label: "Gaming" },
     { id: "transportation", label: "Transportation" },
-    { id: "mobile", label: "Mobile" }
+    { id: "mobile", label: "Mobile" },
+    { id: "nonprofit", label: "Nonprofit" }
   ];
   
   return (
@@ -155,7 +165,7 @@ export default function EmbeddedExperience() {
             </CardContent>
           </Card>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="overflow-hidden transition-all hover:shadow-md">
               <CardHeader className="pb-4">
                 <div className="p-3 bg-indigo-100 text-indigo-700 rounded-lg">
@@ -223,6 +233,30 @@ export default function EmbeddedExperience() {
                   <a href="/embedded-wallet">
                     <LayoutGrid className="mr-2 h-4 w-4" />
                     View Demos
+                  </a>
+                </Button>
+              </CardFooter>
+            </Card>
+            
+            <Card className="overflow-hidden transition-all hover:shadow-md">
+              <CardHeader className="pb-4">
+                <div className="p-3 bg-red-100 text-red-700 rounded-lg">
+                  <Heart className="h-8 w-8" />
+                </div>
+                <CardTitle className="mt-4">Nonprofit Integration</CardTitle>
+                <CardDescription>Donation portal with full wallet access</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Embed complete wallet functionality in donation portals, enabling secure contributions
+                  and seamless financial management for nonprofit organizations.
+                </p>
+              </CardContent>
+              <CardFooter className="flex justify-end border-t pt-4">
+                <Button variant="default" asChild>
+                  <a href="/demo/religious" target="_blank" rel="noopener noreferrer">
+                    <Globe className="mr-2 h-4 w-4" />
+                    View Live Demo
                   </a>
                 </Button>
               </CardFooter>

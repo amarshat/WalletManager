@@ -27,6 +27,11 @@ export default function registerDemoRoutes(app) {
   app.get('/demo/mobile', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'client/public/demo/demo-mobile.html'));
   });
+  
+  // Religious organization demo with full iframe integration
+  app.get('/demo/religious', (req, res) => {
+    res.sendFile(path.join(process.cwd(), 'client/public/demo/demo-religious.html'));
+  });
 
   console.log('Demo routes registered with direct file paths');
 }

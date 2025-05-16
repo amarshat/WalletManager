@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PaySage Themed Wallet Demo</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    :root {
+      /* Default theme variables */
+      --color-primary: #4b6e90;
+      --color-secondary: #80a4c9;
+      --color-accent: #c99d80;
+      --color-background: #f8f9fa;
+      --color-card: #ffffff;
+      --color-text: #353535;
+      --color-text-secondary: #6c757d;
+      --button-radius: 0.375rem;
+      --card-radius: 0.5rem;
+      --font-family: 'Noto Serif', 'Merriweather', serif;
+    }
+    
+    body {
+      font-family: var(--font-family);
+      background-color: var(--color-background);
+      color: var(--color-text);
+    }
+    
+    .themed-card {
+      background-color: var(--color-card);
+      border-radius: var(--card-radius);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .themed-button {
+      background-color: var(--color-primary);
+      color: white;
+      border-radius: var(--button-radius);
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+    }
+    
+    .themed-button:hover {
+      opacity: 0.9;
+    }
+    
+    .charity-theme {
+      --color-primary: #4b6e90;
+      --color-secondary: #80a4c9;
+      --color-accent: #c99d80;
+      --color-background: #f8f9fa;
+      --color-card: #ffffff;
+      --color-text: #353535;
+      --color-text-secondary: #6c757d;
+      --button-radius: 0.375rem;
+      --card-radius: 0.5rem;
+      --font-family: 'Noto Serif', 'Merriweather', serif;
+    }
+    
+    .gaming-theme {
+      --color-primary: #6d28d9;
+      --color-secondary: #2563eb;
+      --color-accent: #db2777;
+      --color-background: #0f172a;
+      --color-card: #1e293b;
+      --color-text: #f8fafc;
+      --color-text-secondary: #94a3b8;
+      --button-radius: 0.25rem;
+      --card-radius: 0.5rem;
+      --font-family: 'Rajdhani', 'Play', sans-serif;
+    }
+    
+    .parking-theme {
+      --color-primary: #0369a1;
+      --color-secondary: #0284c7;
+      --color-accent: #14b8a6;
+      --color-background: #f0f9ff;
+      --color-card: #ffffff;
+      --color-text: #0f172a;
+      --color-text-secondary: #64748b;
+      --button-radius: 0.5rem;
+      --card-radius: 0.75rem;
+      --font-family: 'Inter', 'Roboto', sans-serif;
+    }
+    
+    .gambling-theme {
+      --color-primary: #18181b;
+      --color-secondary: #a855f7;
+      --color-accent: #f97316;
+      --color-background: #18181b;
+      --color-card: #27272a;
+      --color-text: #f4f4f5;
+      --color-text-secondary: #a1a1aa;
+      --button-radius: 0.25rem;
+      --card-radius: 0.5rem;
+      --font-family: 'Montserrat', 'Roboto', sans-serif;
+    }
+    
+    .active-button {
+      border: 2px solid white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="charity-theme">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8 flex flex-col items-center justify-center text-center">
+      <h1 class="text-3xl font-bold mb-2">PaySage Themed Wallet Demo</h1>
+      <p class="text-lg text-gray-600 mb-6">Experience our dynamic theming system with industry-specific presets</p>
+      
+      <div class="flex flex-wrap justify-center gap-3 mb-8">
+        <button onclick="applyTheme('charity')" class="themed-button active-button" id="charity-btn">Charity Theme</button>
+        <button onclick="applyTheme('gaming')" class="themed-button" id="gaming-btn">Gaming Theme</button>
+        <button onclick="applyTheme('parking')" class="themed-button" id="parking-btn">Parking Theme</button>
+        <button onclick="applyTheme('gambling')" class="themed-button" id="gambling-btn">Gambling Theme</button>
+      </div>
+    </div>
+    
+    <div class="grid md:grid-cols-3 gap-6 mb-6">
+      <div class="col-span-3 md:col-span-2">
+        <div class="themed-card p-6 mb-6">
+          <h2 class="text-xl font-bold mb-4" id="overview-title">Donation Overview</h2>
+          
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-500" id="metric1-label">Total Donated</p>
+              <p class="text-2xl font-bold" id="metric1-value">$1,245.00</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-500" id="metric2-label">Impact Generated</p>
+              <p class="text-2xl font-bold" id="metric2-value">17 Lives</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="themed-card p-6">
+          <h2 class="text-xl font-bold mb-4" id="items-title">Recent Donations</h2>
+          
+          <div class="space-y-4" id="items-container">
+            <!-- Dynamic items will be inserted here -->
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-span-3 md:col-span-1">
+        <div class="themed-card p-6">
+          <h2 class="text-xl font-bold mb-4" id="action-title">Make a Donation</h2>
+          
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">Type</label>
+              <select class="w-full p-2 border rounded" id="options-select">
+                <!-- Options will be inserted here -->
+              </select>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-1">Amount</label>
+              <div class="flex">
+                <span class="inline-flex items-center px-3 border border-r-0 rounded-l-md bg-gray-50">$</span>
+                <input type="text" class="w-full p-2 border rounded-r-md" placeholder="0.00">
+              </div>
+            </div>
+            
+            <div>
+              <label class="block text-sm font-medium mb-1">Payment Method</label>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="border p-3 rounded flex items-center space-x-2 cursor-pointer" 
+                     style="border-color: var(--color-primary); background-color: rgba(75, 110, 144, 0.1);">
+                  <div class="w-4 h-4 rounded-full border-2" style="border-color: var(--color-primary);"></div>
+                  <span>Wallet Balance</span>
+                </div>
+                <div class="border p-3 rounded flex items-center space-x-2 cursor-pointer">
+                  <div class="w-4 h-4 rounded-full border-2 border-gray-300"></div>
+                  <span>Credit Card</span>
+                </div>
+              </div>
+            </div>
+            
+            <button class="w-full py-2 px-4 mt-4 text-white font-medium rounded themed-button" id="action-button">
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="text-center p-4 text-sm text-gray-500">
+      <p>This is a themed demo wallet. <a href="/demo" class="underline">Back to demos</a></p>
+      <p class="mt-1">© 2025 PaySage Wallet — All rights reserved</p>
+    </div>
+  </div>
+
+  <script>
+    // Theme content by theme type
+    const themeContent = {
+      charity: {
+        title: 'Donation Wallet',
+        overview: 'Donation Overview',
+        metric1: 'Total Donated',
+        metric1Value: '$1,245.00',
+        metric2: 'Impact Generated',
+        metric2Value: '17 Lives',
+        itemsTitle: 'Recent Donations',
+        items: [
+          { name: "World Mission Fund", date: "May 12, 2025", amount: 50 },
+          { name: "Disaster Relief", date: "May 5, 2025", amount: 100 },
+          { name: "Kingdom Hall Construction", date: "April 28, 2025", amount: 75 }
+        ],
+        actionText: 'Make a Donation',
+        actionButtonText: 'Donate Now',
+        options: ['World Mission Fund', 'Disaster Relief', 'Kingdom Hall Construction', 'Assembly Hall Maintenance']
+      },
+      gaming: {
+        title: 'Gaming Wallet',
+        overview: 'Game Credits',
+        metric1: 'Available Credits',
+        metric1Value: '1,500',
+        metric2: 'XP Collected',
+        metric2Value: '3,275',
+        itemsTitle: 'Recent Transactions',
+        items: [
+          { name: "Premium Battle Pass", date: "May 14, 2025", amount: 950 },
+          { name: "Character Skin", date: "May 8, 2025", amount: 320 },
+          { name: "Weapon Bundle", date: "May 1, 2025", amount: 540 }
+        ],
+        actionText: 'Add Credits',
+        actionButtonText: 'Purchase Credits',
+        options: ['Battle Pass', 'Credits Pack - Small', 'Credits Pack - Large', 'Season Pass']
+      },
+      parking: {
+        title: 'Parking Wallet',
+        overview: 'Parking Credits',
+        metric1: 'Available Credits',
+        metric1Value: '$45.75',
+        metric2: 'Saved This Month',
+        metric2Value: '$12.50',
+        itemsTitle: 'Recent Parking Sessions',
+        items: [
+          { name: "Downtown Garage", date: "May 15, 2025", amount: 8.50 },
+          { name: "Main Street Lot", date: "May 12, 2025", amount: 4.25 },
+          { name: "City Center Parking", date: "May 9, 2025", amount: 6.00 }
+        ],
+        actionText: 'Add Parking Credits',
+        actionButtonText: 'Add Credits',
+        options: ['$5 Credit', '$10 Credit', '$25 Credit', '$50 Credit']
+      },
+      gambling: {
+        title: 'Betting Wallet',
+        overview: 'Account Summary',
+        metric1: 'Available Balance',
+        metric1Value: '$215.50',
+        metric2: 'Winnings (30d)',
+        metric2Value: '$75.25',
+        itemsTitle: 'Recent Bets',
+        items: [
+          { name: "Football - Manchester vs. Liverpool", date: "May 15, 2025", amount: 25.00 },
+          { name: "Horse Racing - Daily Double", date: "May 13, 2025", amount: 15.00 },
+          { name: "Poker Tournament", date: "May 10, 2025", amount: 50.00 }
+        ],
+        actionText: 'Add Funds',
+        actionButtonText: 'Deposit Funds',
+        options: ['Sports Bet', 'Casino Games', 'Poker Tables', 'Horse Racing']
+      }
+    };
+
+    // Function to apply a theme
+    function applyTheme(theme) {
+      // Remove active class from all buttons
+      document.querySelectorAll('.themed-button').forEach(btn => {
+        btn.classList.remove('active-button');
+      });
+      
+      // Add active class to selected button
+      document.getElementById(`${theme}-btn`).classList.add('active-button');
+      
+      // Apply theme class to body
+      document.body.className = `${theme}-theme`;
+      
+      // Update content based on theme
+      const content = themeContent[theme];
+      
+      document.title = `${content.title} - PaySage`;
+      document.getElementById('overview-title').textContent = content.overview;
+      document.getElementById('metric1-label').textContent = content.metric1;
+      document.getElementById('metric1-value').textContent = content.metric1Value;
+      document.getElementById('metric2-label').textContent = content.metric2;
+      document.getElementById('metric2-value').textContent = content.metric2Value;
+      document.getElementById('items-title').textContent = content.itemsTitle;
+      document.getElementById('action-title').textContent = content.actionText;
+      document.getElementById('action-button').textContent = content.actionButtonText;
+      
+      // Update items
+      const itemsContainer = document.getElementById('items-container');
+      itemsContainer.innerHTML = '';
+      
+      content.items.forEach(item => {
+        const itemElement = document.createElement('div');
+        itemElement.className = 'flex justify-between items-center p-3 border-b';
+        itemElement.innerHTML = `
+          <div>
+            <p class="font-medium">${item.name}</p>
+            <p class="text-sm" style="color: var(--color-text-secondary)">${item.date}</p>
+          </div>
+          <p class="font-bold" style="color: var(--color-primary)">
+            $${item.amount.toFixed(2)}
+          </p>
+        `;
+        itemsContainer.appendChild(itemElement);
+      });
+      
+      // Update options
+      const optionsSelect = document.getElementById('options-select');
+      optionsSelect.innerHTML = '';
+      
+      content.options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.textContent = option;
+        optionsSelect.appendChild(optionElement);
+      });
+      
+      // For gambling theme, adjust payment methods text
+      const paymentLabels = document.querySelectorAll('.grid.grid-cols-2 span');
+      if (theme === 'gambling') {
+        paymentLabels[0].textContent = 'Account Balance';
+        paymentLabels[1].textContent = 'Bank Transfer';
+      } else if (theme === 'gaming') {
+        paymentLabels[0].textContent = 'Game Balance';
+        paymentLabels[1].textContent = 'Real Money';
+      } else if (theme === 'parking') {
+        paymentLabels[0].textContent = 'Saved Payment';
+        paymentLabels[1].textContent = 'New Payment';
+      } else {
+        paymentLabels[0].textContent = 'Wallet Balance';
+        paymentLabels[1].textContent = 'Credit Card';
+      }
+    }
+
+    // Initialize with charity theme
+    applyTheme('charity');
+  </script>
+</body>
+</html>

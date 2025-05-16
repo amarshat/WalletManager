@@ -80,6 +80,10 @@ app.use((req, res, next) => {
     res.redirect('/demo/demo-religious.html');
   });
   
+  app.get('/demo/themed-wallet', (req, res) => {
+    res.redirect('/demo/demo-themed-wallet.html');
+  });
+  
   // Let the error handler middleware run before Vite takes over routing
   app.use(errorHandler);
   

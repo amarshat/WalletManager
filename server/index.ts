@@ -79,6 +79,12 @@ app.use((req, res, next) => {
   app.get('/demo/religious', (req, res) => {
     res.redirect('/demo/demo-religious.html');
   });
+  
+  // Add route for themed wallet
+  app.get('/themed-wallet', (req, res) => {
+    // Forward to the frontend to handle the route
+    res.sendFile(path.join(process.cwd(), 'client/index.html'));
+  });
 
   // Use the error handler middleware
   app.use(errorHandler);

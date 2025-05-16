@@ -440,7 +440,7 @@ export default function EmbeddedWalletPage({ skipAuth = false }: EmbeddedWalletP
                     <p className="text-muted-foreground">Community platform with donation management</p>
                   </div>
                   <Button asChild variant="outline">
-                    <a href="#" target="_blank">
+                    <a href="/demo/religious" target="_blank">
                       <ExternalLink className="h-4 w-4 mr-2" />
                       Open Demo
                     </a>

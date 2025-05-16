@@ -80,14 +80,11 @@ app.use((req, res, next) => {
     res.redirect('/demo/demo-religious.html');
   });
   
-  // Handle all routes that should be handled by the React router
-  app.get(['/themed-wallet', '/themed-wallet/*', '/auth', '/dashboard', '/admin/*'], (req, res) => {
-    // Forward to the client-side router
-    res.sendFile(path.join(process.cwd(), 'client/index.html'));
-  });
-
-  // Use the error handler middleware
+  // Let the error handler middleware run before Vite takes over routing
   app.use(errorHandler);
+  
+  // The Vite middleware will handle the client-side routes automatically
+  // This is done in setupVite() in server/vite.ts
   
   // Fallback error handler (should rarely be used)
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

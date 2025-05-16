@@ -2,6 +2,9 @@
  * Theme configuration interface for dynamic wallet styling
  */
 export interface ThemeConfig {
+  // Theme preset identifier
+  preset?: 'charity' | 'gaming' | 'parking' | 'gambling';
+  
   // Brand appearance
   brand: {
     name: string;

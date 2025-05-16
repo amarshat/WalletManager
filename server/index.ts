@@ -80,9 +80,9 @@ app.use((req, res, next) => {
     res.redirect('/demo/demo-religious.html');
   });
   
-  // Add route for themed wallet
-  app.get('/themed-wallet', (req, res) => {
-    // Forward to the frontend to handle the route
+  // Handle all routes that should be handled by the React router
+  app.get(['/themed-wallet', '/themed-wallet/*', '/auth', '/dashboard', '/admin/*'], (req, res) => {
+    // Forward to the client-side router
     res.sendFile(path.join(process.cwd(), 'client/index.html'));
   });
 

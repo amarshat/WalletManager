@@ -13,12 +13,14 @@ import { useDynamicTheme } from "./hooks/use-dynamic-theme";
 
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
+import ThemedWalletPage from "@/pages/themed-wallet-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 // Admin Pages
 import AdminDashboard from "@/pages/admin/dashboard";
 import BrandSettings from "@/pages/admin/brand-settings";
 import WalletConfig from "@/pages/admin/wallet-config";
+import ThemeCustomizer from "@/pages/admin/theme-customizer";
 import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
@@ -60,6 +62,9 @@ function Router() {
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
       
+      {/* Themed Wallet - No authentication required */}
+      <Route path="/themed-wallet" component={ThemedWalletPage} />
+      
       {/* Admin Routes */}
       <ProtectedRoute 
         path="/admin" 
@@ -82,6 +87,12 @@ function Router() {
       <ProtectedRoute 
         path="/admin/wallet-config" 
         component={WalletConfig} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
+      <ProtectedRoute 
+        path="/admin/theme-customizer" 
+        component={ThemeCustomizer} 
         requireAdmin={true} 
         redirectTo="/auth" 
       />

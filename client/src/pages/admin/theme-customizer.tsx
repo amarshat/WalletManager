@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { ThemeConfig, themePresets } from "@shared/theme-config";
-import { Copy, Download, Globe, Paintbrush, Palette, Refresh, Save } from "lucide-react";
+import { Copy, Download, Globe, Paintbrush, Palette, RefreshCw, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ThemeCustomizer() {

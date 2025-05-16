@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CustomerLayout from '@/components/layouts/CustomerLayout';
+import { useDynamicTheme } from '@/hooks/use-dynamic-theme';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,11 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-export default function EmbeddedWalletPage() {
+interface EmbeddedWalletPageProps {
+  skipAuth?: boolean;
+}
+
+export default function EmbeddedWalletPage({ skipAuth = false }: EmbeddedWalletPageProps) {
   const [selectedTab, setSelectedTab] = useState<string>("wallet");
   const [copiedCode, setCopiedCode] = useState(false);
   const [frameHeight, setFrameHeight] = useState("680px");
@@ -43,6 +48,186 @@ export default function EmbeddedWalletPage() {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
+  // Use dynamic theme for styling if available
+  const { activeTheme, isCustomTheme } = useDynamicTheme();
+  
+  // Update links for themed wallet demos based on current themes
+  useEffect(() => {
+    // No need to run this if skipAuth is true (already in themed mode)
+    if (skipAuth) return;
+    
+    // Update demo links to use themed wallet
+    if (selectedTab === "parking" && activeTheme) {
+      // Could update links to themed versions here if needed
+    }
+  }, [selectedTab, skipAuth]);
+  
+  // For theme preview or non-authenticated access, show a simplified wallet view
+  if (skipAuth) {
+    const bgColor = isCustomTheme && activeTheme ? activeTheme.colors.background : '#f9fafb';
+    const textColor = isCustomTheme && activeTheme ? activeTheme.colors.text : '#111827';
+    
+    return (
+      <div className="p-6" style={{ backgroundColor: bgColor, color: textColor, minHeight: '100vh' }}>
+        <div className="max-w-7xl mx-auto">
+          {/* Simplified header for themed wallet */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold">{activeTheme?.brand.name || "PaySage Wallet"}</h1>
+              <p className="text-muted-foreground">{activeTheme?.brand.tagline || "Your Digital Wallet Solution"}</p>
+            </div>
+            
+            {/* Theme indicator badge */}
+            {isCustomTheme && activeTheme && (
+              <Badge variant="outline" className="ml-2 bg-primary/10">
+                Custom Theme
+              </Badge>
+            )}
+          </div>
+          
+          {/* Simplified content with tabs */}
+          <Tabs defaultValue="dashboard">
+            <TabsList className="mb-6">
+              <TabsTrigger value="dashboard">
+                <LayoutDashboard className="h-4 w-4 mr-2" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="cards">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Cards
+              </TabsTrigger>
+              <TabsTrigger value="transactions">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Transactions
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="dashboard">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Wallet Overview</CardTitle>
+                  <CardDescription>Your financial summary at a glance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Total Balance</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">$2,845.00</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          <span className="text-green-500">↑ 2.5%</span> from last week
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">12</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          transactions this week
+                        </p>
+                      </CardContent>
+                    </Card>
+                    
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Active Cards</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-2xl font-bold">3</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          prepaid cards available
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="cards">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Cards</CardTitle>
+                  <CardDescription>Manage your prepaid cards</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl p-6 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-4">
+                        <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg" className="opacity-20">
+                          <circle cx="30" cy="30" r="30" fill="white" />
+                          <path d="M22 30H38" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                          <path d="M30 22V38" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="mb-6">
+                        <p className="text-sm text-white/70">Card Number</p>
+                        <p className="text-lg font-mono">•••• •••• •••• 4242</p>
+                      </div>
+                      <div className="flex justify-between">
+                        <div>
+                          <p className="text-sm text-white/70">Card Holder</p>
+                          <p>J. Smith</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-white/70">Expires</p>
+                          <p>12/26</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <Button className="h-full min-h-[180px] text-lg rounded-xl flex flex-col gap-4 border-dashed">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 5V19M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      Add New Card
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="transactions">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Recent Transactions</CardTitle>
+                  <CardDescription>Your most recent financial activity</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <div key={i} className="flex items-center justify-between p-3 border rounded hover:bg-muted/40 transition-colors">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ArrowRight className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Payment to John Doe</p>
+                            <p className="text-sm text-muted-foreground">May {i + 10}, 2025</p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">-$120.00</p>
+                          <p className="text-sm text-muted-foreground">Completed</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    );
+  }
+  
   return (
     <CustomerLayout
       title="Full Wallet Embedding"

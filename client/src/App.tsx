@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { useConfigImport } from "./hooks/use-config-import";
+import { useDynamicTheme } from "./hooks/use-dynamic-theme";
 
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
@@ -186,6 +187,8 @@ function Router() {
 
 function App() {
   const [loading, setLoading] = useState(true);
+  // Initialize dynamic theming
+  const { activeTheme, isCustomTheme } = useDynamicTheme();
 
   useEffect(() => {
     // Simulate initial load time for splash screen
@@ -195,6 +198,12 @@ function App() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  // Apply custom theme to splash screen if available
+  const splashScreenStyle = isCustomTheme && activeTheme ? {
+    backgroundColor: activeTheme.colors.background,
+    color: activeTheme.colors.text
+  } : undefined;
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -206,7 +215,11 @@ function App() {
                 <BudgetProvider>
                   <CarbonProvider>
                     <Toaster />
-                    {loading ? <SplashScreen /> : <Router />}
+                    {loading ? (
+                      <SplashScreen style={splashScreenStyle} brandName={activeTheme?.brand.name} />
+                    ) : (
+                      <Router />
+                    )}
                   </CarbonProvider>
                 </BudgetProvider>
               </ConfigImportWrapper>

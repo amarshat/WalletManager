@@ -1,9 +1,15 @@
 import { useBrand } from "@/hooks/use-brand";
 import { useAppBranding } from "@/hooks/use-app-branding";
 import BrandLogo from "@/components/ui/brand-logo";
-import { BookOpen, Car, Gamepad2, Wallet } from "lucide-react";
+import { BookOpen, Car, Gamepad2, Wallet, Heart } from "lucide-react";
+import { CSSProperties } from "react";
 
-export default function SplashScreen() {
+interface SplashScreenProps {
+  style?: CSSProperties;
+  brandName?: string;
+}
+
+export default function SplashScreen({ style, brandName }: SplashScreenProps) {
   const { brand } = useBrand();
   const { branding, appType } = useAppBranding();
   
@@ -28,10 +34,14 @@ export default function SplashScreen() {
   const subtextColor = appType && branding.theme === 'dark' ? 'text-gray-300' : 'text-gray-700';
   const spinnerColor = appType ? branding.primaryColor : '#6366f1';
   
+  // Use custom style if provided, otherwise use default styling
+  const customStyle = style || { backgroundColor };
+  const displayBrandName = brandName || (appType ? branding.name : (brand?.name || "PaySage Wallet"));
+  
   return (
     <div 
       className="fixed inset-0 z-50 flex flex-col items-center justify-center"
-      style={{ backgroundColor }}
+      style={customStyle}
     >
       {appType ? (
         <div className="mb-8">
@@ -43,7 +53,7 @@ export default function SplashScreen() {
       
       <div className="text-center mb-6 fade-in">
         <h1 className={`text-2xl font-bold ${textColor}`}>
-          {appType ? branding.name : (brand?.name || "PaySage Wallet")}
+          {displayBrandName}
         </h1>
         <p className={`mt-2 ${subtextColor}`}>
           {appType ? branding.tagline : (brand?.tagline || "Your Digital Wallet Solution")}

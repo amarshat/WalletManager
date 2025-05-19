@@ -9,49 +9,46 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
   ActivityIndicator,
-  Alert
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const { login, register } = useAuth();
+  const [fullName, setFullName] = useState('');
+  const { login, register, isLoading } = useAuth();
 
-  const handleAuth = async () => {
+  const handleSubmit = async () => {
     if (!username || !password) {
-      Alert.alert('Required Fields', 'Please fill in all required fields');
+      Alert.alert('Error', 'Please fill in all required fields');
       return;
     }
-
-    if (!isLogin && !fullName) {
-      Alert.alert('Required Fields', 'Please enter your full name');
-      return;
-    }
-
-    setIsSubmitting(true);
 
     try {
       if (isLogin) {
         await login(username, password);
       } else {
+        if (!email || !fullName) {
+          Alert.alert('Error', 'Please fill in all required fields');
+          return;
+        }
         await register({
           username,
           password,
-          fullName,
           email,
+          fullName,
         });
       }
     } catch (error) {
-      Alert.alert('Authentication Error', error.message);
-    } finally {
-      setIsSubmitting(false);
+      Alert.alert(
+        'Authentication Error',
+        error.message || 'Something went wrong. Please try again.'
+      );
     }
   };
 
@@ -60,90 +57,92 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Image 
-            source={require('../assets/logo.png')} 
-            style={styles.logo}
-            defaultSource={require('../assets/logo.png')}
-          />
-          <Text style={styles.title}>PaySage Wallet</Text>
-          <Text style={styles.subtitle}>
-            {isLogin ? 'Sign in to your account' : 'Create a new account'}
-          </Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>PaySage Wallet</Text>
+          <Text style={styles.tagline}>Manage your money with ease</Text>
         </View>
 
-        <View style={styles.form}>
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Username</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your username"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-            />
-          </View>
+        <View style={styles.formContainer}>
+          <Text style={styles.title}>
+            {isLogin ? 'Sign In' : 'Create Account'}
+          </Text>
 
           {!isLogin && (
             <>
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Full Name</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your full name"
-                  value={fullName}
-                  onChangeText={setFullName}
-                />
-              </View>
+              <Text style={styles.inputLabel}>Full Name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your full name"
+                value={fullName}
+                onChangeText={setFullName}
+                autoCapitalize="words"
+              />
 
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Email (Optional)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Enter your email"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
+              <Text style={styles.inputLabel}>Email</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter your email"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+              />
             </>
           )}
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Password</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter your password"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-            />
-          </View>
+          <Text style={styles.inputLabel}>Username</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your username"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.inputLabel}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
           <TouchableOpacity
-            style={styles.button}
-            onPress={handleAuth}
-            disabled={isSubmitting}
+            style={styles.forgotPasswordButton}
+            onPress={() => Alert.alert('Coming Soon', 'This feature is coming soon!')}
           >
-            {isSubmitting ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>
-                {isLogin ? 'Sign In' : 'Create Account'}
-              </Text>
-            )}
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={isLoading}
+          >
+            <LinearGradient
+              colors={['#6366f1', '#4f46e5', '#4338ca']}
+              style={styles.buttonGradient}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.submitButtonText}>
+                  {isLogin ? 'Sign In' : 'Create Account'}
+                </Text>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.switchButton}
             onPress={() => setIsLogin(!isLogin)}
           >
-            <Text style={styles.switchText}>
+            <Text style={styles.switchButtonText}>
               {isLogin
-                ? "Don't have an account? Sign up"
-                : 'Already have an account? Sign in'}
+                ? "Don't have an account? Sign Up"
+                : 'Already have an account? Sign In'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -157,72 +156,83 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  scrollContent: {
+  scrollContainer: {
     flexGrow: 1,
+    justifyContent: 'center',
     padding: 20,
   },
-  header: {
+  logoContainer: {
     alignItems: 'center',
-    marginTop: 30,
     marginBottom: 40,
   },
-  logo: {
-    width: 80,
-    height: 80,
-    resizeMode: 'contain',
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 24,
+  logoText: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#4f46e5',
     marginBottom: 8,
   },
-  subtitle: {
+  tagline: {
     fontSize: 16,
     color: '#6b7280',
+  },
+  formContainer: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 24,
     textAlign: 'center',
   },
-  form: {
-    width: '100%',
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
+  inputLabel: {
     fontSize: 14,
     fontWeight: '500',
+    color: '#4b5563',
     marginBottom: 6,
-    color: '#374151',
   },
   input: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    backgroundColor: '#f3f4f6',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    padding: 16,
+    marginBottom: 16,
     fontSize: 16,
   },
-  button: {
-    backgroundColor: '#4f46e5',
-    paddingVertical: 14,
+  forgotPasswordButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    color: '#4f46e5',
+    fontSize: 14,
+  },
+  submitButton: {
+    marginBottom: 16,
     borderRadius: 8,
+    overflow: 'hidden',
+  },
+  buttonGradient: {
+    paddingVertical: 16,
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 20,
+    borderRadius: 8,
   },
-  buttonText: {
-    color: '#fff',
+  submitButtonText: {
+    color: 'white',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   switchButton: {
     alignItems: 'center',
   },
-  switchText: {
+  switchButtonText: {
     color: '#4f46e5',
     fontSize: 14,
-    fontWeight: '500',
   },
 });

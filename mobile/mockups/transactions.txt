@@ -1,0 +1,74 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║  Transactions                 ║
+║                               ║
+║  ┌───────────────────────┐    ║
+║  │ 🔍 Search transactions│    ║
+║  └───────────────────────┘    ║
+║                               ║
+║  [All] [Received] [Sent] [Deposits]  ║
+║   ▔▔▔                        ║
+║                               ║
+║  May 19, 2025                 ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ ▼                       │  ║
+║  │ Coffee Shop             │  ║
+║  │ Coffee with friends     │  ║
+║  │ 10:30 AM         -$4.50 │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  May 18, 2025                 ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ ▲                       │  ║
+║  │ John Smith              │  ║
+║  │ Rent payment            │  ║
+║  │ 2:15 PM         +$125.00│  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  May 15, 2025                 ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ +                       │  ║
+║  │ Bank Transfer           │  ║
+║  │ Monthly deposit         │  ║
+║  │ 9:45 AM        +$500.00 │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ ▼                       │  ║
+║  │ Online Store            │  ║
+║  │ Online purchase         │  ║
+║  │ 12:10 PM        -$35.99 │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The Transactions screen provides a comprehensive view of the user's financial activity with an organized, chronological display.
+
+Key elements:
+- Search bar at the top for filtering transactions
+- Filter tabs for different transaction types:
+  * All (selected by default, indicated by underline)
+  * Received (incoming payments)
+  * Sent (outgoing payments) 
+  * Deposits (bank transfers, etc.)
+
+- Chronological grouping by date
+  * May 19, 2025
+  * May 18, 2025
+  * May 15, 2025
+
+- Detailed transaction cards showing:
+  * Transaction type icon:
+    - Downward arrow (▼) for outgoing payments
+    - Upward arrow (▲) for incoming payments
+    - Plus sign (+) for deposits
+  * Recipient/sender name (Coffee Shop, John Smith, etc.)
+  * Transaction description (Coffee with friends, Rent payment, etc.)
+  * Time and amount (color-coded: red for outgoing, green for incoming)
+
+Each transaction card uses a clean white background with subtle shadows and rounded corners, consistent with the app's overall design language. The interface makes it easy to scan through transactions quickly while providing all necessary details. The color scheme continues to use the PaySage brand colors, with the primary purple (#4f46e5) for selected tabs and interactive elements.

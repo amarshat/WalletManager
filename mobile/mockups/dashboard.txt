@@ -1,0 +1,60 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║    [Balance Card]             ║
+║  ╭─────────────────────────╮  ║
+║  │                         │  ║
+║  │  Available Balance      │  ║
+║  │                         │  ║
+║  │  $1,250.75              │  ║
+║  │                         │  ║
+║  │        ⟳       +    $   │  ║
+║  │     Refresh   Add  Send │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║    [Quick Actions]            ║
+║  ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐ ║
+║  │  +  │ │  $  │ │  ⊘  │ │  ⌟  │ ║
+║  │     │ │     │ │     │ │     │ ║
+║  │ Add │ │ Send│ │Cards│ │Carbon│ ║
+║  └─────┘ └─────┘ └─────┘ └─────┘ ║
+║                               ║
+║    Recent Transactions        ║
+║  ╭─────────────────────────╮  ║
+║  │ ▼ Coffee Shop     $4.50 │  ║
+║  │   May 19, 2025          │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ ▲ John Smith    $125.00 │  ║
+║  │   May 18, 2025          │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ + Bank Deposit  $500.00 │  ║
+║  │   May 15, 2025          │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  [View All Transactions]      ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The dashboard screen provides a comprehensive overview of the user's financial status with a clean, organized layout.
+
+Key elements:
+- Prominent wallet card at the top showing the available balance ($1,250.75) in bold text against a gradient purple background (#4f46e5 to #818cf8)
+- Quick action buttons for refreshing, adding money, and sending money directly on the balance card
+- Four circular quick-access buttons below for common actions:
+  * Add Money (+ icon)
+  * Send Money ($ icon)
+  * Cards (card icon)
+  * Carbon Impact (leaf icon)
+- Recent transactions section showing the three most recent activities:
+  * Outgoing payment to Coffee Shop ($4.50) with downward arrow icon
+  * Incoming payment from John Smith ($125.00) with upward arrow icon
+  * Bank deposit ($500.00) with plus icon
+- View All Transactions button at the bottom
+- Each transaction shows the name, amount (color-coded: red for outgoing, green for incoming), and date
+
+The interface follows a card-based design with subtle shadows and rounded corners, optimized for quick access to key features while providing essential financial information at a glance.

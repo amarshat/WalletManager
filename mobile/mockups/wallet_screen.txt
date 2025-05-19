@@ -1,0 +1,63 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║  Your Accounts                ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │  [USD Account]  Primary │  ║
+║  │                         │  ║
+║  │  $1,250.75              │  ║
+║  │                         │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │  [EUR Account]          │  ║
+║  │                         │  ║
+║  │  €150.00                │  ║
+║  │                         │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  [+ Add Account]              ║
+║                               ║
+║  Your Cards                   ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │    ■■■■                 │  ║
+║  │    MASTERCARD           │  ║
+║  │                         │  ║
+║  │    •••• •••• •••• 4567  │  ║
+║  │                         │  ║
+║  │    09/26                │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │    ■■■■                 │  ║
+║  │    VISA                 │  ║
+║  │                         │  ║
+║  │    •••• •••• •••• 8901  │  ║
+║  │                         │  ║
+║  │    03/27                │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  [+ Add Card]                 ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The wallet screen provides a comprehensive view of the user's accounts and payment cards with a clean, visually appealing interface.
+
+Key elements:
+- Accounts section at the top showing:
+  * USD Account card with $1,250.75 balance, marked as Primary in a small badge
+  * EUR Account card with €150.00 balance
+  * Each account card has a distinctive gradient background (primary purple for USD, blue for EUR)
+  * "Add Account" button with plus icon for adding new accounts
+
+- Cards section showing:
+  * Mastercard debit card ending in 4567, expiring 09/26
+  * Visa debit card ending in 8901, expiring 03/27
+  * Cards are displayed with realistic styling, including the card network logo
+  * Card details are visible: last four digits, expiration date
+  * "Add Card" button with plus icon for adding new cards
+
+The design uses a card-based layout with subtle shadows and rounded corners for each account and card. Colors are based on the PaySage brand palette, with the primary purple (#4f46e5) used for the main account and accent colors for secondary accounts. The interface maintains a clean, uncluttered look while providing all essential financial information.

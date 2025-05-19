@@ -1,0 +1,82 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║  Carbon Impact                ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 🌿 Carbon Overview      │  ║
+║  │                         │  ║
+║  │    128.5    75.0    53.5│  ║
+║  │   kg CO₂   offset    net│  ║
+║  │                         │  ║
+║  │  [Progress Bar: 58%]    │  ║
+║  │                58% Offset│  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Settings                     ║
+║  ╭─────────────────────────╮  ║
+║  │ Track Carbon Impact     │  ║
+║  │ Calculate impact for    │  ║
+║  │ your transactions    ⚪⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ Automatic Offsets       │  ║
+║  │ Offset carbon from      │  ║
+║  │ transactions         ○⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  [PURCHASE CARBON OFFSET]     ║
+║                               ║
+║  Impact By Category           ║
+║  ╭─────────────────────────╮  ║
+║  │ 🚗 Transportation       │  ║
+║  │ [████████─────] 48.7 kg │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 🛒 Groceries            │  ║
+║  │ [██████─────────] 35.2 kg│  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ ⚡ Utilities            │  ║
+║  │ [████───────────] 22.4 kg│  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Recent Impacts               ║
+║  ╭─────────────────────────╮  ║
+║  │ 🚗 Ride sharing         │  ║
+║  │ May 18           8.5 kg │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The Carbon Impact screen provides a comprehensive view of the user's environmental footprint from financial transactions.
+
+Key elements:
+- Carbon Overview card:
+  * Total impact: 128.5 kg CO₂
+  * Total offset: 75.0 kg CO₂
+  * Net impact: 53.5 kg CO₂
+  * Progress bar showing 58% of carbon has been offset
+  * Leaf icon representing environmental focus
+
+- Settings section:
+  * Track Carbon Impact toggle (On) with explanation
+  * Automatic Offsets toggle (Off) with explanation
+  * Purchase Carbon Offset button in green
+
+- Impact By Category section:
+  * Transportation: 48.7 kg (highest impact) with car icon
+  * Groceries: 35.2 kg with shopping cart icon
+  * Utilities: 22.4 kg with lightning bolt icon
+  * Visual progress bars showing relative impact of each category
+  * Bars color-coded by impact level (red for high, yellow for medium, green for low)
+
+- Recent Impacts section:
+  * Most recent carbon impact event
+  * Ride sharing: 8.5 kg on May 18
+
+The design uses a cohesive card-based layout with the app's overall style. The color scheme incorporates greens for the environmental theme while maintaining the PaySage brand elements. The interface makes the complex topic of carbon tracking visually accessible and easy to understand.

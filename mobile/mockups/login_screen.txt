@@ -1,0 +1,48 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║            ⬤                  ║
+║      [PaySage Logo]           ║
+║                               ║
+║      PaySage Wallet           ║
+║                               ║
+║   Sign in to your account     ║
+║                               ║
+║   ┌───────────────────────┐   ║
+║   │                       │   ║
+║   │      Username         │   ║
+║   └───────────────────────┘   ║
+║                               ║
+║   ┌───────────────────────┐   ║
+║   │                       │   ║
+║   │      Password         │   ║
+║   └───────────────────────┘   ║
+║                               ║
+║                               ║
+║   ┌───────────────────────┐   ║
+║   │                       │   ║
+║   │      Sign In          │   ║
+║   └───────────────────────┘   ║
+║                               ║
+║                               ║
+║   Don't have an account?      ║
+║   Sign up                     ║
+║                               ║
+║                               ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The login screen features a clean, minimalist design with the PaySage logo at the top. The color scheme uses the brand's primary purple (#4f46e5) for the sign-in button and logo, with a white background for clarity and readability.
+
+Key elements:
+- PaySage logo at the top
+- App name "PaySage Wallet" in bold typography
+- "Sign in to your account" subtitle in lighter gray
+- Username input field with subtle border
+- Password input field with subtle border and masked text
+- Prominent "Sign In" button in the brand's primary purple color with white text
+- "Don't have an account? Sign up" option at the bottom in purple text
+- Clean spacing throughout for a modern, uncluttered feel
+
+The entire interface follows iOS/Android design guidelines while maintaining the PaySage brand identity.

@@ -1,0 +1,82 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║       Profile                 ║
+║                               ║
+║           [J]                 ║
+║      John Smith               ║
+║    john.smith@email.com       ║
+║                               ║
+║    [Edit Profile]             ║
+║                               ║
+║  Account Information          ║
+║  ╭─────────────────────────╮  ║
+║  │ 👤 Username             │  ║
+║  │ johnsmith               │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 📅 Member Since         │  ║
+║  │ May 2025                │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 🔰 Verification Status  │  ║
+║  │ Verified                │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Settings                     ║
+║  ╭─────────────────────────╮  ║
+║  │ 🔔 Push Notifications   │  ║
+║  │ On                   ⚪⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 👆 Biometric Auth       │  ║
+║  │ Off                  ○⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 🌙 Dark Mode            │  ║
+║  │ Off                  ○⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │ 👁 Privacy Mode         │  ║
+║  │ Off                  ○⃝ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  [LOGOUT]                     ║
+║                               ║
+║  PaySage Wallet v1.0.0        ║
+║  © 2025 PaySage               ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The Profile screen provides a comprehensive view of the user's account information and app settings.
+
+Key elements:
+- User profile header:
+  * User initial in a circular avatar (J for John)
+  * Full name (John Smith)
+  * Email address (john.smith@email.com)
+  * Edit Profile button
+
+- Account Information section:
+  * Username with person icon
+  * Member Since with calendar icon
+  * Verification Status with badge icon (Verified in green)
+
+- Settings section with toggle switches:
+  * Push Notifications (On)
+  * Biometric Authentication (Off)
+  * Dark Mode (Off)
+  * Privacy Mode (Off)
+  * Each setting has a relevant icon and toggle switch
+
+- Logout button in red at the bottom
+
+- App version and copyright information
+
+The design maintains consistency with the app's overall style through card elements with subtle shadows and rounded corners. The toggles use the PaySage brand purple color when active. The interface is clean and organized, making it easy for users to view their information and adjust settings.

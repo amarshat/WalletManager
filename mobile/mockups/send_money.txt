@@ -1,0 +1,75 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║  Send Money                   ║
+║                               ║
+║  From                         ║
+║  ╭─────────────────────────╮  ║
+║  │  [USD Account]  Primary │  ║
+║  │  $1,250.75            ✓ │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  To                           ║
+║  ┌───────────────────────┐    ║
+║  │ Username or email     │    ║
+║  └───────────────────────┘    ║
+║                               ║
+║  Recent                       ║
+║  ╭─────────────────────────╮  ║
+║  │  J                      │  ║
+║  │  John Smith             │  ║
+║  │  johnsmith              │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │  S                      │  ║
+║  │  Sarah Johnson          │  ║
+║  │  sarahj                 │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Amount                       ║
+║  ╭─────────────────────────╮  ║
+║  │  USD                    │  ║
+║  │  $ 50.00                │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Note (Optional)              ║
+║  ┌───────────────────────┐    ║
+║  │ Dinner last night     │    ║
+║  └───────────────────────┘    ║
+║                               ║
+║  ┌───────────────────────┐    ║
+║  │      SEND MONEY       │    ║
+║  └───────────────────────┘    ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The Send Money screen provides a streamlined interface for transferring funds to other users.
+
+Key elements:
+- Source account selection at the top:
+  * USD Account card selected (with checkmark)
+  * Available balance displayed ($1,250.75)
+  * Account marked as Primary
+
+- Recipient section:
+  * Text input field for entering username or email
+  * "Recent" section showing frequently used contacts
+  * Contact cards with user initials, full name, and username
+  * John Smith and Sarah Johnson shown as recent contacts
+
+- Amount section:
+  * Currency selector (USD selected)
+  * Large amount field showing $50.00
+  * Clean, prominent display of the transfer amount
+
+- Note field (optional):
+  * Text input for transaction description
+  * "Dinner last night" entered as the note
+
+- Send Money button:
+  * Prominent button in the brand's primary purple color (#4f46e5)
+  * Clear white text for high contrast
+
+The interface follows a logical flow from top to bottom (source → recipient → amount → note → confirm), making the money transfer process intuitive. The design uses consistent card elements with the overall app style, maintaining the PaySage brand identity with the purple accent color.

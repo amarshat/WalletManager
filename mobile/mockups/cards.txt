@@ -1,0 +1,68 @@
+```
+╔═══════════════════════════════╗
+║                               ║
+║  Cards                        ║
+║                               ║
+║  [Debit Cards] [Prepaid Cards]║
+║   ▔▔▔▔▔▔▔▔▔▔▔                 ║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │    ■■■■                 │  ║
+║  │    MASTERCARD           │  ║
+║  │                         │  ║
+║  │    •••• •••• •••• 4567  │  ║
+║  │                         │  ║
+║  │    J. SMITH    09/26    │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Card Controls                ║
+║  ┌───────┐ ┌───────┐ ┌───────┐║
+║  │ Freeze│ │ Limits│ │Details│║
+║  └───────┘ └───────┘ └───────┘║
+║                               ║
+║  ╭─────────────────────────╮  ║
+║  │    ■■■■                 │  ║
+║  │    VISA                 │  ║
+║  │                         │  ║
+║  │    •••• •••• •••• 8901  │  ║
+║  │                         │  ║
+║  │    J. SMITH    03/27    │  ║
+║  ╰─────────────────────────╯  ║
+║                               ║
+║  Card Controls                ║
+║  ┌───────┐ ┌───────┐ ┌───────┐║
+║  │ Freeze│ │ Limits│ │Details│║
+║  └───────┘ └───────┘ └───────┘║
+║                               ║
+║                               ║
+║  ┌───────────────────────┐    ║
+║  │     + ADD CARD        │    ║
+║  └───────────────────────┘    ║
+║                               ║
+╚═══════════════════════════════╝
+```
+
+The Cards management screen provides a visual representation of the user's payment cards with interactive control options.
+
+Key elements:
+- Tab navigation at the top:
+  * Debit Cards (selected, indicated by underline)
+  * Prepaid Cards
+
+- Card visualization:
+  * Realistic card representation with issuer logo
+  * Mastercard debit card ending in 4567
+  * Visa debit card ending in 8901
+  * Cards display masked number, cardholder name, and expiry date
+  * Each card shown with its distinctive brand color (Mastercard red/orange, Visa blue)
+
+- Card Controls below each card:
+  * Freeze button to temporarily disable the card
+  * Limits button to set spending limits
+  * Details button to view full card information
+
+- Add Card button:
+  * Prominent button at the bottom in the brand's primary purple color
+  * Plus icon followed by "ADD CARD" text
+
+The design uses a 3D-like presentation for the cards, giving them a realistic appearance with subtle shadows and proper perspective. The control buttons are easily accessible below each card for quick actions. The interface maintains consistency with the app's overall design language through card elements, typography, and the PaySage color palette.

@@ -16,7 +16,10 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.paysage.wallet"
+      "bundleIdentifier": "com.paysage.wallet",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,8 +33,9 @@
     },
     "extra": {
       "eas": {
-        "projectId": "paysage-wallet"
+        "projectId": "bc5e2889-521f-4bf2-a6a7-4d35cf6a3925"
       }
-    }
+    },
+    "owner": "akshatam"
   }
 }

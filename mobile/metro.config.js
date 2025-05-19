@@ -1,23 +1,23 @@
 // Learn more https://docs.expo.io/guides/customizing-metro
-const { getDefaultConfig } = require('@expo/metro-config');
+const { getDefaultConfig } = require('expo/metro-config');
 
-const defaultConfig = getDefaultConfig(__dirname);
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname);
 
-// Remove import locations plugin requirement
-const { 
-  resolver: { 
-    sourceExts, 
-    assetExts 
+// 1. Modify the resolver configuration
+config.resolver.sourceExts = ['js', 'jsx', 'json', 'ts', 'tsx', 'cjs'];
+config.resolver.assetExts = [
+  'bmp', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'svg', 'webp',
+  'ttf', 'otf', 'woff', 'woff2',
+  'mp4', 'mov', 'mp3', 'wav'
+];
+
+// 2. Remove specific problematic plugins
+if (config.transformer && config.transformer.serializer) {
+  // Remove importLocationsPlugin dependency if it exists
+  if (config.transformer.serializer.experimentalSerializerHook) {
+    config.transformer.serializer.experimentalSerializerHook = null;
   }
-} = defaultConfig;
+}
 
-module.exports = {
-  transformer: {
-    babelTransformerPath: require.resolve('react-native-svg-transformer'),
-    assetPlugins: ['expo-asset/tools/hashAssetFiles'],
-  },
-  resolver: {
-    assetExts: assetExts.filter(ext => ext !== 'svg'),
-    sourceExts: [...sourceExts, 'svg'],
-  },
-};
+module.exports = config;

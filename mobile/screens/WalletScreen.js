@@ -7,92 +7,137 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
-  Alert
+  Alert,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../context/AuthContext';
+import { apiClient } from '../api/client';
+
+const screenWidth = Dimensions.get('window').width;
 
 export default function WalletScreen({ navigation }) {
   const { user } = useAuth();
   const [accounts, setAccounts] = useState([]);
   const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [prepaidCards, setPrepaidCards] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Format currency function
+  const formatCurrency = (amount, currency = 'USD') => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+    }).format(amount);
+  };
+
+  // Fetch wallet data
+  const fetchWalletData = async () => {
+    try {
+      setLoading(true);
+      
+      // For demonstration purposes, using mock data
+      // In a real app, you would fetch from your API
+      const mockAccounts = [
+        { id: 1, type: 'checking', balance: 950.25, currency: 'USD', accountNumber: '****4321' },
+        { id: 2, type: 'savings', balance: 300.50, currency: 'USD', accountNumber: '****8765' },
+      ];
+      
+      const mockCards = [
+        { 
+          id: 1, 
+          type: 'visa', 
+          name: 'PaySage Visa',
+          maskedNumber: '****9876',
+          expiryMonth: 9,
+          expiryYear: 25,
+          isDefault: true,
+        },
+        { 
+          id: 2, 
+          type: 'mastercard', 
+          name: 'PaySage Credit',
+          maskedNumber: '****5432',
+          expiryMonth: 3,
+          expiryYear: 26,
+          isDefault: false,
+        },
+      ];
+      
+      const mockPrepaidCards = [
+        { 
+          id: 1, 
+          name: 'Shopping Card',
+          balance: 150,
+          currency: 'USD',
+          maskedNumber: '****1234',
+          expiryMonth: 12,
+          expiryYear: 24,
+          status: 'active'
+        },
+        { 
+          id: 2, 
+          name: 'Travel Card',
+          balance: 85.75,
+          currency: 'USD',
+          maskedNumber: '****5678',
+          expiryMonth: 8,
+          expiryYear: 25,
+          status: 'active'
+        },
+      ];
+      
+      // In a real app, fetch data from your API:
+      // const accountsResponse = await apiClient.wallet.getAccounts();
+      // const cardsResponse = await apiClient.cards.getAll();
+      // const prepaidCardsResponse = await apiClient.prepaidCards.getAll();
+      
+      setAccounts(mockAccounts);
+      setCards(mockCards);
+      setPrepaidCards(mockPrepaidCards);
+      
+    } catch (error) {
+      Alert.alert('Error', 'Failed to load wallet data. Please try again.');
+      console.error('Error fetching wallet data:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Load data on initial render
   useEffect(() => {
     fetchWalletData();
   }, []);
 
-  const fetchWalletData = async () => {
-    setLoading(true);
-    try {
-      // In a real app, this would fetch from your API
-      // Simulating API call for demo purposes
-      setTimeout(() => {
-        setAccounts([
-          { id: 1, balance: 1250.75, currencyCode: 'USD', primary: true },
-          { id: 2, balance: 150.00, currencyCode: 'EUR', primary: false }
-        ]);
-        
-        setCards([
-          { 
-            id: 1, 
-            type: 'debit',
-            last4: '4567',
-            expiryMonth: 9,
-            expiryYear: 26,
-            brand: 'mastercard',
-            status: 'active'
-          },
-          { 
-            id: 2, 
-            type: 'prepaid',
-            last4: '8901',
-            expiryMonth: 3,
-            expiryYear: 27,
-            brand: 'visa',
-            status: 'active'
-          }
-        ]);
-        
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load wallet data');
-      setLoading(false);
+  // Handle pull-to-refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchWalletData();
+  };
+
+  // Get total balance from all accounts
+  const getTotalBalance = () => {
+    return accounts.reduce((total, account) => total + account.balance, 0);
+  };
+
+  // Get card icon based on type
+  const getCardIcon = (type) => {
+    switch (type.toLowerCase()) {
+      case 'visa':
+        return <Ionicons name="card" size={24} color="#1a1f71" />;
+      case 'mastercard':
+        return <Ionicons name="card" size={24} color="#eb001b" />;
+      case 'amex':
+        return <Ionicons name="card" size={24} color="#006fcf" />;
+      default:
+        return <Ionicons name="card-outline" size={24} color="#6b7280" />;
     }
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchWalletData();
-    setRefreshing(false);
-  };
-
-  // Format currency based on code
-  const formatCurrency = (amount, code) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: code,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount);
-  };
-
-  const handleAddMoney = () => {
-    navigation.navigate('AddMoney');
-  };
-
-  const handleSendMoney = () => {
-    navigation.navigate('SendMoney');
-  };
-
-  const handleAddAccount = () => {
-    // In a real app, this would navigate to add account screen
-    Alert.alert('Add Account', 'This feature is coming soon!');
-  };
-
-  if (loading && !refreshing && accounts.length === 0) {
+  if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4f46e5" />
@@ -108,162 +153,182 @@ export default function WalletScreen({ navigation }) {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      {/* Action Buttons */}
-      <View style={styles.actionButtonsContainer}>
-        <TouchableOpacity style={styles.actionButton} onPress={handleAddMoney}>
-          <View style={styles.actionButtonIcon}>
-            <Ionicons name="add-outline" size={24} color="#ffffff" />
-          </View>
-          <Text style={styles.actionButtonText}>Add Money</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.actionButton} onPress={handleSendMoney}>
-          <View style={styles.actionButtonIcon}>
-            <Ionicons name="send-outline" size={24} color="#ffffff" />
-          </View>
-          <Text style={styles.actionButtonText}>Send Money</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Balance Summary */}
+      <LinearGradient
+        colors={['#4f46e5', '#6366f1', '#818cf8']}
+        style={styles.balanceSummary}
+      >
+        <Text style={styles.balanceLabel}>Total Balance</Text>
+        <Text style={styles.balanceAmount}>
+          {formatCurrency(getTotalBalance(), 'USD')}
+        </Text>
+        <View style={styles.actionButtons}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('AddMoney')}
+          >
+            <Ionicons name="add-circle" size={20} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Add Money</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => navigation.navigate('SendMoney')}
+          >
+            <Ionicons name="paper-plane" size={20} color="#ffffff" />
+            <Text style={styles.actionButtonText}>Send Money</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
       {/* Accounts Section */}
-      <View style={styles.sectionContainer}>
+      <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Accounts</Text>
-          <TouchableOpacity onPress={handleAddAccount}>
-            <Text style={styles.actionText}>+ Add Account</Text>
+          <TouchableOpacity>
+            <Text style={styles.linkText}>Manage</Text>
           </TouchableOpacity>
         </View>
 
-        {accounts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No accounts found</Text>
-            <TouchableOpacity
-              style={styles.emptyStateButton}
-              onPress={handleAddAccount}
-            >
-              <Text style={styles.emptyStateButtonText}>Add an Account</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          accounts.map((account) => (
-            <TouchableOpacity
-              key={account.id}
-              style={styles.accountCard}
-              onPress={() => {
-                /* Handle account press */
-              }}
-            >
-              <View style={styles.accountDetails}>
-                <View style={styles.accountNameContainer}>
-                  <Text style={styles.accountName}>
-                    {account.currencyCode} Account
-                  </Text>
-                  {account.primary && (
-                    <View style={styles.primaryBadge}>
-                      <Text style={styles.primaryBadgeText}>Primary</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.accountBalance}>
-                  {formatCurrency(account.balance, account.currencyCode)}
-                </Text>
+        {accounts.map((account) => (
+          <View key={account.id} style={styles.accountCard}>
+            <View style={styles.accountHeader}>
+              <View style={styles.accountIconContainer}>
+                <Ionicons
+                  name={account.type === 'savings' ? 'wallet' : 'card'}
+                  size={24}
+                  color="#4f46e5"
+                />
               </View>
-              <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
-            </TouchableOpacity>
-          ))
-        )}
+              <View style={styles.accountInfo}>
+                <Text style={styles.accountType}>
+                  {account.type.charAt(0).toUpperCase() + account.type.slice(1)} Account
+                </Text>
+                <Text style={styles.accountNumber}>{account.accountNumber}</Text>
+              </View>
+            </View>
+            <Text style={styles.accountBalance}>
+              {formatCurrency(account.balance, account.currency)}
+            </Text>
+            <View style={styles.accountActions}>
+              <TouchableOpacity style={styles.accountAction}>
+                <Ionicons name="arrow-up-circle" size={18} color="#4f46e5" />
+                <Text style={styles.accountActionText}>Transfer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.accountAction}>
+                <Ionicons name="document-text" size={18} color="#4f46e5" />
+                <Text style={styles.accountActionText}>Statement</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.accountAction}>
+                <Ionicons name="ellipsis-horizontal" size={18} color="#4f46e5" />
+                <Text style={styles.accountActionText}>More</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+
+        <TouchableOpacity style={styles.addButton}>
+          <Ionicons name="add-circle" size={20} color="#4f46e5" />
+          <Text style={styles.addButtonText}>Add New Account</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Cards Section */}
-      <View style={styles.sectionContainer}>
+      <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Your Cards</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Cards')}>
-            <Text style={styles.actionText}>View All</Text>
-          </TouchableOpacity>
-        </View>
-
-        {cards.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No cards found</Text>
-            <TouchableOpacity
-              style={styles.emptyStateButton}
-              onPress={() => navigation.navigate('Cards')}
-            >
-              <Text style={styles.emptyStateButtonText}>Add a Card</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View style={styles.cardsContainer}>
-            {cards.map((card) => (
-              <TouchableOpacity
-                key={card.id}
-                style={styles.cardItem}
-                onPress={() => navigation.navigate('Cards')}
-              >
-                <View style={styles.cardIcon}>
-                  <Ionicons
-                    name={card.type === 'debit' ? 'card-outline' : 'gift-outline'}
-                    size={24}
-                    color="#4f46e5"
-                  />
-                </View>
-                <View style={styles.cardDetails}>
-                  <Text style={styles.cardType}>
-                    {card.type === 'debit' ? 'Debit Card' : 'Prepaid Card'}
-                  </Text>
-                  <Text style={styles.cardNumber}>
-                    {card.brand.toUpperCase()} •••• {card.last4}
-                  </Text>
-                </View>
-                <View style={styles.cardStatus}>
-                  {card.status === 'active' ? (
-                    <View style={styles.activeStatus}>
-                      <Text style={styles.activeStatusText}>Active</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.inactiveStatus}>
-                      <Text style={styles.inactiveStatusText}>Inactive</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.quickActionsContainer}>
-        <Text style={styles.quickActionsTitle}>Quick Actions</Text>
-        
-        <View style={styles.quickActionsList}>
-          <TouchableOpacity style={styles.quickActionItem} onPress={handleAddMoney}>
-            <Ionicons name="add-circle-outline" size={20} color="#4f46e5" />
-            <Text style={styles.quickActionText}>Add Money</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.quickActionItem} onPress={handleSendMoney}>
-            <Ionicons name="send-outline" size={20} color="#4f46e5" />
-            <Text style={styles.quickActionText}>Send Money</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.quickActionItem} 
-            onPress={() => navigation.navigate('Transactions')}
-          >
-            <Ionicons name="list-outline" size={20} color="#4f46e5" />
-            <Text style={styles.quickActionText}>Transactions</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.quickActionItem} 
+          <TouchableOpacity
             onPress={() => navigation.navigate('Cards')}
           >
-            <Ionicons name="card-outline" size={20} color="#4f46e5" />
-            <Text style={styles.quickActionText}>Cards</Text>
+            <Text style={styles.linkText}>View All</Text>
           </TouchableOpacity>
         </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.cardsContainer}
+        >
+          {cards.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={styles.cardItem}
+              onPress={() => navigation.navigate('Cards')}
+            >
+              <View style={styles.cardHeader}>
+                {getCardIcon(card.type)}
+                {card.isDefault && (
+                  <View style={styles.defaultBadge}>
+                    <Text style={styles.defaultText}>Default</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.cardName}>{card.name}</Text>
+              <Text style={styles.cardNumber}>{card.maskedNumber}</Text>
+              <Text style={styles.cardExpiry}>
+                Expires {card.expiryMonth}/{card.expiryYear}
+              </Text>
+            </TouchableOpacity>
+          ))}
+
+          <TouchableOpacity
+            style={styles.addCardButton}
+            onPress={() => navigation.navigate('Cards')}
+          >
+            <View style={styles.addCardIcon}>
+              <Ionicons name="add" size={24} color="#4f46e5" />
+            </View>
+            <Text style={styles.addCardText}>Add New Card</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+
+      {/* Prepaid Cards Section */}
+      <View style={[styles.section, { marginBottom: 24 }]}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Prepaid Cards</Text>
+          <TouchableOpacity>
+            <Text style={styles.linkText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        {prepaidCards.map((card) => (
+          <View key={card.id} style={styles.prepaidCard}>
+            <View style={styles.prepaidCardHeader}>
+              <View style={styles.prepaidCardInfo}>
+                <Text style={styles.prepaidCardName}>{card.name}</Text>
+                <Text style={styles.prepaidCardNumber}>{card.maskedNumber}</Text>
+              </View>
+              <View style={styles.statusBadge}>
+                <Text style={styles.statusText}>{card.status}</Text>
+              </View>
+            </View>
+            <View style={styles.prepaidCardBalance}>
+              <Text style={styles.prepaidCardLabel}>Available Balance</Text>
+              <Text style={styles.prepaidCardAmount}>
+                {formatCurrency(card.balance, card.currency)}
+              </Text>
+            </View>
+            <View style={styles.prepaidCardActions}>
+              <TouchableOpacity style={styles.prepaidCardAction}>
+                <Ionicons name="add-circle" size={18} color="#4f46e5" />
+                <Text style={styles.prepaidCardActionText}>Top Up</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.prepaidCardAction}>
+                <Ionicons name="sync" size={18} color="#4f46e5" />
+                <Text style={styles.prepaidCardActionText}>Transfer</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.prepaidCardAction}>
+                <Ionicons name="ellipsis-horizontal" size={18} color="#4f46e5" />
+                <Text style={styles.prepaidCardActionText}>Details</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
+
+        <TouchableOpacity style={styles.addButton}>
+          <Ionicons name="add-circle" size={20} color="#4f46e5" />
+          <Text style={styles.addButtonText}>Get New Prepaid Card</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
@@ -285,35 +350,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4f46e5',
   },
-  actionButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    padding: 16,
-    backgroundColor: '#ffffff',
-    marginBottom: 16,
+  balanceSummary: {
+    padding: 24,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
   },
-  actionButton: {
-    alignItems: 'center',
-  },
-  actionButtonIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#4f46e5',
-    justifyContent: 'center',
-    alignItems: 'center',
+  balanceLabel: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 8,
   },
+  balanceAmount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 20,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 50,
+    flex: 0.48,
+    justifyContent: 'center',
+  },
   actionButtonText: {
-    fontSize: 14,
-    color: '#4f46e5',
+    color: '#ffffff',
+    marginLeft: 8,
     fontWeight: '500',
   },
-  sectionContainer: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 16,
+  section: {
+    padding: 16,
+    marginTop: 16,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -324,161 +398,238 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#111827',
+    color: '#1f2937',
   },
-  actionText: {
-    fontSize: 14,
+  linkText: {
     color: '#4f46e5',
-    fontWeight: '500',
-  },
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 16,
-  },
-  emptyStateButton: {
-    backgroundColor: '#4f46e5',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  emptyStateButtonText: {
-    color: '#ffffff',
-    fontWeight: '500',
+    fontSize: 14,
   },
   accountCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     padding: 16,
-    borderRadius: 8,
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
   },
-  accountDetails: {
-    flex: 1,
-  },
-  accountNameContainer: {
+  accountHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  accountName: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  primaryBadge: {
-    backgroundColor: '#4f46e5',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  primaryBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  accountBalance: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  cardsContainer: {
-    marginTop: 8,
-  },
-  cardItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
     marginBottom: 12,
   },
-  cardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(79, 70, 229, 0.1)',
+  accountIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
   },
-  cardDetails: {
+  accountInfo: {
     flex: 1,
   },
-  cardType: {
+  accountType: {
     fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  accountNumber: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  accountBalance: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  accountActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+    paddingTop: 12,
+  },
+  accountAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 6,
+    flex: 1,
+  },
+  accountActionText: {
+    fontSize: 14,
+    color: '#4f46e5',
+    marginLeft: 4,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 50,
+    paddingVertical: 12,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  addButtonText: {
+    fontSize: 14,
     fontWeight: '500',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#4f46e5',
+    marginLeft: 8,
+  },
+  cardsContainer: {
+    paddingBottom: 8,
+    paddingTop: 4,
+  },
+  cardItem: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    width: screenWidth * 0.7,
+    marginRight: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  defaultBadge: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  defaultText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  cardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 6,
   },
   cardNumber: {
     fontSize: 14,
     color: '#6b7280',
+    marginBottom: 12,
   },
-  cardStatus: {
-    marginLeft: 12,
+  cardExpiry: {
+    fontSize: 14,
+    color: '#6b7280',
   },
-  activeStatus: {
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  activeStatusText: {
-    color: '#10b981',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  inactiveStatus: {
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  inactiveStatusText: {
-    color: '#ef4444',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  quickActionsContainer: {
+  addCardButton: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 32,
+    borderRadius: 16,
+    padding: 16,
+    width: screenWidth * 0.4,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed',
   },
-  quickActionsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+  addCardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addCardText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#4f46e5',
+    textAlign: 'center',
+  },
+  prepaidCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  prepaidCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     marginBottom: 16,
   },
-  quickActionsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  prepaidCardInfo: {
+    flex: 1,
   },
-  quickActionItem: {
+  prepaidCardName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  prepaidCardNumber: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  statusBadge: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  statusText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+    textTransform: 'capitalize',
+  },
+  prepaidCardBalance: {
+    marginBottom: 16,
+  },
+  prepaidCardLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  prepaidCardAmount: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+  },
+  prepaidCardActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+    paddingTop: 12,
+  },
+  prepaidCardAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8,
+    justifyContent: 'center',
+    paddingVertical: 6,
+    flex: 1,
   },
-  quickActionText: {
+  prepaidCardActionText: {
     fontSize: 14,
-    color: '#4b5563',
-    marginLeft: 6,
+    color: '#4f46e5',
+    marginLeft: 4,
   },
 });

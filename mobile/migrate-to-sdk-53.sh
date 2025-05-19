@@ -811,6 +811,391 @@ const styles = StyleSheet.create({
 });
 EOL
 
+# Create CardsScreen if it doesn't exist
+if [ ! -f "./screens/CardsScreen.js" ]; then
+  progress "Creating CardsScreen.js..."
+  
+  cat > ./screens/CardsScreen.js << 'EOL'
+import React, { useState, useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  Alert,
+  ActivityIndicator,
+  SafeAreaView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
+
+export default function CardsScreen({ navigation }) {
+  const { user } = useAuth();
+  const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch cards data
+  const fetchCards = async () => {
+    try {
+      setLoading(true);
+      
+      // Mock data for demonstration
+      const mockCards = [
+        { 
+          id: 1, 
+          type: 'visa', 
+          name: 'PaySage Visa',
+          number: '•••• •••• •••• 4321',
+          expiryMonth: 9,
+          expiryYear: 25,
+          isDefault: true,
+        },
+        { 
+          id: 2, 
+          type: 'mastercard', 
+          name: 'PaySage Credit',
+          number: '•••• •••• •••• 5678',
+          expiryMonth: 3,
+          expiryYear: 26,
+          isDefault: false,
+        },
+      ];
+      
+      // In a real app, fetch from API
+      // const response = await apiClient.cards.getAll();
+      
+      setCards(mockCards);
+    } catch (error) {
+      console.error('Error fetching cards:', error);
+      Alert.alert('Error', 'Failed to load cards. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCards();
+  }, []);
+
+  // Get card logo based on type
+  const getCardLogo = (type) => {
+    switch (type.toLowerCase()) {
+      case 'visa':
+        return require('../assets/visa-logo.png');
+      case 'mastercard':
+        return require('../assets/mastercard-logo.png');
+      case 'amex':
+        return require('../assets/amex-logo.png');
+      default:
+        return null;
+    }
+  };
+
+  // Handle add new card
+  const handleAddCard = () => {
+    Alert.alert('Add Card', 'This feature will be implemented soon!');
+  };
+
+  // Handle card options
+  const handleCardOptions = (card) => {
+    Alert.alert(
+      'Card Options',
+      'What would you like to do with this card?',
+      [
+        {
+          text: 'Set as Default',
+          onPress: () => {
+            // Set card as default
+            Alert.alert('Success', 'Card set as default payment method');
+          },
+        },
+        {
+          text: 'Remove Card',
+          style: 'destructive',
+          onPress: () => {
+            // Remove card
+            Alert.alert('Success', 'Card has been removed');
+          },
+        },
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+      ],
+    );
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+        <Text style={styles.loadingText}>Loading your cards...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
+        <View style={styles.headerContainer}>
+          <Text style={styles.headerTitle}>Your Payment Cards</Text>
+          <Text style={styles.headerSubtitle}>
+            Manage your cards and payment methods
+          </Text>
+        </View>
+
+        <View style={styles.cardsContainer}>
+          {cards.map((card) => (
+            <View key={card.id} style={styles.cardItem}>
+              <View style={styles.cardHeader}>
+                {getCardLogo(card.type) && (
+                  <Image
+                    source={getCardLogo(card.type)}
+                    style={styles.cardLogo}
+                    resizeMode="contain"
+                  />
+                )}
+                <TouchableOpacity
+                  onPress={() => handleCardOptions(card)}
+                  style={styles.optionsButton}
+                >
+                  <Ionicons
+                    name="ellipsis-vertical"
+                    size={20}
+                    color="#6b7280"
+                  />
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.cardName}>{card.name}</Text>
+              <Text style={styles.cardNumber}>{card.number}</Text>
+              
+              <View style={styles.cardFooter}>
+                <Text style={styles.cardExpiry}>
+                  Expires {card.expiryMonth < 10 ? `0${card.expiryMonth}` : card.expiryMonth}/{card.expiryYear}
+                </Text>
+                
+                {card.isDefault && (
+                  <View style={styles.defaultBadge}>
+                    <Text style={styles.defaultBadgeText}>Default</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+          ))}
+
+          <TouchableOpacity
+            style={styles.addCardButton}
+            onPress={handleAddCard}
+          >
+            <View style={styles.addCardIconContainer}>
+              <Ionicons name="add" size={24} color="#4f46e5" />
+            </View>
+            <Text style={styles.addCardText}>Add New Card</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Security Settings</Text>
+          
+          <TouchableOpacity style={styles.settingItem}>
+            <View style={styles.settingIconContainer}>
+              <Ionicons name="lock-closed" size={20} color="#4f46e5" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>Payment Security</Text>
+              <Text style={styles.settingDescription}>
+                Configure security for your payment methods
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={styles.settingItem}>
+            <View style={styles.settingIconContainer}>
+              <Ionicons name="finger-print" size={20} color="#4f46e5" />
+            </View>
+            <View style={styles.settingContent}>
+              <Text style={styles.settingTitle}>Biometric Authentication</Text>
+              <Text style={styles.settingDescription}>
+                Enable fingerprint or face ID for payments
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#4f46e5',
+  },
+  headerContainer: {
+    padding: 20,
+    paddingBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  cardsContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  cardItem: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  cardLogo: {
+    width: 50,
+    height: 30,
+  },
+  optionsButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardName: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 8,
+  },
+  cardNumber: {
+    fontSize: 16,
+    color: '#4b5563',
+    marginBottom: 16,
+    letterSpacing: 1,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardExpiry: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  defaultBadge: {
+    backgroundColor: '#10b981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  defaultBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  addCardButton: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  addCardIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addCardText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#4f46e5',
+  },
+  sectionContainer: {
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  settingItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  settingIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  settingContent: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#1f2937',
+    marginBottom: 2,
+  },
+  settingDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+});
+EOL
+fi
+
 # Create TransactionsScreen if it doesn't exist
 if [ ! -f "./screens/TransactionsScreen.js" ]; then
   progress "Creating TransactionsScreen.js..."
@@ -1128,6 +1513,19 @@ EOL
 
 progress "Creating placeholder favicon.png..."
 cat > ./assets/favicon.png << 'EOL'
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
+EOL
+
+progress "Creating credit card assets..."
+cat > ./assets/visa-logo.png << 'EOL'
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
+EOL
+
+cat > ./assets/mastercard-logo.png << 'EOL'
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
+EOL
+
+cat > ./assets/amex-logo.png << 'EOL'
 iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
 EOL
 

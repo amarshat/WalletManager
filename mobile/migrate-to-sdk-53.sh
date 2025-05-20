@@ -1516,18 +1516,31 @@ cat > ./assets/favicon.png << 'EOL'
 iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
 EOL
 
-progress "Creating credit card assets..."
-cat > ./assets/visa-logo.png << 'EOL'
-iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
-EOL
+progress "Downloading credit card assets..."
+# Download actual card logo images using curl
+curl -s -o ./assets/visa-logo.png https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/visa.png || {
+  echo "Failed to download Visa logo. Creating fallback colored rectangle."
+  # Create a simple colored rectangle as fallback
+  echo -e "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00(\x08\x06\x00\x00\x00\xbe\xc0\xd8g\x00\x00\x00\tpHYs\x00\x00\x0e\xc4\x00\x00\x0e\xc4\x01\x95+\x0e\x1b\x00\x00\x00zIDATx\x9c\xed\xd0\xb1\r\xc0 \x10\x04\xd1\xef\xaaT\xe9\xea\x1d0\x06\x98\"m\xc8\xdd\x89\xb6\xf0\x80e$Xd\xc9\x9a\xf7\x1d\xd2\x9e-\xab\xee'\x8a\"\"\xd5)@S\x80\xa6\x00M\x01\x9a\x02\xb4\xd5\xf7\xce\xec\xe3\xb3\x8d\x02\x143\x0eR\x14\xa0)@S\x80\xa6\x00M\x01\x9a\x02\xb4\xe5'\xa4\xfb\xa9\x7f'\x1d\x9a\x02\xb4'j\xae\xeb\xb4\xbc\x88\xa3\x1a\xb7\x19\x08\xae\xd6\x00\x00\x00\x00IEND\xaeB\x60\x82" > ./assets/visa-logo.png
+}
 
-cat > ./assets/mastercard-logo.png << 'EOL'
-iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
-EOL
+curl -s -o ./assets/mastercard-logo.png https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/mc.png || {
+  echo "Failed to download Mastercard logo. Creating fallback colored rectangle."
+  # Create a simple colored rectangle as fallback
+  echo -e "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00(\x08\x06\x00\x00\x00\xbe\xc0\xd8g\x00\x00\x00\tpHYs\x00\x00\x0e\xc4\x00\x00\x0e\xc4\x01\x95+\x0e\x1b\x00\x00\x00zIDATx\x9c\xed\xd2\xb1\r\x80 \x10\x04\xc1\xbbs\nw\x9d\n\x04\xc1\x1a\xba\xe0\x84zl\xc9Vq\xef\x96\x01\xc0~\x86\xe0\x8e\x0e\xddo\xeay\x18\x11\x11\xf1\x9b\x02\xb4\'@{\x02\xb4\'@{\x02\xb4\xebw\xab\xee\x8d-X\xd6\x83wN\x80\xf6\x04h\x7f\xcc-\xb8\xe2\x03x,@{\x02\xb4'@{\x02\xb4'@{\x02\xb4\x03\x02\xb9\xbd\"\xef\xeb\x9cm\x16\x00\x00\x00\x00IEND\xaeB\x60\x82" > ./assets/mastercard-logo.png
+}
 
-cat > ./assets/amex-logo.png << 'EOL'
-iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+P+/HgAFPQJAGukX9wAAAABJRU5ErkJggg==
-EOL
+curl -s -o ./assets/amex-logo.png https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/amex.png || {
+  echo "Failed to download Amex logo. Creating fallback colored rectangle."
+  # Create a simple colored rectangle as fallback
+  echo -e "\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00d\x00\x00\x00(\x08\x06\x00\x00\x00\xbe\xc0\xd8g\x00\x00\x00\tpHYs\x00\x00\x0e\xc4\x00\x00\x0e\xc4\x01\x95+\x0e\x1b\x00\x00\x00zIDATx\x9c\xed\xd2\xb1\r\x80 \x10\x04\xc1\xbbs\nw\x9d\n\x04\xc1\x1a\xba\xe0\x84zl\xc9Vq\xef\x96\x01\xc0~\x86\xe0\x8e\x0e\xddo\xeay\x18\x11\x11\xf1\x9b\x02\xb4\'@{\x02\xb4\'@{\x02\xb4\xebw\xab\xee\x8d-X\xd6\x83wN\x80\xf6\x04h\x7f\xcc-\xb8\xe2\x03x,@{\x02\xb4'@{\x02\xb4'@{\x02\xb4\x03\x02\xb9\xbd\"\xef\xeb\x9cm\x16\x00\x00\x00\x00IEND\xaeB\x60\x82" > ./assets/amex-logo.png
+}
+
+# Alternative approach: Add instructions to manually copy image files
+echo "NOTE: If you encounter issues with the credit card images, download these images manually:"
+echo "Visa logo: https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/visa.png"
+echo "Mastercard logo: https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/mc.png"
+echo "Amex logo: https://raw.githubusercontent.com/kristoferjoseph/flexcomponents/master/examples/logos/amex.png"
 
 # Update app.json to make it work without proper assets during development
 progress "Updating app.json for development..."

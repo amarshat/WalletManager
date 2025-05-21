@@ -412,9 +412,35 @@ export default function SuperAdminDashboard() {
                                     style={{ backgroundColor: field.value }}
                                   />
                                   <FormControl>
-                                    <Input {...field} />
+                                    <Input placeholder="#4F46E5" {...field} />
                                   </FormControl>
                                 </div>
+                                <FormDescription>
+                                  Main brand color (HEX format: #RRGGBB)
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="secondaryColor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Secondary Color</FormLabel>
+                                <div className="flex gap-2">
+                                  <div 
+                                    className="h-9 w-9 rounded-md border"
+                                    style={{ backgroundColor: field.value }}
+                                  />
+                                  <FormControl>
+                                    <Input placeholder="#7E57C2" {...field} />
+                                  </FormControl>
+                                </div>
+                                <FormDescription>
+                                  Used for gradients and accents (HEX format)
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}

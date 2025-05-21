@@ -145,6 +145,7 @@ export const budgetCategories = pgTable("budget_categories", {
   parentId: integer("parent_id"), // Will reference budgetCategories.id via relation
   userId: integer("user_id").references(() => users.id), // For custom categories
   isSystem: boolean("is_system").default(false), // True for system categories
+  metadata: json("metadata"), // For storing tenant ID and other metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -159,6 +160,7 @@ export const budgetPlans = pgTable("budget_plans", {
   startDate: timestamp("start_date").notNull(),
   endDate: timestamp("end_date").notNull(),
   isActive: boolean("is_active").default(true),
+  metadata: json("metadata"), // For storing tenant ID and other metadata
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

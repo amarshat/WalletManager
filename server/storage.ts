@@ -519,7 +519,8 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Add tenant info to wallet metadata if available
-    const walletMetadata = wallet.metadata || {};
+    const walletMetadata: Record<string, any> = typeof wallet.metadata === 'object' ? 
+      {...wallet.metadata as Record<string, any>} : {};
     if (effectiveTenantId) {
       walletMetadata.tenantId = effectiveTenantId;
     }
@@ -899,7 +900,9 @@ export class DatabaseStorage implements IStorage {
     }
     
     // Create transaction with tenant metadata if available
-    const transactionMetadata = transaction.metadata || {};
+    const transactionMetadata: Record<string, any> = typeof transaction.metadata === 'object' ? 
+      {...transaction.metadata as Record<string, any>} : {};
+      
     if (effectiveTenantId) {
       transactionMetadata.tenantId = effectiveTenantId;
     }

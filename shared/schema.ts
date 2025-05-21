@@ -55,6 +55,7 @@ export const customerWallets = pgTable("customer_wallets", {
   customerId: text("customer_id").notNull().unique(),
   externalReference: text("external_reference"),
   status: text("status").default("ACTIVE"),
+  metadata: json("metadata"), // For storing tenant ID and other metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -183,6 +184,7 @@ export const budgetTransactions = pgTable("budget_transactions", {
   transactionDate: timestamp("transaction_date").notNull().defaultNow(),
   walletTransactionId: text("wallet_transaction_id"), // For linking to wallet transactions
   isIncome: boolean("is_income").default(false),
+  metadata: json("metadata"), // For storing tenant ID and other metadata
   createdAt: timestamp("created_at").defaultNow(),
 });
 

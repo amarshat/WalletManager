@@ -500,10 +500,36 @@ export class DatabaseStorage implements IStorage {
     return wallet;
   }
   
-  async createWallet(wallet: InsertCustomerWallet): Promise<CustomerWallet> {
+  async createWallet(wallet: InsertCustomerWallet, tenantId?: number): Promise<CustomerWallet> {
+    // Get user's tenant information if tenantId is provided
+    let effectiveTenantId = tenantId;
+    
+    if (!effectiveTenantId) {
+      // If no tenantId is provided, try to get the user's default tenant
+      try {
+        const userTenants = await this.getUserTenants(wallet.userId);
+        const defaultTenant = userTenants.find(ut => ut.isDefault);
+        if (defaultTenant) {
+          effectiveTenantId = defaultTenant.tenantId;
+        }
+      } catch (error) {
+        // If there's an error getting tenant info, continue without it
+        console.warn("Could not determine tenant for wallet creation:", error);
+      }
+    }
+    
+    // Add tenant info to wallet metadata if available
+    const walletMetadata = wallet.metadata || {};
+    if (effectiveTenantId) {
+      walletMetadata.tenantId = effectiveTenantId;
+    }
+    
     const [created] = await db
       .insert(customerWallets)
-      .values(wallet)
+      .values({
+        ...wallet,
+        metadata: Object.keys(walletMetadata).length > 0 ? walletMetadata : undefined
+      })
       .returning();
     return created;
   }

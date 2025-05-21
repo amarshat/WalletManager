@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,10 +29,11 @@ const profileFormSchema = z.object({
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const { toast } = useToast();
   const [isUpdating, setIsUpdating] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
   
   // Initialize form with user data
   const form = useForm<ProfileFormValues>({
@@ -319,6 +321,68 @@ export default function Profile() {
             </form>
           </Form>
         </CardContent>
+      </Card>
+      
+      {/* Tenant/Organization Management Card */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Organization Settings</CardTitle>
+          <CardDescription>
+            Change or switch between organizations
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-sm font-medium mb-2">Current Organization</h3>
+              <div className="flex items-center p-3 border rounded-md bg-muted/20">
+                <Building2 className="h-5 w-5 mr-3 text-primary" />
+                <span className="font-medium">
+                  {localStorage.getItem('selectedTenantId') || 'Default Organization'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="flex flex-col sm:flex-row gap-3">
+          <Button
+            variant="outline"
+            onClick={() => {
+              // Switch organization (keep user logged in)
+              setLocation('/tenant-select');
+              
+              toast({
+                title: "Organization Selection",
+                description: "Please select your organization"
+              });
+            }}
+          >
+            <Building2 className="w-4 h-4 mr-2" />
+            Switch Organization
+          </Button>
+          
+          <Button
+            variant="destructive"
+            onClick={() => {
+              // Log out user completely
+              logoutMutation.mutate(undefined, {
+                onSuccess: () => {
+                  // Clear tenant selection too
+                  localStorage.removeItem('selectedTenantId');
+                  setLocation('/tenant-select');
+                  
+                  toast({
+                    title: "Logged Out",
+                    description: "You have been logged out successfully"
+                  });
+                }
+              });
+            }}
+          >
+            <LogOut className="w-4 h-4 mr-2" />
+            Log Out & Switch
+          </Button>
+        </CardFooter>
       </Card>
     </CustomerLayout>
   );

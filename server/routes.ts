@@ -70,12 +70,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
   
   // Tenant routes
-  app.get("/api/tenants", async (req, res) => {
+  app.get("/api/tenants", ensureAuth, ensureAdmin, async (req, res) => {
     try {
       const tenants = await storage.getTenants();
       res.json(tenants);
     } catch (error) {
       console.error("Error retrieving tenants:", error);
+      res.status(500).json({ error: "Failed to retrieve tenants" });
+    }
+  });
+  
+  // Public tenant endpoint for tenant selection (no auth required)
+  app.get("/api/tenants/public", async (req, res) => {
+    try {
+      const tenants = await storage.getTenants();
+      // Only return the public information needed for tenant selection
+      const publicTenants = tenants.map(tenant => ({
+        id: tenant.id,
+        tenantId: tenant.tenantId,
+        name: tenant.name,
+        logo: tenant.logo
+      }));
+      res.json(publicTenants);
+    } catch (error) {
+      console.error("Error retrieving public tenants:", error);
       res.status(500).json({ error: "Failed to retrieve tenants" });
     }
   });

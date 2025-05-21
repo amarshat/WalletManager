@@ -231,9 +231,16 @@ export default function AuthPage() {
         </div>
 
         {/* Hero Side */}
-        <div className="bg-primary text-white p-10 flex flex-col justify-center hidden md:block">
-          <h2 className="text-3xl font-bold mb-4">Digital Embedded Wallet Platform</h2>
-          <p className="text-lg mb-6">Manage your finances securely with our digital wallet solution powered by Paysafe.</p>
+        <div 
+          className="text-white p-10 flex flex-col justify-center hidden md:block"
+          style={{ 
+            background: branding?.primaryColor && branding?.secondaryColor 
+              ? `linear-gradient(135deg, ${branding.primaryColor} 0%, ${branding.secondaryColor} 100%)`
+              : "linear-gradient(135deg, #4F46E5 0%, #7E57C2 100%)"
+          }}
+        >
+          <h2 className="text-3xl font-bold mb-4">{branding?.name || "PaySage Wallet Platform"}</h2>
+          <p className="text-lg mb-6">{branding?.tagline || "Manage your finances securely with our digital wallet solution."}</p>
           
           <div className="space-y-4">
             <div className="flex items-start">

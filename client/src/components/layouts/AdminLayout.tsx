@@ -146,8 +146,8 @@ export default function AdminLayout({
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           }`}
         >
-          <div className="h-16 flex items-center px-6 border-b border-gray-700">
-            <span className="font-semibold text-white">Admin Dashboard</span>
+          <div className="h-16 flex items-center justify-between px-6 border-b border-gray-700">
+            <span className="font-semibold text-white">{brand?.name || "Admin Dashboard"}</span>
           </div>
           <nav className="py-4 overflow-y-auto h-[calc(100%-4rem)]">
             <ul>

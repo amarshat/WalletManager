@@ -28,6 +28,8 @@ export const brandSettings = pgTable("brand_settings", {
   tagline: text("tagline").default("Your Digital Wallet Solution"),
   logo: text("logo"),
   iconUrl: text("icon_url"), // Added icon URL for brand
+  primaryColor: text("primary_color").default("#4F46E5"), // Primary brand color for UI
+  secondaryColor: text("secondary_color").default("#7E57C2"), // Secondary brand color for gradients
   walletAuthKey: text("wallet_auth_key"),
   // Wallet feature configurations
   walletConfig: json("wallet_config").$defaultFn(() => ({

@@ -198,7 +198,7 @@ export default function AdminLayout({
       </div>
       
       <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-        Paysafe GenAI Showcase — powered by PaySage Wallet
+        {brand?.name || "Digital Wallet"} — <span className="font-semibold">Powered by PaySage AI</span>
       </footer>
     </div>
   );

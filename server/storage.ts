@@ -1,7 +1,8 @@
 import { 
   users, brandSettings, customerWallets, walletAccounts, cards, prepaidCards, systemLogs,
   budgetCategories, budgetPlans, budgetAllocations, budgetTransactions,
-  carbonImpacts, carbonOffsets, carbonCategories, carbonPreferences
+  carbonImpacts, carbonOffsets, carbonCategories, carbonPreferences,
+  tenants, userTenants
 } from "@shared/schema";
 import type { 
   User, InsertUser, BrandSettings, InsertBrandSettings, 
@@ -10,7 +11,8 @@ import type {
   BudgetCategory, InsertBudgetCategory, BudgetPlan, InsertBudgetPlan,
   BudgetAllocation, InsertBudgetAllocation, BudgetTransaction, InsertBudgetTransaction,
   CarbonImpact, InsertCarbonImpact, CarbonOffset, InsertCarbonOffset,
-  CarbonCategory, InsertCarbonCategory, CarbonPreference, InsertCarbonPreference
+  CarbonCategory, InsertCarbonCategory, CarbonPreference, InsertCarbonPreference,
+  Tenant, InsertTenant, UserTenant, InsertUserTenant
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, gte, not, or } from "drizzle-orm";
@@ -20,6 +22,9 @@ import { pool } from "./db";
 
 const PostgresSessionStore = connectPg(session);
 
+// Add to the end of IStorage interface
+  sessionStore: session.Store;
+
 // Storage interface
 export interface IStorage {
   // User operations
@@ -28,11 +33,28 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
-  listUsers(isAdmin?: boolean): Promise<User[]>;
+  listUsers(isAdmin?: boolean, tenantId?: number): Promise<User[]>;
   
-  // Brand settings operations
-  getBrandSettings(): Promise<BrandSettings | undefined>;
-  updateBrandSettings(data: Partial<InsertBrandSettings>): Promise<BrandSettings>;
+  // Tenant operations
+  getTenants(): Promise<Tenant[]>;
+  getTenantById(id: number): Promise<Tenant | undefined>;
+  getTenantBySlug(tenantId: string): Promise<Tenant | undefined>;
+  createTenant(tenant: InsertTenant): Promise<Tenant>;
+  updateTenant(id: number, data: Partial<InsertTenant>): Promise<Tenant | undefined>;
+  deleteTenant(id: number): Promise<boolean>;
+  
+  // User-Tenant operations
+  getUserTenants(userId: number): Promise<(UserTenant & { tenant: Tenant })[]>;
+  getUsersInTenant(tenantId: number, role?: string): Promise<(UserTenant & { user: User })[]>;
+  getUserTenantRole(userId: number, tenantId: number): Promise<string | undefined>;
+  addUserToTenant(userTenant: InsertUserTenant): Promise<UserTenant>;
+  updateUserTenantRole(userId: number, tenantId: number, role: string): Promise<UserTenant | undefined>;
+  removeUserFromTenant(userId: number, tenantId: number): Promise<boolean>;
+  setDefaultTenant(userId: number, tenantId: number): Promise<boolean>;
+  
+  // Brand settings operations (per tenant)
+  getBrandSettings(tenantId?: number): Promise<BrandSettings | undefined>;
+  updateBrandSettings(data: Partial<InsertBrandSettings>, tenantId?: number): Promise<BrandSettings>;
   
   // Wallet operations
   getWalletByUserId(userId: number): Promise<CustomerWallet | undefined>;

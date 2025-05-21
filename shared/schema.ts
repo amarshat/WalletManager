@@ -2,6 +2,9 @@ import { pgTable, text, serial, integer, boolean, json, timestamp, varchar, deci
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Import tenant schema
+export * from "./schema-tenant";
+
 // Users Table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

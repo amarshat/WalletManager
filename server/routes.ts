@@ -28,6 +28,21 @@ const ensureAdmin = (req: Request, res: Response, next: any) => {
   res.status(403).json({ error: "Forbidden: Admin access required" });
 };
 
+// SuperAdmin middleware - for cross-tenant operations
+const ensureSuperAdmin = (req: Request, res: Response, next: any) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  
+  // For now, we're using a hardcoded superadmin username
+  // In a real-world scenario, you'd have a dedicated flag in the database
+  if (req.user.username !== 'superadmin') {
+    return res.status(403).json({ error: "Forbidden: SuperAdmin access required" });
+  }
+  
+  next();
+};
+
 // Helper to log API calls
 const logApiCall = async (req: Request, action: string, statusCode: number, responseData: any = null) => {
   if (!req.user) return;
@@ -115,6 +130,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // SuperAdmin Routes - for cross-tenant operations
+  app.get('/api/superadmin/tenants', ensureSuperAdmin, async (req, res) => {
+    try {
+      const tenants = await storage.getTenants();
+      res.json(tenants);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      res.status(500).json({ error: 'Failed to fetch tenants' });
+    }
+  });
+  
+  app.post('/api/superadmin/tenants', ensureSuperAdmin, async (req, res) => {
+    try {
+      const tenant = await storage.createTenant(req.body);
+      await logApiCall(req, 'Create tenant', 201, tenant);
+      res.status(201).json(tenant);
+    } catch (error) {
+      console.error('Error creating tenant:', error);
+      res.status(500).json({ error: 'Failed to create tenant' });
+    }
+  });
+  
+  app.patch('/api/superadmin/tenants/:id', ensureSuperAdmin, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.id);
+      const tenant = await storage.updateTenant(tenantId, req.body);
+      
+      if (!tenant) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      await logApiCall(req, `Update tenant ${tenantId}`, 200, tenant);
+      res.json(tenant);
+    } catch (error) {
+      console.error('Error updating tenant:', error);
+      res.status(500).json({ error: 'Failed to update tenant' });
+    }
+  });
+  
+  app.delete('/api/superadmin/tenants/:id', ensureSuperAdmin, async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.id);
+      const success = await storage.deleteTenant(tenantId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Tenant not found' });
+      }
+      
+      await logApiCall(req, `Delete tenant ${tenantId}`, 200, { success });
+      res.json({ success });
+    } catch (error) {
+      console.error('Error deleting tenant:', error);
+      res.status(500).json({ error: 'Failed to delete tenant' });
+    }
+  });
+  
+  app.get('/api/superadmin/users', ensureSuperAdmin, async (req, res) => {
+    try {
+      // Get all users, regardless of tenant
+      const users = await storage.listUsers();
+      res.json(users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      res.status(500).json({ error: 'Failed to fetch users' });
+    }
+  });
+
   // Setup error handler middleware
   app.use('/api/client-error', logClientError);
   

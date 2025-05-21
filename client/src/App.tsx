@@ -26,6 +26,7 @@ import ManageCustomers from "@/pages/admin/manage-customers";
 import SystemLogs from "@/pages/admin/system-logs";
 import DevCenter from "@/pages/admin/dev-center";
 import TroubleshootingDashboard from "@/pages/admin/troubleshooting";
+import SuperAdminDashboard from "@/pages/admin/superadmin-dashboard";
 import EmbeddedWalletPage from "@/pages/embedded-wallet-page";
 import CustomerEmbeddedWallet from "@/pages/customer/embedded-wallet-page";
 import EmbeddedWidgets from "@/pages/embedded-widgets";
@@ -101,6 +102,14 @@ function Router() {
       
       {/* Themed Wallet - No authentication required */}
       <Route path="/themed-wallet" component={ThemedWalletPage} />
+      
+      {/* SuperAdmin Route */}
+      <ProtectedRoute 
+        path="/superadmin" 
+        component={SuperAdminDashboard} 
+        requireAdmin={true} 
+        redirectTo="/auth" 
+      />
       
       {/* Admin Routes */}
       <ProtectedRoute 

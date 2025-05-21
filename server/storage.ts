@@ -45,6 +45,7 @@ export interface IStorage {
   getUserTenants(userId: number): Promise<(UserTenant & { tenant: Tenant })[]>;
   getUsersInTenant(tenantId: number, role?: string): Promise<(UserTenant & { user: User })[]>;
   getUserTenantRole(userId: number, tenantId: number): Promise<string | undefined>;
+  checkUserTenantAccess(userId: number, tenantId: number): Promise<boolean>;
   addUserToTenant(userTenant: InsertUserTenant): Promise<UserTenant>;
   updateUserTenantRole(userId: number, tenantId: number, role: string): Promise<UserTenant | undefined>;
   removeUserFromTenant(userId: number, tenantId: number): Promise<boolean>;
@@ -302,6 +303,18 @@ export class DatabaseStorage implements IStorage {
       ));
     
     return userTenant?.role;
+  }
+  
+  async checkUserTenantAccess(userId: number, tenantId: number): Promise<boolean> {
+    const [userTenant] = await db
+      .select()
+      .from(userTenants)
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    return !!userTenant;
   }
 
   async addUserToTenant(userTenant: InsertUserTenant): Promise<UserTenant> {

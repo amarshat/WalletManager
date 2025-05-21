@@ -14,9 +14,9 @@ type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginData, { tenantId?: string | number }>;
   logoutMutation: UseMutationResult<void, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  registerMutation: UseMutationResult<SelectUser, Error, InsertUser, { tenantId?: string | number }>;
 };
 
 type LoginData = Pick<InsertUser, "username" | "password">;

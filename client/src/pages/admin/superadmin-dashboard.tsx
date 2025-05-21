@@ -30,6 +30,9 @@ interface Tenant {
   name: string;
   createdAt: string;
   logo?: string;
+  tagline?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
 interface User {
@@ -45,6 +48,14 @@ const tenantFormSchema = z.object({
   tenantId: z.string().min(3, "Tenant ID must be at least 3 characters"),
   name: z.string().min(2, "Name must be at least 2 characters"),
   logo: z.string().optional(),
+  tagline: z.string().optional(),
+  primaryColor: z.string().default("#4F46E5"),
+  secondaryColor: z.string().default("#818CF8"),
+  // Admin credentials section
+  adminUsername: z.string().min(3, "Admin username must be at least 3 characters"),
+  adminPassword: z.string().min(8, "Admin password must be at least 8 characters"),
+  adminFullName: z.string().min(2, "Admin full name must be at least 2 characters"),
+  adminEmail: z.string().email("Please enter a valid email").optional(),
 });
 
 type TenantFormValues = z.infer<typeof tenantFormSchema>;
@@ -67,16 +78,28 @@ export default function SuperAdminDashboard() {
     staleTime: 1000 * 60, // 1 minute
   });
   
-  // Create tenant mutation
+  // Create tenant mutation with admin account
   const createTenantMutation = useMutation({
-    mutationFn: async (tenant: TenantFormValues) => {
-      const res = await apiRequest("POST", "/api/superadmin/tenants", tenant);
+    mutationFn: async ({ 
+      tenant, 
+      adminInfo 
+    }: { 
+      tenant: Omit<TenantFormValues, 'adminUsername' | 'adminPassword' | 'adminFullName' | 'adminEmail'>, 
+      adminInfo: { 
+        username: string, 
+        password: string, 
+        fullName: string, 
+        email: string | null,
+        isAdmin: boolean 
+      } 
+    }) => {
+      const res = await apiRequest("POST", "/api/superadmin/tenants", { tenant, adminInfo });
       return await res.json();
     },
     onSuccess: () => {
       toast({
         title: "Tenant created",
-        description: "The tenant has been created successfully.",
+        description: "The tenant and admin account have been created successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/superadmin/tenants'] });
       setIsDialogOpen(false);
@@ -90,17 +113,36 @@ export default function SuperAdminDashboard() {
     },
   });
   
-  // Update tenant mutation
+  // Update tenant mutation with optional admin account update
   const updateTenantMutation = useMutation({
-    mutationFn: async ({ id, tenant }: { id: number, tenant: TenantFormValues }) => {
-      const res = await apiRequest("PATCH", `/api/superadmin/tenants/${id}`, tenant);
+    mutationFn: async ({ 
+      id, 
+      tenant, 
+      adminInfo 
+    }: { 
+      id: number, 
+      tenant: Omit<TenantFormValues, 'adminUsername' | 'adminPassword' | 'adminFullName' | 'adminEmail'>,
+      adminInfo?: { 
+        username: string, 
+        password: string, 
+        fullName: string, 
+        email: string | null,
+        isAdmin: boolean 
+      }
+    }) => {
+      const res = await apiRequest("PATCH", `/api/superadmin/tenants/${id}`, { tenant, adminInfo });
       return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      const adminUpdated = data.adminUpdated;
+      
       toast({
         title: "Tenant updated",
-        description: "The tenant has been updated successfully.",
+        description: adminUpdated 
+          ? "The tenant and admin account have been updated." 
+          : "The tenant branding has been updated successfully.",
       });
+      
       queryClient.invalidateQueries({ queryKey: ['/api/superadmin/tenants'] });
       setIsDialogOpen(false);
       setEditingTenant(null);
@@ -153,6 +195,13 @@ export default function SuperAdminDashboard() {
         tenantId: "",
         name: "",
         logo: "",
+        tagline: "",
+        primaryColor: "#4F46E5",
+        secondaryColor: "#818CF8",
+        adminUsername: "",
+        adminPassword: "",
+        adminFullName: "",
+        adminEmail: "",
       });
     }
   }, [isDialogOpen, editingTenant, form]);
@@ -164,6 +213,14 @@ export default function SuperAdminDashboard() {
         tenantId: editingTenant.tenantId,
         name: editingTenant.name,
         logo: editingTenant.logo || "",
+        tagline: editingTenant.tagline || "",
+        primaryColor: editingTenant.primaryColor || "#4F46E5",
+        secondaryColor: editingTenant.secondaryColor || "#818CF8",
+        // When editing, we don't prefill admin credentials
+        adminUsername: "",
+        adminPassword: "",
+        adminFullName: "",
+        adminEmail: "",
       });
       setIsDialogOpen(true);
     }
@@ -171,10 +228,54 @@ export default function SuperAdminDashboard() {
   
   // Handle form submission
   const onSubmit = (values: TenantFormValues) => {
+    // Extract admin credentials 
+    const { 
+      adminUsername, 
+      adminPassword, 
+      adminFullName, 
+      adminEmail, 
+      ...tenantData 
+    } = values;
+    
+    // When editing an existing tenant
     if (editingTenant) {
-      updateTenantMutation.mutate({ id: editingTenant.id, tenant: values });
-    } else {
-      createTenantMutation.mutate(values);
+      // Update tenant with the new branding info
+      updateTenantMutation.mutate({ 
+        id: editingTenant.id, 
+        tenant: tenantData,
+        // Only include admin info if provided (all fields must be filled)
+        adminInfo: (adminUsername && adminPassword && adminFullName) ? {
+          username: adminUsername,
+          password: adminPassword,
+          fullName: adminFullName,
+          email: adminEmail || null,
+          isAdmin: true
+        } : undefined
+      });
+    } 
+    // When creating a new tenant
+    else {
+      // Require admin credentials for new tenants
+      if (!adminUsername || !adminPassword || !adminFullName) {
+        toast({
+          title: "Admin credentials required",
+          description: "Please provide admin credentials for the new tenant",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Create tenant with admin credentials
+      createTenantMutation.mutate({
+        tenant: tenantData,
+        adminInfo: {
+          username: adminUsername,
+          password: adminPassword,
+          fullName: adminFullName,
+          email: adminEmail || null,
+          isAdmin: true
+        }
+      });
     }
   };
   
@@ -222,77 +323,220 @@ export default function SuperAdminDashboard() {
                   </DialogHeader>
                   
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="tenantId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Organization ID</FormLabel>
-                            <FormControl>
-                              <Input placeholder="unique-org-id" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              A unique identifier for the organization, used in URLs
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                      <div className="space-y-4">
+                        <h3 className="text-lg font-medium">Organization Details</h3>
+                        <FormField
+                          control={form.control}
+                          name="tenantId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Organization ID</FormLabel>
+                              <FormControl>
+                                <Input placeholder="unique-org-id" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                A unique identifier for the organization, used in URLs
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Organization Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Acme Corporation" {...field} />
+                              </FormControl>
+                              <FormDescription>
+                                The display name for the organization
+                              </FormDescription>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Organization Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Acme Corporation" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              The display name for the organization
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="space-y-4 pt-2 border-t">
+                        <h3 className="text-lg font-medium">Branding</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="logo"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Logo URL</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="https://example.com/logo.svg" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  URL to the organization's logo
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="tagline"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Tagline</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Your Digital Wallet Solution" {...field} />
+                                </FormControl>
+                                <FormDescription>
+                                  A short slogan for the organization
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="primaryColor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Primary Color</FormLabel>
+                                <div className="flex gap-2">
+                                  <div 
+                                    className="h-9 w-9 rounded-md border"
+                                    style={{ backgroundColor: field.value }}
+                                  />
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="secondaryColor"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Secondary Color</FormLabel>
+                                <div className="flex gap-2">
+                                  <div 
+                                    className="h-9 w-9 rounded-md border"
+                                    style={{ backgroundColor: field.value }}
+                                  />
+                                  <FormControl>
+                                    <Input {...field} />
+                                  </FormControl>
+                                </div>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
                       
-                      <FormField
-                        control={form.control}
-                        name="logo"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Logo URL</FormLabel>
-                            <FormControl>
-                              <Input placeholder="https://example.com/logo.svg" {...field} />
-                            </FormControl>
-                            <FormDescription>
-                              URL to the organization's logo (optional)
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className="space-y-4 pt-2 border-t">
+                        <h3 className="text-lg font-medium">Default Admin Account</h3>
+                        <p className="text-sm text-muted-foreground -mt-2">
+                          {editingTenant 
+                            ? "Leave blank if you don't want to modify the admin account" 
+                            : "Create an administrator account for this organization"}
+                        </p>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="adminUsername"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Admin Username</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="admin" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="adminPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Admin Password</FormLabel>
+                                <FormControl>
+                                  <Input type="password" placeholder="••••••••" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="adminFullName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Admin Full Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="John Doe" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          
+                          <FormField
+                            control={form.control}
+                            name="adminEmail"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Admin Email (optional)</FormLabel>
+                                <FormControl>
+                                  <Input type="email" placeholder="admin@example.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
                       
                       <DialogFooter>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => {
-                            setIsDialogOpen(false);
-                            setEditingTenant(null);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button 
-                          type="submit"
-                          disabled={createTenantMutation.isPending || updateTenantMutation.isPending}
-                        >
-                          {createTenantMutation.isPending || updateTenantMutation.isPending 
-                            ? "Saving..." 
-                            : editingTenant ? "Update" : "Create"}
-                        </Button>
+                        <div className="flex items-center justify-between w-full">
+                          <p className="text-xs text-muted-foreground">
+                            All tenants are co-branded with "Powered by PaySage AI"
+                          </p>
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => {
+                                setIsDialogOpen(false);
+                                setEditingTenant(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              type="submit"
+                              disabled={createTenantMutation.isPending || updateTenantMutation.isPending}
+                            >
+                              {createTenantMutation.isPending || updateTenantMutation.isPending 
+                                ? "Saving..." 
+                                : editingTenant ? "Update" : "Create"}
+                            </Button>
+                          </div>
+                        </div>
                       </DialogFooter>
                     </form>
                   </Form>

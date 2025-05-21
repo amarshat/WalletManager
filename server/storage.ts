@@ -50,6 +50,8 @@ export interface IStorage {
   updateUserTenantRole(userId: number, tenantId: number, role: string): Promise<UserTenant | undefined>;
   removeUserFromTenant(userId: number, tenantId: number): Promise<boolean>;
   setDefaultTenant(userId: number, tenantId: number): Promise<boolean>;
+  getTenantAdmins(tenantId: number): Promise<User[]>;
+  associateUserWithTenant(userId: number, tenantId: number, isDefault?: boolean): Promise<void>;
   
   // Brand settings operations (per tenant)
   getBrandSettings(tenantId?: number): Promise<BrandSettings | undefined>;
@@ -156,6 +158,73 @@ export class DatabaseStorage implements IStorage {
       .values(insertUser)
       .returning();
     return user;
+  }
+  
+  // Get admin users for a specific tenant
+  async getTenantAdmins(tenantId: number): Promise<User[]> {
+    const result = await db
+      .select({
+        user: users
+      })
+      .from(userTenants)
+      .innerJoin(users, eq(userTenants.userId, users.id))
+      .where(
+        and(
+          eq(userTenants.tenantId, tenantId),
+          eq(users.isAdmin, true)
+        )
+      );
+    
+    return result.map(r => r.user);
+  }
+  
+  // Associate a user with a tenant
+  async associateUserWithTenant(userId: number, tenantId: number, isDefault = false): Promise<void> {
+    // Check if association already exists
+    const [existing] = await db
+      .select()
+      .from(userTenants)
+      .where(
+        and(
+          eq(userTenants.userId, userId),
+          eq(userTenants.tenantId, tenantId)
+        )
+      );
+    
+    if (!existing) {
+      // Create new association
+      await db
+        .insert(userTenants)
+        .values({
+          userId,
+          tenantId,
+          isDefault
+        });
+    } else if (isDefault && !existing.isDefault) {
+      // Update to make this tenant the default for this user
+      await db
+        .update(userTenants)
+        .set({ isDefault: true })
+        .where(
+          and(
+            eq(userTenants.userId, userId),
+            eq(userTenants.tenantId, tenantId)
+          )
+        );
+    }
+    
+    // If this is being set as the default tenant, unset any other defaults for this user
+    if (isDefault) {
+      await db
+        .update(userTenants)
+        .set({ isDefault: false })
+        .where(
+          and(
+            eq(userTenants.userId, userId),
+            not(eq(userTenants.tenantId, tenantId))
+          )
+        );
+    }
   }
   
   async updateUser(id: number, data: Partial<InsertUser>): Promise<User | undefined> {

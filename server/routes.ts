@@ -143,9 +143,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   app.post('/api/superadmin/tenants', ensureSuperAdmin, async (req, res) => {
     try {
-      const tenant = await storage.createTenant(req.body);
-      await logApiCall(req, 'Create tenant', 201, tenant);
-      res.status(201).json(tenant);
+      const { tenant, adminInfo } = req.body;
+      
+      // Create the tenant with extended branding information
+      const newTenant = await storage.createTenant({
+        tenantId: tenant.tenantId,
+        name: tenant.name,
+        logo: tenant.logo,
+        tagline: tenant.tagline,
+        primaryColor: tenant.primaryColor,
+        secondaryColor: tenant.secondaryColor
+      });
+      
+      // Create admin user for this tenant if info provided
+      let adminUser = null;
+      if (adminInfo && adminInfo.username) {
+        adminUser = await storage.createUser({
+          username: adminInfo.username,
+          password: adminInfo.password, // Will be hashed in storage layer
+          fullName: adminInfo.fullName,
+          email: adminInfo.email,
+          isAdmin: true
+        });
+        
+        // Associate admin user with the tenant
+        await storage.associateUserWithTenant(adminUser.id, newTenant.id);
+      }
+      
+      await logApiCall(req, 'Create tenant with admin', 201, { tenant: newTenant, adminCreated: !!adminUser });
+      res.status(201).json({ 
+        tenant: newTenant, 
+        adminCreated: !!adminUser 
+      });
     } catch (error) {
       console.error('Error creating tenant:', error);
       res.status(500).json({ error: 'Failed to create tenant' });
@@ -155,14 +184,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/superadmin/tenants/:id', ensureSuperAdmin, async (req, res) => {
     try {
       const tenantId = parseInt(req.params.id);
-      const tenant = await storage.updateTenant(tenantId, req.body);
+      const { tenant, adminInfo } = req.body;
       
-      if (!tenant) {
+      // Update tenant with branding information
+      const updatedTenant = await storage.updateTenant(tenantId, tenant);
+      
+      if (!updatedTenant) {
         return res.status(404).json({ error: 'Tenant not found' });
       }
       
-      await logApiCall(req, `Update tenant ${tenantId}`, 200, tenant);
-      res.json(tenant);
+      // Update or create admin user if credentials provided
+      let adminUpdated = false;
+      if (adminInfo && adminInfo.username && adminInfo.password && adminInfo.fullName) {
+        // Check if an admin already exists for this tenant
+        const existingAdmins = await storage.getTenantAdmins(tenantId);
+        
+        if (existingAdmins && existingAdmins.length > 0) {
+          // Update the first admin (typically there should be just one)
+          const adminId = existingAdmins[0].id;
+          await storage.updateUser(adminId, {
+            username: adminInfo.username,
+            password: adminInfo.password, // Will be hashed in storage layer
+            fullName: adminInfo.fullName,
+            email: adminInfo.email,
+            isAdmin: true
+          });
+        } else {
+          // Create a new admin user
+          const adminUser = await storage.createUser({
+            username: adminInfo.username,
+            password: adminInfo.password,
+            fullName: adminInfo.fullName,
+            email: adminInfo.email,
+            isAdmin: true
+          });
+          
+          // Associate with tenant
+          await storage.associateUserWithTenant(adminUser.id, tenantId);
+        }
+        adminUpdated = true;
+      }
+      
+      await logApiCall(req, `Update tenant ${tenantId} and admin`, 200, { tenant: updatedTenant, adminUpdated });
+      res.json({ tenant: updatedTenant, adminUpdated });
     } catch (error) {
       console.error('Error updating tenant:', error);
       res.status(500).json({ error: 'Failed to update tenant' });

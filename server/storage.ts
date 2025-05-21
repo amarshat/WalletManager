@@ -689,9 +689,9 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(systemLogs)
       .where(
-        gte(systemLogs.createdAt, sevenDaysAgo)
+        gte(systemLogs.timestamp, sevenDaysAgo)
       )
-      .orderBy(desc(systemLogs.createdAt))
+      .orderBy(desc(systemLogs.timestamp))
       .limit(limit)
       .offset(offset);
   }
@@ -707,10 +707,10 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(systemLogs.userId, userId),
-          gte(systemLogs.createdAt, sevenDaysAgo)
+          gte(systemLogs.timestamp, sevenDaysAgo)
         )
       )
-      .orderBy(desc(systemLogs.createdAt))
+      .orderBy(desc(systemLogs.timestamp))
       .limit(limit);
   }
 

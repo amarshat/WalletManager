@@ -107,7 +107,7 @@ function Router() {
       <ProtectedRoute 
         path="/superadmin" 
         component={SuperAdminDashboard} 
-        requireAdmin={true} 
+        requireSuperAdmin={true} 
         redirectTo="/auth" 
       />
       

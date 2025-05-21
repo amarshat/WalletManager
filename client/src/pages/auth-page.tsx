@@ -36,7 +36,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<"customer" | "admin">("customer");
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
-  const { brand } = useBrand();
+  const { brand: branding } = useBrand();
   const [tenantId, setTenantId] = useState<string | null>(null);
   
   // Parse tenantId from URL params
@@ -125,8 +125,8 @@ export default function AuthPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">{brand?.name || "PaySage Wallet"}</h1>
-            <p className="text-neutral-600 mt-1">{brand?.tagline || "Your Digital Wallet Solution"}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{branding?.name || "PaySage Wallet"}</h1>
+            <p className="text-neutral-600 mt-1">{branding?.tagline || "Your Digital Wallet Solution"}</p>
           </div>
 
           <Tabs defaultValue="customer" value={activeTab} onValueChange={(v) => setActiveTab(v as "customer" | "admin")}>
@@ -274,7 +274,9 @@ export default function AuthPage() {
           </div>
           
           <div className="mt-auto pt-10">
-            <p className="text-sm text-white text-opacity-70">Paysafe GenAI Showcase — powered by PaySage</p>
+            <p className="text-sm text-white text-opacity-70">
+              {branding?.name || "Digital Wallet"} — <span className="font-semibold">Powered by PaySage AI</span>
+            </p>
           </div>
         </div>
       </div>

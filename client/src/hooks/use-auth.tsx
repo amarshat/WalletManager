@@ -47,8 +47,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      
       // Store user info for tenant redirect flow
       localStorage.setItem('lastLoggedInUser', user.username);
+      
+      // Redirect superadmin user to the superadmin dashboard
+      if (user.username === 'superadmin') {
+        window.location.href = '/superadmin';
+      } else if (user.isAdmin) {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/';
+      }
+      
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.fullName}!`,

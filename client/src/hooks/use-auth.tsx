@@ -34,8 +34,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
+    mutationFn: async (credentials: LoginData, options?: { tenantId?: string | number }) => {
+      let endpoint = "/api/login";
+      
+      // Add tenantId as query parameter if provided
+      if (options?.tenantId) {
+        endpoint += `?tenantId=${options.tenantId}`;
+      }
+      
+      const res = await apiRequest("POST", endpoint, credentials);
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {

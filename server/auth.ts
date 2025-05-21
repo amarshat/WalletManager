@@ -207,14 +207,59 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/login", (req, res, next) => {
+  app.post("/api/login", async (req, res, next) => {
     try {
       loginSchema.parse(req.body);
       
-      passport.authenticate("local", (err: Error, user: SelectUser) => {
+      // Get the tenant ID from query params - it could be a numeric ID or a tenant slug
+      const tenantIdParam = req.query.tenantId as string | undefined;
+      let tenantId: number | undefined;
+      
+      // If tenant ID is provided, try to resolve it to a numeric ID
+      if (tenantIdParam) {
+        try {
+          // First try to parse it as a number
+          const parsedId = parseInt(tenantIdParam);
+          
+          if (!isNaN(parsedId)) {
+            // If it's a valid number, use it directly
+            tenantId = parsedId;
+          } else {
+            // Otherwise, try to look up the tenant by slug/tenantId
+            const tenant = await storage.getTenantBySlug(tenantIdParam);
+            if (tenant) {
+              tenantId = tenant.id;
+            }
+          }
+        } catch (error) {
+          console.error("Error resolving tenant ID:", error);
+        }
+      }
+      
+      passport.authenticate("local", async (err: Error, user: SelectUser) => {
         if (err) return next(err);
         if (!user) {
           return res.status(401).json({ error: "Invalid username or password" });
+        }
+        
+        // If a tenant ID was specified, check if the user has access to that tenant
+        if (tenantId) {
+          try {
+            const hasTenantAccess = await storage.checkUserTenantAccess(user.id, tenantId);
+            if (!hasTenantAccess) {
+              // User doesn't have access to this tenant, let's associate them
+              await storage.addUserToTenant({
+                userId: user.id,
+                tenantId,
+                role: "user",
+                isDefault: true // Make this the default tenant for the user
+              });
+              console.log(`User ${user.id} associated with tenant ${tenantId} during login`);
+            }
+          } catch (error) {
+            console.error("Error checking tenant access:", error);
+            // Continue with login even if tenant check fails
+          }
         }
         
         req.login(user, (err) => {

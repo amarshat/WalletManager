@@ -86,7 +86,12 @@ export default function AuthPage() {
 
   // Handle login submission
   function onLoginSubmit(data: LoginFormValues) {
-    loginMutation.mutate(data);
+    // Pass tenant ID if available
+    if (tenantId) {
+      loginMutation.mutate(data, { tenantId });
+    } else {
+      loginMutation.mutate(data);
+    }
   }
 
   // Handle registration submission

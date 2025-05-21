@@ -100,6 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
+      // Remove user info but keep tenant ID for multi-tenant persistence
+      localStorage.removeItem('lastLoggedInUser');
     },
     onError: (error: Error) => {
       toast({

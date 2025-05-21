@@ -14,7 +14,7 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { supportedCurrencies } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Save, User } from "lucide-react";
+import { Save, User, Building2, LogOut } from "lucide-react";
 
 // Profile update schema
 const profileFormSchema = z.object({

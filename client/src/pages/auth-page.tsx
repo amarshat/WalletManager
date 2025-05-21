@@ -37,6 +37,16 @@ export default function AuthPage() {
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
   const { brand } = useBrand();
+  const [tenantId, setTenantId] = useState<number | null>(null);
+  
+  // Parse tenantId from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tenantParam = params.get('tenantId');
+    if (tenantParam) {
+      setTenantId(parseInt(tenantParam));
+    }
+  }, []);
 
   // Redirect if user is already logged in
   useEffect(() => {

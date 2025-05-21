@@ -55,10 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser, options?: { tenantId?: number }) => {
+    mutationFn: async (
+      credentials: InsertUser, 
+      options?: { tenantId?: string | number }
+    ) => {
       let endpoint = "/api/register";
       
-      // Add tenantId as query parameter if provided
+      // Add tenantId as query parameter if provided in options
       if (options?.tenantId) {
         endpoint += `?tenantId=${options.tenantId}`;
       }

@@ -37,14 +37,20 @@ export default function AuthPage() {
   const [location, navigate] = useLocation();
   const { user, loginMutation, registerMutation } = useAuth();
   const { brand } = useBrand();
-  const [tenantId, setTenantId] = useState<number | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
   
   // Parse tenantId from URL params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tenantParam = params.get('tenantId');
     if (tenantParam) {
-      setTenantId(parseInt(tenantParam));
+      setTenantId(tenantParam);
+    } else {
+      // Check if tenantId is in localStorage
+      const storedTenantId = localStorage.getItem('selectedTenantId');
+      if (storedTenantId) {
+        setTenantId(storedTenantId);
+      }
     }
   }, []);
 
@@ -90,12 +96,15 @@ export default function AuthPage() {
     
     // Pass tenant ID if available
     if (tenantId) {
-      registerMutation.mutate(registrationData, {
-        onSuccess: () => {
-          // After registration is successful, store the tenant ID
-          localStorage.setItem('selectedTenantId', tenantId.toString());
+      registerMutation.mutate(
+        registrationData,
+        {
+          onSuccess: () => {
+            // After registration is successful, store the tenant ID
+            localStorage.setItem('selectedTenantId', tenantId);
+          }
         }
-      });
+      );
     } else {
       registerMutation.mutate(registrationData);
     }

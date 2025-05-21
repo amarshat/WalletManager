@@ -47,6 +47,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Seed initial tenants
+  try {
+    await seedTenants();
+    console.log("Tenant seeding completed successfully");
+  } catch (error) {
+    console.error("Error seeding tenants:", error);
+  }
+  
   const server = await registerRoutes(app);
   
   // Register the demo routes for embedded widgets

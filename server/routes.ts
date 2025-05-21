@@ -69,6 +69,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication routes
   setupAuth(app);
   
+  // Tenant routes
+  app.get("/api/tenants", async (req, res) => {
+    try {
+      const tenants = await storage.getTenants();
+      res.json(tenants);
+    } catch (error) {
+      console.error("Error retrieving tenants:", error);
+      res.status(500).json({ error: "Failed to retrieve tenants" });
+    }
+  });
+  
+  // Get specific tenant by ID
+  app.get("/api/tenants/:id", async (req, res) => {
+    try {
+      const tenantId = parseInt(req.params.id);
+      const tenant = await storage.getTenantById(tenantId);
+      
+      if (!tenant) {
+        return res.status(404).json({ error: "Tenant not found" });
+      }
+      
+      res.json(tenant);
+    } catch (error) {
+      console.error("Error retrieving tenant:", error);
+      res.status(500).json({ error: "Failed to retrieve tenant" });
+    }
+  });
+  
   // Setup error handler middleware
   app.use('/api/client-error', logClientError);
   

@@ -14,6 +14,7 @@ import { useDynamicTheme } from "./hooks/use-dynamic-theme";
 import AuthPage from "@/pages/auth-page";
 import NotFound from "@/pages/not-found";
 import ThemedWalletPage from "@/pages/themed-wallet-page";
+import TenantSelectPage from "@/pages/tenant-select";
 import { ProtectedRoute } from "./lib/protected-route";
 
 // Admin Pages
@@ -59,6 +60,9 @@ function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* Tenant Selection - Entry point for multi-tenant app */}
+      <Route path="/select-tenant" component={TenantSelectPage} />
+      
       {/* Auth */}
       <Route path="/auth" component={AuthPage} />
       

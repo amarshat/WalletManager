@@ -64,9 +64,10 @@ export default function TenantSelectPage() {
   // Effect to check for previously selected tenant
   useEffect(() => {
     const storedTenantId = localStorage.getItem('selectedTenantId');
-    if (storedTenantId) {
+    if (storedTenantId && tenants) {
       // Check if stored ID matches any of the loaded tenants
-      if (tenants && tenants.some(t => t.tenantId === storedTenantId)) {
+      const matchingTenant = tenants.find(t => t.tenantId === storedTenantId);
+      if (matchingTenant) {
         setTenantId(storedTenantId);
         setUseCustomTenant(false);
       } else {
@@ -110,7 +111,7 @@ export default function TenantSelectPage() {
                         <SelectValue placeholder="Select an organization" />
                       </SelectTrigger>
                       <SelectContent>
-                        {tenants.map((tenant) => (
+                        {tenants.map((tenant: PublicTenant) => (
                           <SelectItem key={tenant.tenantId} value={tenant.tenantId}>
                             {tenant.name}
                           </SelectItem>

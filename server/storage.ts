@@ -19,11 +19,9 @@ import { eq, desc, and, gte, not, or } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import type { Store } from "express-session";
 
 const PostgresSessionStore = connectPg(session);
-
-// Add to the end of IStorage interface
-  sessionStore: session.Store;
 
 // Storage interface
 export interface IStorage {
@@ -126,12 +124,12 @@ export interface IStorage {
   }>;
   
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
 }
 
 // Database storage implementation
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: Store;
   
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 

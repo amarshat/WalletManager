@@ -87,6 +87,8 @@ export default function BrandSettingsPage() {
         tagline: brand.tagline,
         walletAuthKey: brand.walletAuthKey,
         iconUrl: brand.iconUrl,
+        primaryColor: brand.primaryColor || "#4F46E5",
+        secondaryColor: brand.secondaryColor || "#7E57C2",
       });
       
       if (brand.logo) {

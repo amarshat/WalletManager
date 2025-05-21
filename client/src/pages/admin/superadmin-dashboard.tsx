@@ -458,9 +458,12 @@ export default function SuperAdminDashboard() {
                                     style={{ backgroundColor: field.value }}
                                   />
                                   <FormControl>
-                                    <Input {...field} />
+                                    <Input placeholder="#7E57C2" {...field} />
                                   </FormControl>
                                 </div>
+                                <FormDescription>
+                                  Used for gradients and accents (HEX format)
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}

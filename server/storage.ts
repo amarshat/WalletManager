@@ -871,7 +871,7 @@ export class DatabaseStorage implements IStorage {
           // Update the spent amount
           const newSpentAmount = Number(allocation.spentAmount) + Number(transaction.amount);
           await this.updateBudgetAllocation(allocation.id, {
-            spentAmount: newSpentAmount
+            spentAmount: String(newSpentAmount)
           });
         }
       }

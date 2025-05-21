@@ -43,6 +43,8 @@ export const brandSettings = pgTable("brand_settings", {
     defaultCommissionRate: 0.5, // percentage
     retentionPeriodDays: 7, // for system logs
   })),
+  tenantId: integer("tenant_id"),
+  isDefault: boolean("is_default").default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

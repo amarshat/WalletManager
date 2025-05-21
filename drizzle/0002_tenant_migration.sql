@@ -42,7 +42,7 @@ END $$;
 -- Create default Paysafe tenant if not exists
 DO $$
 DECLARE
-  tenant_id INTEGER;
+  tenant_record_id INTEGER;
   superadmin_id INTEGER;
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM "tenants" WHERE "tenant_id" = 'paysafe') THEN
@@ -55,18 +55,18 @@ BEGIN
       '#4F46E5',
       '#818CF8'
     )
-    RETURNING "id" INTO tenant_id;
+    RETURNING "id" INTO tenant_record_id;
 
     -- Get superadmin ID
     SELECT "id" INTO superadmin_id FROM "users" WHERE "username" = 'superadmin';
 
     -- Add superadmin to tenant with role "SUPERADMIN"
     INSERT INTO "user_tenants" ("user_id", "tenant_id", "role", "is_default")
-    VALUES (superadmin_id, tenant_id, 'SUPERADMIN', TRUE);
+    VALUES (superadmin_id, tenant_record_id, 'SUPERADMIN', TRUE);
 
     -- Migrate existing users to the default tenant
     INSERT INTO "user_tenants" ("user_id", "tenant_id", "role", "is_default")
-    SELECT "id", tenant_id, CASE WHEN "is_admin" THEN 'ADMIN' ELSE 'USER' END, TRUE
+    SELECT "id", tenant_record_id, CASE WHEN "is_admin" THEN 'ADMIN' ELSE 'USER' END, TRUE
     FROM "users"
     WHERE "username" != 'superadmin'; -- Exclude superadmin as they've already been added
   END IF;

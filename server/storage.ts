@@ -174,35 +174,320 @@ export class DatabaseStorage implements IStorage {
     return !!deletedUser;
   }
   
-  async listUsers(isAdmin?: boolean): Promise<User[]> {
-    if (isAdmin !== undefined) {
-      return db.select().from(users).where(eq(users.isAdmin, isAdmin));
-    }
-    return db.select().from(users);
-  }
-  
-  // Brand settings operations
-  async getBrandSettings(): Promise<BrandSettings | undefined> {
-    const [settings] = await db.select().from(brandSettings).limit(1);
-    return settings;
-  }
-  
-  async updateBrandSettings(data: Partial<InsertBrandSettings>): Promise<BrandSettings> {
-    const existingSettings = await this.getBrandSettings();
-    
-    if (existingSettings) {
-      const [updated] = await db
-        .update(brandSettings)
-        .set({ ...data, updatedAt: new Date() })
-        .where(eq(brandSettings.id, existingSettings.id))
-        .returning();
-      return updated;
+  async listUsers(isAdmin?: boolean, tenantId?: number): Promise<User[]> {
+    if (tenantId) {
+      // If tenantId is provided, get users from the specified tenant
+      const userTenantRecords = await db
+        .select({ user: users })
+        .from(userTenants)
+        .innerJoin(users, eq(userTenants.userId, users.id))
+        .where(eq(userTenants.tenantId, tenantId));
+      
+      // If isAdmin is specified, filter by that as well
+      return userTenantRecords
+        .map(record => record.user)
+        .filter(user => isAdmin === undefined || user.isAdmin === isAdmin);
     } else {
-      const [created] = await db
-        .insert(brandSettings)
-        .values({ ...data, updatedAt: new Date() })
-        .returning();
-      return created;
+      // Otherwise, get all users (with optional isAdmin filter)
+      if (isAdmin !== undefined) {
+        return db.select().from(users).where(eq(users.isAdmin, isAdmin));
+      }
+      return db.select().from(users);
+    }
+  }
+  
+  // Tenant operations
+  async getTenants(): Promise<Tenant[]> {
+    return await db.select().from(tenants);
+  }
+
+  async getTenantById(id: number): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.id, id));
+    return tenant;
+  }
+
+  async getTenantBySlug(tenantId: string): Promise<Tenant | undefined> {
+    const [tenant] = await db.select().from(tenants).where(eq(tenants.tenantId, tenantId));
+    return tenant;
+  }
+
+  async createTenant(tenant: InsertTenant): Promise<Tenant> {
+    const [newTenant] = await db.insert(tenants).values(tenant).returning();
+    return newTenant;
+  }
+
+  async updateTenant(id: number, data: Partial<InsertTenant>): Promise<Tenant | undefined> {
+    const [updatedTenant] = await db
+      .update(tenants)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(tenants.id, id))
+      .returning();
+    return updatedTenant;
+  }
+
+  async deleteTenant(id: number): Promise<boolean> {
+    // First check if the tenant has any users
+    const userTenantCount = await db
+      .select()
+      .from(userTenants)
+      .where(eq(userTenants.tenantId, id));
+    
+    if (userTenantCount.length > 0) {
+      throw new Error("Cannot delete tenant with associated users");
+    }
+    
+    await db.delete(tenants).where(eq(tenants.id, id));
+    return true;
+  }
+  
+  // User-Tenant operations
+  async getUserTenants(userId: number): Promise<(UserTenant & { tenant: Tenant })[]> {
+    return await db
+      .select({
+        id: userTenants.id,
+        userId: userTenants.userId,
+        tenantId: userTenants.tenantId,
+        role: userTenants.role,
+        isDefault: userTenants.isDefault,
+        createdAt: userTenants.createdAt,
+        tenant: tenants
+      })
+      .from(userTenants)
+      .innerJoin(tenants, eq(userTenants.tenantId, tenants.id))
+      .where(eq(userTenants.userId, userId));
+  }
+
+  async getUsersInTenant(tenantId: number, role?: string): Promise<(UserTenant & { user: User })[]> {
+    if (role) {
+      return await db
+        .select({
+          id: userTenants.id,
+          userId: userTenants.userId,
+          tenantId: userTenants.tenantId,
+          role: userTenants.role,
+          isDefault: userTenants.isDefault,
+          createdAt: userTenants.createdAt,
+          user: users
+        })
+        .from(userTenants)
+        .innerJoin(users, eq(userTenants.userId, users.id))
+        .where(and(
+          eq(userTenants.tenantId, tenantId),
+          eq(userTenants.role, role)
+        ));
+    } else {
+      return await db
+        .select({
+          id: userTenants.id,
+          userId: userTenants.userId,
+          tenantId: userTenants.tenantId,
+          role: userTenants.role,
+          isDefault: userTenants.isDefault,
+          createdAt: userTenants.createdAt,
+          user: users
+        })
+        .from(userTenants)
+        .innerJoin(users, eq(userTenants.userId, users.id))
+        .where(eq(userTenants.tenantId, tenantId));
+    }
+  }
+
+  async getUserTenantRole(userId: number, tenantId: number): Promise<string | undefined> {
+    const [userTenant] = await db
+      .select({ role: userTenants.role })
+      .from(userTenants)
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    return userTenant?.role;
+  }
+
+  async addUserToTenant(userTenant: InsertUserTenant): Promise<UserTenant> {
+    // Check if this is the first tenant for this user
+    const existingTenants = await db
+      .select()
+      .from(userTenants)
+      .where(eq(userTenants.userId, userTenant.userId));
+    
+    // If this is the first tenant, set it as default
+    const isDefault = existingTenants.length === 0 ? true : userTenant.isDefault || false;
+    
+    // If isDefault is true, set all other tenants for this user to isDefault=false
+    if (isDefault) {
+      await db
+        .update(userTenants)
+        .set({ isDefault: false })
+        .where(eq(userTenants.userId, userTenant.userId));
+    }
+    
+    const [newUserTenant] = await db
+      .insert(userTenants)
+      .values({ ...userTenant, isDefault })
+      .returning();
+    
+    return newUserTenant;
+  }
+
+  async updateUserTenantRole(userId: number, tenantId: number, role: string): Promise<UserTenant | undefined> {
+    const [updatedUserTenant] = await db
+      .update(userTenants)
+      .set({ role })
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ))
+      .returning();
+    
+    return updatedUserTenant;
+  }
+
+  async removeUserFromTenant(userId: number, tenantId: number): Promise<boolean> {
+    // Before removing, check if this is the default tenant for the user
+    const [userTenant] = await db
+      .select()
+      .from(userTenants)
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    // Delete the user-tenant relationship
+    await db
+      .delete(userTenants)
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    // If the deleted tenant was the default, set a new default if possible
+    if (userTenant?.isDefault) {
+      const [remainingTenant] = await db
+        .select()
+        .from(userTenants)
+        .where(eq(userTenants.userId, userId))
+        .limit(1);
+      
+      if (remainingTenant) {
+        await db
+          .update(userTenants)
+          .set({ isDefault: true })
+          .where(eq(userTenants.id, remainingTenant.id));
+      }
+    }
+    
+    return true;
+  }
+
+  async setDefaultTenant(userId: number, tenantId: number): Promise<boolean> {
+    // First, check if the user is part of the tenant
+    const [userTenant] = await db
+      .select()
+      .from(userTenants)
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    if (!userTenant) {
+      throw new Error("User is not part of the specified tenant");
+    }
+    
+    // Set all tenants for this user to isDefault=false
+    await db
+      .update(userTenants)
+      .set({ isDefault: false })
+      .where(eq(userTenants.userId, userId));
+    
+    // Set the specified tenant as default
+    await db
+      .update(userTenants)
+      .set({ isDefault: true })
+      .where(and(
+        eq(userTenants.userId, userId),
+        eq(userTenants.tenantId, tenantId)
+      ));
+    
+    return true;
+  }
+  
+  // Brand settings operations (per tenant)
+  async getBrandSettings(tenantId?: number): Promise<BrandSettings | undefined> {
+    if (tenantId) {
+      // Get brand settings for specific tenant
+      const [settings] = await db
+        .select()
+        .from(brandSettings)
+        .where(eq(brandSettings.tenantId, tenantId))
+        .limit(1);
+      return settings;
+    } else {
+      // Legacy support - get the default brand settings
+      const [settings] = await db
+        .select()
+        .from(brandSettings)
+        .where(eq(brandSettings.isDefault, true))
+        .limit(1);
+      
+      if (settings) return settings;
+      
+      // If no default found, get the first one
+      const [firstSettings] = await db
+        .select()
+        .from(brandSettings)
+        .limit(1);
+      return firstSettings;
+    }
+  }
+  
+  async updateBrandSettings(data: Partial<InsertBrandSettings>, tenantId?: number): Promise<BrandSettings> {
+    if (tenantId) {
+      // Update or create tenant-specific brand settings
+      const existingSettings = await this.getBrandSettings(tenantId);
+      
+      if (existingSettings) {
+        const [updated] = await db
+          .update(brandSettings)
+          .set({ ...data, updatedAt: new Date() })
+          .where(eq(brandSettings.id, existingSettings.id))
+          .returning();
+        return updated;
+      } else {
+        // Create new tenant-specific settings
+        const [created] = await db
+          .insert(brandSettings)
+          .values({ 
+            ...data, 
+            tenantId, 
+            isDefault: false,
+            updatedAt: new Date() 
+          })
+          .returning();
+        return created;
+      }
+    } else {
+      // Update or create default brand settings
+      const existingSettings = await this.getBrandSettings();
+      
+      if (existingSettings) {
+        const [updated] = await db
+          .update(brandSettings)
+          .set({ ...data, updatedAt: new Date() })
+          .where(eq(brandSettings.id, existingSettings.id))
+          .returning();
+        return updated;
+      } else {
+        const [created] = await db
+          .insert(brandSettings)
+          .values({ 
+            ...data, 
+            isDefault: true,
+            updatedAt: new Date() 
+          })
+          .returning();
+        return created;
+      }
     }
   }
   

@@ -47,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
+      // Store user info for tenant redirect flow
+      localStorage.setItem('lastLoggedInUser', user.username);
       toast({
         title: "Login successful",
         description: `Welcome back, ${user.fullName}!`,

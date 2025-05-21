@@ -74,12 +74,26 @@ function Router() {
       {/* Root route - redirect to tenant selection */}
       <Route path="/">
         {() => {
-          window.location.href = '/select-tenant';
-          return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
+          // Check if tenant is already selected
+          const selectedTenant = localStorage.getItem('selectedTenantId');
+          if (selectedTenant) {
+            // If user is already logged in, go to dashboard, otherwise auth
+            const storedUser = localStorage.getItem('lastLoggedInUser');
+            window.location.href = storedUser ? '/dashboard' : '/auth';
+          } else {
+            window.location.href = '/tenant-select';
+          }
+          return <div className="min-h-screen flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+              <p className="text-lg text-muted-foreground">Redirecting to your organization</p>
+            </div>
+          </div>;
         }}
       </Route>
     
       {/* Tenant Selection - Entry point for multi-tenant app */}
+      <Route path="/tenant-select" component={TenantSelectPage} />
       <Route path="/select-tenant" component={TenantSelectPage} />
       
       {/* Auth */}

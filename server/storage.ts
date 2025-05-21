@@ -828,6 +828,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateBudgetAllocation(id: number, data: Partial<InsertBudgetAllocation>): Promise<BudgetAllocation | undefined> {
+    // Convert numeric values to strings for decimal fields if needed
+    if (data.spentAmount !== undefined && typeof data.spentAmount === 'number') {
+      data.spentAmount = String(data.spentAmount);
+    }
+    if (data.allocatedAmount !== undefined && typeof data.allocatedAmount === 'number') {
+      data.allocatedAmount = String(data.allocatedAmount);
+    }
+    
     const [updated] = await db
       .update(budgetAllocations)
       .set({ ...data, updatedAt: new Date() })
@@ -846,10 +854,36 @@ export class DatabaseStorage implements IStorage {
       .limit(limit);
   }
 
-  async createBudgetTransaction(transaction: InsertBudgetTransaction): Promise<BudgetTransaction> {
+  async createBudgetTransaction(transaction: InsertBudgetTransaction, tenantId?: number): Promise<BudgetTransaction> {
+    // Get user's tenant information if tenantId is provided
+    let effectiveTenantId = tenantId;
+    
+    if (!effectiveTenantId) {
+      // If no tenantId is provided, try to get the user's default tenant
+      try {
+        const userTenants = await this.getUserTenants(transaction.userId);
+        const defaultTenant = userTenants.find(ut => ut.isDefault);
+        if (defaultTenant) {
+          effectiveTenantId = defaultTenant.tenantId;
+        }
+      } catch (error) {
+        // If there's an error getting tenant info, continue without it
+        console.warn("Could not determine tenant for budget transaction:", error);
+      }
+    }
+    
+    // Create transaction with tenant metadata if available
+    const transactionMetadata = transaction.metadata || {};
+    if (effectiveTenantId) {
+      transactionMetadata.tenantId = effectiveTenantId;
+    }
+    
     const [created] = await db
       .insert(budgetTransactions)
-      .values(transaction)
+      .values({
+        ...transaction,
+        metadata: Object.keys(transactionMetadata).length > 0 ? transactionMetadata : undefined
+      })
       .returning();
 
     // If this is an expense (not income), update the spent amount for the active budget

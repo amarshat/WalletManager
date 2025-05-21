@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { errorHandler } from './diagnostics/error-tracking';
 import { setupCorsForWidgets, setupSecureCookies } from './cors-middleware';
+import { seedTenants } from './seed-tenants';
 import fs from 'fs';
 import path from 'path';
 // Import demo routes for embedded widgets will be done dynamically

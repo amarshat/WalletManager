@@ -2,7 +2,7 @@ import { AuthProvider } from "./hooks/use-auth";
 import { BrandProvider } from "./hooks/use-brand";
 import { BudgetProvider } from "./hooks/use-budget";
 import { CarbonProvider } from "./hooks/use-carbon-provider";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
@@ -44,6 +44,17 @@ import CustomerEmbeddedWidgets from "@/pages/customer/embedded-widgets";
 import SplashScreen from "@/components/ui/splash-screen";
 import React, { useState, useEffect, Suspense } from "react";
 
+// Component to handle redirect from root to tenant selection
+function RedirectToTenantSelect() {
+  const [, navigate] = useLocation();
+  
+  useEffect(() => {
+    navigate('/select-tenant');
+  }, [navigate]);
+  
+  return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
+}
+
 // This component wraps the application to handle config import
 function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
   // Using the hook will automatically check for config parameters in URL
@@ -60,6 +71,14 @@ function ConfigImportWrapper({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
+      {/* Root route - redirect to tenant selection */}
+      <Route path="/">
+        {() => {
+          window.location.href = '/select-tenant';
+          return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
+        }}
+      </Route>
+    
       {/* Tenant Selection - Entry point for multi-tenant app */}
       <Route path="/select-tenant" component={TenantSelectPage} />
       

@@ -97,6 +97,7 @@ export function setupAuth(app: Express) {
   app.post("/api/register", async (req, res, next) => {
     try {
       const validatedData = registerSchema.parse(req.body);
+      const tenantId = req.query.tenantId ? parseInt(req.query.tenantId as string) : undefined;
       
       const existingUser = await storage.getUserByUsername(validatedData.username);
       if (existingUser) {
@@ -107,6 +108,22 @@ export function setupAuth(app: Express) {
         ...validatedData,
         password: await hashPassword(validatedData.password),
       });
+      
+      // If tenantId was provided, associate the user with the tenant
+      if (tenantId) {
+        try {
+          // Add user to tenant with default "user" role
+          await storage.addUserToTenant({
+            userId: user.id,
+            tenantId,
+            role: "user",
+            isDefault: true // Make this the default tenant for the user
+          });
+        } catch (error) {
+          console.error("Error associating user with tenant:", error);
+          // Continue with registration even if tenant association fails
+        }
+      }
 
       // Create wallet for the new user
       try {

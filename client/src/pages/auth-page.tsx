@@ -87,7 +87,18 @@ export default function AuthPage() {
   function onRegisterSubmit(data: RegisterFormValues) {
     // Remove confirmPassword as it's not part of the API schema
     const { confirmPassword, ...registrationData } = data;
-    registerMutation.mutate(registrationData);
+    
+    // Pass tenant ID if available
+    if (tenantId) {
+      registerMutation.mutate(registrationData, {
+        onSuccess: () => {
+          // After registration is successful, store the tenant ID
+          localStorage.setItem('selectedTenantId', tenantId.toString());
+        }
+      });
+    } else {
+      registerMutation.mutate(registrationData);
+    }
   }
 
   return (

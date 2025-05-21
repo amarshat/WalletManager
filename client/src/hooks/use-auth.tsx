@@ -55,8 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
+    mutationFn: async (credentials: InsertUser, options?: { tenantId?: number }) => {
+      let endpoint = "/api/register";
+      
+      // Add tenantId as query parameter if provided
+      if (options?.tenantId) {
+        endpoint += `?tenantId=${options.tenantId}`;
+      }
+      
+      const res = await apiRequest("POST", endpoint, credentials);
       return await res.json();
     },
     onSuccess: (user: SelectUser) => {

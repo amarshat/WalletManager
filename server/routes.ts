@@ -338,8 +338,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (tenant) {
           // Get tenant-specific brand settings
           settings = await storage.getBrandSettingsByTenantId(tenant.id);
+          
+          // If no specific settings exist for this tenant, create default brand settings for the tenant
+          if (!settings) {
+            console.log(`Creating default brand settings for tenant ${tenantId}`);
+            // Return tenant info directly as brand settings
+            settings = {
+              name: tenant.name,
+              tagline: "Your Digital Wallet Solution",
+              logo: tenant.logo,
+              primaryColor: "#4F46E5", // Default primary color
+              secondaryColor: "#9333EA", // Default secondary color
+              tenantId: tenant.id
+            };
+          }
         }
-      } else {
+      } 
+      
+      if (!settings) {
         // Get default brand settings
         settings = await storage.getBrandSettings();
       }

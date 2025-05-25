@@ -342,14 +342,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // If no specific settings exist for this tenant, create default brand settings for the tenant
           if (!settings) {
             console.log(`Creating default brand settings for tenant ${tenantId}`);
-            // Return tenant info directly as brand settings
+            
+            // Get the global brand settings for co-branding elements
+            const globalSettings = await storage.getBrandSettings();
+            
+            // Return tenant info directly as brand settings with co-branding elements
             settings = {
               name: tenant.name,
               tagline: "Your Digital Wallet Solution",
               logo: tenant.logo,
-              primaryColor: "#4F46E5", // Default primary color
-              secondaryColor: "#9333EA", // Default secondary color
-              tenantId: tenant.id
+              primaryColor: tenant.primaryColor || "#4F46E5", // Use tenant color if available
+              secondaryColor: tenant.secondaryColor || "#9333EA", // Use tenant color if available
+              tenantId: tenant.id,
+              // Include global co-branding elements
+              globalBrandName: globalSettings?.globalBrandName || "PaySage",
+              globalBrandColor: globalSettings?.globalBrandColor || "#6366F1",
+              globalBrandPosition: globalSettings?.globalBrandPosition || "right",
+              globalBrandLogo: globalSettings?.globalBrandLogo
             };
           }
         }

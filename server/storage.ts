@@ -15,7 +15,7 @@ import type {
   Tenant, InsertTenant, UserTenant, InsertUserTenant
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, gte, not, or } from "drizzle-orm";
+import { eq, desc, and, gte, not, or, isNull, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";

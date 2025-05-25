@@ -442,11 +442,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // User Management Routes (Admin only)
+  // User Management Routes (Admin only) - Tenant-aware
   app.get("/api/users", ensureAdmin, async (req, res) => {
     try {
-      const users = await storage.listUsers(false); // Get non-admin users
-      res.json(users);
+      // Get the admin's tenant associations
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+      
+      // For superadmin, return all users
+      if (req.user.isSuperAdmin) {
+        const users = await storage.listUsers(false); // Get non-admin users
+        return res.json(users);
+      }
+      
+      // Get the admin's default tenant
+      const userTenants = await storage.getUserTenants(req.user.id);
+      const defaultTenant = userTenants.find(ut => ut.isDefault);
+      
+      if (!defaultTenant) {
+        return res.status(400).json({ error: "No default tenant associated with this admin" });
+      }
+      
+      // Get users associated with the admin's tenant
+      const tenantUsers = await storage.getUsersByTenantId(defaultTenant.tenantId);
+      res.json(tenantUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });

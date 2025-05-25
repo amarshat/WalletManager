@@ -495,32 +495,33 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Brand settings operations (per tenant)
-  async getBrandSettings(tenantId?: number): Promise<BrandSettings | undefined> {
-    if (tenantId) {
-      // Get brand settings for specific tenant
-      const [settings] = await db
-        .select()
-        .from(brandSettings)
-        .where(eq(brandSettings.tenantId, tenantId))
-        .limit(1);
-      return settings;
-    } else {
-      // Legacy support - get the default brand settings
-      const [settings] = await db
-        .select()
-        .from(brandSettings)
-        .where(eq(brandSettings.isDefault, true))
-        .limit(1);
+  async getBrandSettings(): Promise<BrandSettings | undefined> {
+    // Get the default brand settings
+    const [settings] = await db
+      .select()
+      .from(brandSettings)
+      .where(eq(brandSettings.isDefault, true))
+      .limit(1);
+    
+    if (settings) return settings;
+    
+    // If no default found, get the first one
+    const [firstSettings] = await db
+      .select()
+      .from(brandSettings)
+      .limit(1);
+    return firstSettings;
+  }
+  
+  async getBrandSettingsByTenantId(tenantId: number): Promise<BrandSettings | undefined> {
+    // Get brand settings for specific tenant
+    const [settings] = await db
+      .select()
+      .from(brandSettings)
+      .where(eq(brandSettings.tenantId, tenantId))
+      .limit(1);
       
-      if (settings) return settings;
-      
-      // If no default found, get the first one
-      const [firstSettings] = await db
-        .select()
-        .from(brandSettings)
-        .limit(1);
-      return firstSettings;
-    }
+    return settings;
   }
   
   async updateBrandSettings(data: Partial<InsertBrandSettings>, tenantId?: number): Promise<BrandSettings> {

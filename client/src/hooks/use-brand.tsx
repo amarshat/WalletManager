@@ -18,13 +18,24 @@ export const BrandContext = createContext<BrandContextType | null>(null);
 export function BrandProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
+  // Get tenant ID from localStorage 
+  const tenantId = localStorage.getItem('selectedTenantId');
+  
   const {
     data: brand,
     error,
     isLoading,
     refetch
   } = useQuery<BrandSettings, Error>({
-    queryKey: ["/api/brand"],
+    queryKey: ["/api/brand", tenantId],
+    queryFn: async () => {
+      const url = tenantId ? `/api/brand?tenantId=${tenantId}` : '/api/brand';
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error('Failed to fetch brand settings');
+      }
+      return res.json();
+    }
   });
 
   const mutation = useMutation({

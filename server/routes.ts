@@ -329,7 +329,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Brand Settings Routes
   app.get("/api/brand", async (req, res) => {
     try {
-      const settings = await storage.getBrandSettings();
+      const tenantId = req.query.tenantId as string;
+      let settings;
+      
+      if (tenantId) {
+        // Get tenant by tenantId
+        const tenant = await storage.getTenantByIdentifier(tenantId);
+        if (tenant) {
+          // Get tenant-specific brand settings
+          settings = await storage.getBrandSettingsByTenantId(tenant.id);
+        }
+      } else {
+        // Get default brand settings
+        settings = await storage.getBrandSettings();
+      }
+      
       res.json(settings || { name: "PaySage", tagline: "Your Digital Wallet Solution" });
     } catch (error) {
       console.error("Error fetching brand settings:", error);

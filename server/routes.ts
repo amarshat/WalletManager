@@ -375,10 +375,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json(updated);
       }
       
+      // Extract global branding fields if present
+      const { 
+        globalBrandName, 
+        globalBrandColor, 
+        globalBrandPosition,
+        globalBrandLogo,
+        ...otherFields 
+      } = req.body;
+      
       // Handle other partial updates
       const partialUpdate = {
         ...currentSettings,
-        ...req.body
+        ...otherFields,
+        ...(globalBrandName !== undefined && { globalBrandName }),
+        ...(globalBrandColor !== undefined && { globalBrandColor }),
+        ...(globalBrandPosition !== undefined && { globalBrandPosition }),
+        ...(globalBrandLogo !== undefined && { globalBrandLogo })
       };
       
       const updated = await storage.updateBrandSettings(partialUpdate);

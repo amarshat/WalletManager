@@ -121,6 +121,21 @@ export default function SuperAdminDashboard() {
     staleTime: 1000 * 60, // 1 minute
   });
   
+  // Fetch current brand settings
+  const { data: brandSettings } = useQuery({
+    queryKey: ['/api/brand'],
+    staleTime: 1000 * 60, // 1 minute
+  });
+  
+  // Initialize global branding state from settings
+  useEffect(() => {
+    if (brandSettings) {
+      setGlobalBrandName(brandSettings.globalBrandName || "PaySage AI");
+      setGlobalBrandColor(brandSettings.globalBrandColor || "#7C3AED");
+      setGlobalBrandPosition(brandSettings.globalBrandPosition || "footer");
+    }
+  }, [brandSettings]);
+  
   // Create tenant mutation with admin account
   const createTenantMutation = useMutation({
     mutationFn: async ({ 
@@ -332,14 +347,12 @@ export default function SuperAdminDashboard() {
   // Global branding save handler
   const handleSaveGlobalBranding = () => {
     setIsSavingBranding(true);
-    // Simulate API call since we don't have the actual endpoint yet
-    setTimeout(() => {
-      toast({
-        title: "Global branding saved",
-        description: "The co-branding settings have been applied across all tenant interfaces.",
-      });
-      setIsSavingBranding(false);
-    }, 1000);
+    
+    updateGlobalBrandingMutation.mutate({
+      globalBrandName,
+      globalBrandColor,
+      globalBrandPosition
+    });
   };
   
   return (

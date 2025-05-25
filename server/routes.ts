@@ -498,11 +498,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Admin endpoint to get all users with their wallet details
+  // Admin endpoint to get all users with their wallet details - tenant-aware
   app.get("/api/admin/users-with-wallets", ensureAdmin, async (req, res) => {
     try {
-      // Get all non-admin users
-      const users = await storage.listUsers(false);
+      let users;
+      
+      // For superadmin, return all users
+      if (req.user!.username === 'superadmin') {
+        users = await storage.listUsers(false);
+      } else {
+        // Get the admin's tenant associations
+        const userTenants = await storage.getUserTenants(req.user!.id);
+        
+        // If no tenant associations found, return empty array
+        if (userTenants.length === 0) {
+          return res.json([]);
+        }
+        
+        // Try to get default tenant first
+        const defaultTenant = userTenants.find(ut => ut.isDefault) || userTenants[0];
+        
+        // Get users associated with the admin's tenant
+        users = await storage.getUsersByTenantId(defaultTenant.tenantId);
+      }
+      
+      // Filter out admins if needed
+      users = users.filter(user => !user.isAdmin);
       
       // Enhance each user with wallet info
       const enhancedUsers = await Promise.all(users.map(async (user) => {

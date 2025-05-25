@@ -44,6 +44,8 @@ export default function AuthPage() {
     const params = new URLSearchParams(window.location.search);
     const tenantParam = params.get('tenantId');
     if (tenantParam) {
+      // Save tenant ID to localStorage for future use and API calls
+      localStorage.setItem('selectedTenantId', tenantParam);
       setTenantId(tenantParam);
     } else {
       // Check if tenantId is in localStorage

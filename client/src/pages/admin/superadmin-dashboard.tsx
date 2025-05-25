@@ -731,7 +731,8 @@ export default function SuperAdminDashboard() {
                     <select 
                       id="globalBrandPosition" 
                       className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mt-1"
-                      defaultValue="footer"
+                      value={globalBrandPosition}
+                      onChange={(e) => setGlobalBrandPosition(e.target.value)}
                     >
                       <option value="footer">Footer (recommended)</option>
                       <option value="header">Header</option>
@@ -748,7 +749,7 @@ export default function SuperAdminDashboard() {
                   <div className="flex items-center justify-center h-20 border rounded-md bg-white dark:bg-slate-800 relative">
                     <div className="absolute bottom-2 right-2 flex items-center text-xs text-slate-500">
                       <span>Powered by</span>
-                      <span className="ml-1 font-semibold" style={{ color: "#7C3AED" }}>PaySage AI</span>
+                      <span className="ml-1 font-semibold" style={{ color: globalBrandColor }}>{globalBrandName}</span>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
@@ -757,7 +758,12 @@ export default function SuperAdminDashboard() {
                 </div>
                 
                 <div className="flex justify-end">
-                  <Button>Save Global Branding</Button>
+                  <Button 
+                    onClick={handleSaveGlobalBranding}
+                    disabled={isSavingBranding}
+                  >
+                    {isSavingBranding ? 'Saving...' : 'Save Global Branding'}
+                  </Button>
                 </div>
               </div>
             </CardContent>

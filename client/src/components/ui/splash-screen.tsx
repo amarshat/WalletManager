@@ -73,7 +73,7 @@ export default function SplashScreen({ style, brandName }: SplashScreenProps) {
           {displayBrandName}
         </h1>
         <p className={`mt-2 ${subtextColor}`}>
-          {appType ? branding.tagline : (brand?.tagline || "Your Digital Wallet Solution")}
+          {appType ? branding.tagline : (brand?.tagline || "Paysafe's Embedded Finance Platform")}
         </p>
       </div>
       

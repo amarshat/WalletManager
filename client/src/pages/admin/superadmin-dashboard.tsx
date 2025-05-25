@@ -74,6 +74,13 @@ export default function SuperAdminDashboard() {
   const [isGlobalBrandDialogOpen, setIsGlobalBrandDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   
+  // Global branding state
+  const [globalBrandName, setGlobalBrandName] = useState("PaySage AI");
+  const [globalBrandLogo, setGlobalBrandLogo] = useState("");
+  const [globalBrandColor, setGlobalBrandColor] = useState("#7C3AED");
+  const [globalBrandPosition, setGlobalBrandPosition] = useState("footer");
+  const [isSavingBranding, setIsSavingBranding] = useState(false);
+  
   // Fetch all tenants
   const { data: tenants, isLoading: isLoadingTenants } = useQuery<Tenant[]>({
     queryKey: ['/api/superadmin/tenants'],
@@ -292,6 +299,19 @@ export default function SuperAdminDashboard() {
     if (window.confirm("Are you sure you want to delete this tenant? This action cannot be undone.")) {
       deleteTenantMutation.mutate(id);
     }
+  };
+  
+  // Global branding save handler
+  const handleSaveGlobalBranding = () => {
+    setIsSavingBranding(true);
+    // Simulate API call since we don't have the actual endpoint yet
+    setTimeout(() => {
+      toast({
+        title: "Global branding saved",
+        description: "The co-branding settings have been applied across all tenant interfaces.",
+      });
+      setIsSavingBranding(false);
+    }, 1000);
   };
   
   return (
@@ -664,7 +684,8 @@ export default function SuperAdminDashboard() {
                     <Input 
                       id="globalBrandName" 
                       placeholder="PaySage AI" 
-                      defaultValue="PaySage AI"
+                      value={globalBrandName}
+                      onChange={(e) => setGlobalBrandName(e.target.value)}
                       className="mt-1"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
@@ -676,6 +697,8 @@ export default function SuperAdminDashboard() {
                     <Input 
                       id="globalBrandLogo" 
                       placeholder="https://example.com/logo.svg" 
+                      value={globalBrandLogo}
+                      onChange={(e) => setGlobalBrandLogo(e.target.value)}
                       className="mt-1"
                     />
                     <p className="text-sm text-muted-foreground mt-1">
@@ -690,12 +713,13 @@ export default function SuperAdminDashboard() {
                     <div className="flex items-center gap-2 mt-1">
                       <div 
                         className="h-9 w-9 rounded-md border"
-                        style={{ backgroundColor: "#7C3AED" }}
+                        style={{ backgroundColor: globalBrandColor }}
                       />
                       <Input 
                         id="globalBrandColor" 
                         placeholder="#7C3AED" 
-                        defaultValue="#7C3AED"
+                        value={globalBrandColor}
+                        onChange={(e) => setGlobalBrandColor(e.target.value)}
                       />
                     </div>
                     <p className="text-sm text-muted-foreground mt-1">

@@ -121,7 +121,17 @@ export default function AuthPage() {
         {/* Form Side */}
         <div className="p-6 md:p-10">
           <div className="flex justify-center mb-6">
-            <BrandLogo className="h-10" />
+            {branding?.globalBrandLogo ? (
+              <div className="h-14">
+                <img 
+                  src={branding.globalBrandLogo} 
+                  alt="Global Brand Logo" 
+                  className="h-full object-contain"
+                />
+              </div>
+            ) : (
+              <BrandLogo className="h-10" />
+            )}
           </div>
 
           <div className="text-center mb-8">

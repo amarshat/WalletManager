@@ -7,6 +7,8 @@ import { Wallet, Gamepad2, BookOpen, Car } from "lucide-react";
 interface BrandLogoProps {
   className?: string;
   useIcon?: boolean;
+  showGlobalBranding?: boolean;
+  size?: "small" | "medium" | "large";
 }
 
 // Helper function to check if a string is a URL
@@ -28,7 +30,12 @@ const isBase64Image = (str: string): boolean => {
   return str.startsWith('data:image/');
 };
 
-export default function BrandLogo({ className = "h-8", useIcon = false }: BrandLogoProps) {
+export default function BrandLogo({ 
+  className = "h-8", 
+  useIcon = false,
+  showGlobalBranding = false,
+  size = "medium"
+}: BrandLogoProps) {
   const { brand } = useBrand();
   const { branding, appType } = useAppBranding();
   const [imageError, setImageError] = useState(false);
@@ -55,6 +62,49 @@ export default function BrandLogo({ className = "h-8", useIcon = false }: BrandL
     } else if (appType === 'red') {
       return <Gamepad2 size={iconSize} color={iconColor} />;
     }
+  }
+  
+  // For co-branding display (both global and tenant logos)
+  if (showGlobalBranding && brand) {
+    // Determine size classes
+    const containerClass = "flex items-center gap-2";
+    const globalLogoClass = size === "small" ? "h-5" : size === "large" ? "h-10" : "h-7";
+    const tenantLogoClass = size === "small" ? "h-6" : size === "large" ? "h-12" : "h-8";
+    
+    return (
+      <div className={containerClass}>
+        {/* Display global branding logo if available */}
+        {brand.globalBrandLogo && !imageError ? (
+          <img 
+            src={brand.globalBrandLogo}
+            alt={brand.globalBrandName || "Global Brand"}
+            className={globalLogoClass}
+            onError={handleImageError}
+          />
+        ) : (
+          <img 
+            src={defaultLogo}
+            alt="PaySage"
+            className={globalLogoClass}
+          />
+        )}
+        
+        {/* Divider */}
+        <div className="h-6 w-px bg-white/30"></div>
+        
+        {/* Display tenant logo if available */}
+        {brand.logo && !imageError ? (
+          <img 
+            src={brand.logo}
+            alt={brand.name || "Tenant Brand"}
+            className={tenantLogoClass}
+            onError={handleImageError}
+          />
+        ) : (
+          <span className="text-lg font-semibold">{brand.name || "Digital Wallet"}</span>
+        )}
+      </div>
+    );
   }
   
   // If using icon and we have an icon URL/base64, use it

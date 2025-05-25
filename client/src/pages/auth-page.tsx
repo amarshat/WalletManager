@@ -299,6 +299,17 @@ export default function AuthPage() {
             <p className="text-sm text-white text-opacity-70">
               {branding?.name || "Digital Wallet"} — <span className="font-semibold" style={{ color: branding?.globalBrandColor || '#7C3AED' }}>Powered by {branding?.globalBrandName || 'PaySage AI'}</span>
             </p>
+            {tenantId && (
+              <button 
+                onClick={() => {
+                  localStorage.removeItem('selectedTenantId');
+                  window.location.href = '/tenant-select';
+                }}
+                className="text-xs text-white text-opacity-50 hover:text-opacity-100 mt-2 underline"
+              >
+                Reset tenant selection
+              </button>
+            )}
           </div>
         </div>
       </div>

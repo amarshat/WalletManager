@@ -198,7 +198,7 @@ export default function AdminLayout({
       </div>
       
       <footer className="bg-white border-t border-neutral-200 py-4 px-6 text-center text-sm text-neutral-500">
-        {brand?.name || "Digital Wallet"} — <span className="font-semibold">Powered by PaySage AI</span>
+        {brand?.name || "Digital Wallet"} — <span className="font-semibold" style={{ color: brand?.globalBrandColor || '#7C3AED' }}>Powered by {brand?.globalBrandName || 'PaySage AI'}</span>
       </footer>
     </div>
   );

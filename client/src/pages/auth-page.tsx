@@ -289,7 +289,7 @@ export default function AuthPage() {
       </div>
       
       <p className="text-sm text-neutral-500 mt-8">
-        Paysafe GenAI Showcase — powered by PaySage
+        Paysafe GenAI Showcase — powered by {branding?.globalBrandName || 'PaySage AI'}
       </p>
     </div>
   );

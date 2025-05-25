@@ -450,18 +450,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
       
-      // For superadmin, return all users
-      if (req.user.isSuperAdmin) {
+      // For superadmin (checking admin status and username), return all users
+      if (req.user.isAdmin && req.user.username === 'superadmin') {
         const users = await storage.listUsers(false); // Get non-admin users
         return res.json(users);
       }
       
-      // Get the admin's default tenant
+      // Get the admin's tenant associations
       const userTenants = await storage.getUserTenants(req.user.id);
-      const defaultTenant = userTenants.find(ut => ut.isDefault);
       
+      // If no tenant associations found, return empty array
+      if (userTenants.length === 0) {
+        return res.json([]);
+      }
+      
+      // Try to get default tenant first
+      let defaultTenant = userTenants.find(ut => ut.isDefault);
+      
+      // If no default tenant, use the first one
       if (!defaultTenant) {
-        return res.status(400).json({ error: "No default tenant associated with this admin" });
+        defaultTenant = userTenants[0];
+        
+        // Set this as the default tenant for future use
+        try {
+          await storage.setDefaultTenant(req.user.id, defaultTenant.tenantId);
+        } catch (err) {
+          console.error("Error setting default tenant:", err);
+          // Continue anyway
+        }
       }
       
       // Get users associated with the admin's tenant

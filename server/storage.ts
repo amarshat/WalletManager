@@ -178,6 +178,20 @@ export class DatabaseStorage implements IStorage {
     return result.map(r => r.user);
   }
   
+  // Get users by tenant ID - only returns users associated with a specific tenant
+  async getUsersByTenantId(tenantId: number): Promise<User[]> {
+    // Find all user IDs associated with this tenant
+    const result = await db
+      .select({
+        user: users
+      })
+      .from(userTenants)
+      .innerJoin(users, eq(userTenants.userId, users.id))
+      .where(eq(userTenants.tenantId, tenantId));
+    
+    return result.map(r => r.user);
+  }
+  
   // Associate a user with a tenant
   async associateUserWithTenant(userId: number, tenantId: number, isDefault = false): Promise<void> {
     // Check if association already exists

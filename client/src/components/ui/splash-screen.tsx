@@ -47,6 +47,23 @@ export default function SplashScreen({ style, brandName }: SplashScreenProps) {
         <div className="mb-8">
           <IconComponent />
         </div>
+      ) : brand?.globalBrandLogo ? (
+        <div className="mb-8 w-32 h-32 flex items-center justify-center">
+          <img 
+            src={brand.globalBrandLogo} 
+            alt="Global Brand Logo" 
+            className="max-w-full max-h-full object-contain"
+            onError={() => {
+              // Fallback to regular brand logo if image fails to load
+              document.getElementById('global-brand-logo')?.classList.add('hidden');
+              document.getElementById('fallback-brand-logo')?.classList.remove('hidden');
+            }}
+            id="global-brand-logo"
+          />
+          <div id="fallback-brand-logo" className="hidden">
+            <BrandLogo className="w-32" />
+          </div>
+        </div>
       ) : (
         <BrandLogo className="w-32 mb-8" />
       )}

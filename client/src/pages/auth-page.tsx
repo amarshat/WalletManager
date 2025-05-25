@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useBrand } from "@/hooks/use-brand";
 import BrandLogo from "@/components/ui/brand-logo";
+import defaultLogo from "@/assets/default-logo.svg";
 import { insertUserSchema } from "@shared/schema";
 import { supportedCurrencies } from "@shared/schema";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -88,12 +89,12 @@ export default function AuthPage() {
 
   // Handle login submission
   function onLoginSubmit(data: LoginFormValues) {
-    // Pass tenant ID if available
+    // Store tenant ID in localStorage if it exists
     if (tenantId) {
-      loginMutation.mutate(data, { tenantId });
-    } else {
-      loginMutation.mutate(data);
+      localStorage.setItem('selectedTenantId', tenantId);
     }
+    // Proceed with login
+    loginMutation.mutate(data);
   }
 
   // Handle registration submission
@@ -122,21 +123,27 @@ export default function AuthPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-6 bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Form Side */}
         <div className="p-6 md:p-10">
-          <div className="flex items-center justify-center mb-6 gap-3">
-            {/* Tenant Brand Logo */}
-            <BrandLogo className="h-10" />
-            
-            {/* Global Brand Logo */}
-            {branding?.globalBrandLogo && (
-              <div className="h-10 flex items-center">
-                <div className="border-l h-8 mx-2 border-gray-300"></div>
-                <img 
-                  src={branding.globalBrandLogo} 
-                  alt="Global Brand Logo" 
-                  className="h-full object-contain"
-                />
-              </div>
-            )}
+          <div className="flex items-center justify-center mb-6">
+            {/* Using the existing BrandLogo component */}
+            <div className="flex items-center gap-3">
+              {/* Main Logo */}
+              <BrandLogo className="h-10" />
+              
+              {/* Show global branding if available */}
+              {branding?.globalBrandLogo && (
+                <>
+                  {/* Divider */}
+                  <div className="h-8 w-px bg-gray-300"></div>
+                  
+                  {/* Global Brand Logo */}
+                  <img 
+                    src={branding.globalBrandLogo} 
+                    alt={branding.globalBrandName || "Global Brand"} 
+                    className="h-8 object-contain"
+                  />
+                </>
+              )}
+            </div>
           </div>
 
           <div className="text-center mb-8">

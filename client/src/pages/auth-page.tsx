@@ -120,17 +120,20 @@ export default function AuthPage() {
       <div className="w-full max-w-5xl grid md:grid-cols-2 gap-6 bg-white rounded-lg shadow-lg overflow-hidden">
         {/* Form Side */}
         <div className="p-6 md:p-10">
-          <div className="flex justify-center mb-6">
-            {branding?.globalBrandLogo ? (
-              <div className="h-14">
+          <div className="flex items-center justify-center mb-6 gap-3">
+            {/* Tenant Brand Logo */}
+            <BrandLogo className="h-10" />
+            
+            {/* Global Brand Logo */}
+            {branding?.globalBrandLogo && (
+              <div className="h-10 flex items-center">
+                <div className="border-l h-8 mx-2 border-gray-300"></div>
                 <img 
                   src={branding.globalBrandLogo} 
                   alt="Global Brand Logo" 
                   className="h-full object-contain"
                 />
               </div>
-            ) : (
-              <BrandLogo className="h-10" />
             )}
           </div>
 

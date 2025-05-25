@@ -341,25 +341,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           // If no specific settings exist for this tenant, create default brand settings for the tenant
           if (!settings) {
-            console.log(`Creating default brand settings for tenant ${tenantId}`);
-            
             // Get the global brand settings for co-branding elements
             const globalSettings = await storage.getBrandSettings();
             
-            // Return tenant info directly as brand settings with co-branding elements
-            settings = {
+            // Create and save persistent brand settings for this tenant
+            const brandSettingsData = {
               name: tenant.name,
               tagline: "Your Digital Wallet Solution",
               logo: tenant.logo,
-              primaryColor: tenant.primaryColor || "#4F46E5", // Use tenant color if available
-              secondaryColor: tenant.secondaryColor || "#9333EA", // Use tenant color if available
+              primaryColor: tenant.primaryColor || "#4F46E5", 
+              secondaryColor: tenant.secondaryColor || "#9333EA",
               tenantId: tenant.id,
+              isDefault: false,
               // Include global co-branding elements
-              globalBrandName: globalSettings?.globalBrandName || "PaySage",
+              globalBrandName: globalSettings?.globalBrandName || "Paysafe Embedded Wallet Platform",
               globalBrandColor: globalSettings?.globalBrandColor || "#6366F1",
               globalBrandPosition: globalSettings?.globalBrandPosition || "right",
               globalBrandLogo: globalSettings?.globalBrandLogo
             };
+            
+            // Persist these settings to avoid recreating them on every request
+            try {
+              settings = await storage.updateBrandSettings(brandSettingsData, tenant.id);
+              console.log(`Created persistent brand settings for tenant ${tenantId}`);
+            } catch (err) {
+              console.error(`Error creating brand settings for tenant ${tenantId}:`, err);
+              // Fall back to temporary settings if persistence fails
+              settings = brandSettingsData;
+            }
           }
         }
       } 
@@ -369,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         settings = await storage.getBrandSettings();
       }
       
-      res.json(settings || { name: "PaySage", tagline: "Your Digital Wallet Solution" });
+      res.json(settings || { name: "Paysafe Embedded Wallet Platform", tagline: "Your Digital Wallet Solution" });
     } catch (error) {
       console.error("Error fetching brand settings:", error);
       res.status(500).json({ error: "Failed to fetch brand settings" });

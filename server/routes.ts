@@ -1616,7 +1616,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // User search for transfers
+  // User search for transfers - tenant-aware
   app.get("/api/users/search", ensureAuth, async (req, res) => {
     try {
       const query = req.query.q as string;
@@ -1625,8 +1625,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json([]);
       }
       
-      const allUsers = await storage.listUsers(false);
-      const filteredUsers = allUsers.filter(user => 
+      // Get the current user's tenant associations
+      const userTenants = await storage.getUserTenants(req.user!.id);
+      
+      // If no tenant associations found, return empty array
+      if (userTenants.length === 0) {
+        return res.json([]);
+      }
+      
+      // Use the default tenant if available, otherwise use the first one
+      const defaultTenant = userTenants.find(ut => ut.isDefault) || userTenants[0];
+      
+      // Get only users from the same tenant
+      const tenantUsers = await storage.getUsersByTenantId(defaultTenant.tenantId);
+      
+      const filteredUsers = tenantUsers.filter(user => 
         user.id !== req.user!.id && // Don't include current user
         (user.username.toLowerCase().includes(query.toLowerCase()) || 
          user.fullName.toLowerCase().includes(query.toLowerCase()))

@@ -44,6 +44,7 @@ export interface IStorage {
   // User-Tenant operations
   getUserTenants(userId: number): Promise<(UserTenant & { tenant: Tenant })[]>;
   getUsersInTenant(tenantId: number, role?: string): Promise<(UserTenant & { user: User })[]>;
+  getUsersByTenantId(tenantId: number): Promise<User[]>;
   getUserTenantRole(userId: number, tenantId: number): Promise<string | undefined>;
   checkUserTenantAccess(userId: number, tenantId: number): Promise<boolean>;
   addUserToTenant(userTenant: InsertUserTenant): Promise<UserTenant>;

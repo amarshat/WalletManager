@@ -147,8 +147,8 @@ export default function AuthPage() {
           </div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">{branding?.name || "PaySage Wallet"}</h1>
-            <p className="text-neutral-600 mt-1">{branding?.tagline || "Your Digital Wallet Solution"}</p>
+            <h1 className="text-2xl font-bold text-gray-900">{branding?.name || "Paysafe Embedded Wallet Platform"}</h1>
+            <p className="text-neutral-600 mt-1">{branding?.tagline || "Paysafe's Embedded Finance Platform"}</p>
           </div>
 
           <Tabs defaultValue="customer" value={activeTab} onValueChange={(v) => setActiveTab(v as "customer" | "admin")}>
@@ -261,7 +261,7 @@ export default function AuthPage() {
               : "linear-gradient(135deg, #4F46E5 0%, #7E57C2 100%)"
           }}
         >
-          <h2 className="text-3xl font-bold mb-4">{branding?.name || "PaySage Wallet Platform"}</h2>
+          <h2 className="text-3xl font-bold mb-4">{branding?.name || "Paysafe Embedded Wallet Platform"}</h2>
           <p className="text-lg mb-6">{branding?.tagline || "Manage your finances securely with our digital wallet solution."}</p>
           
           <div className="space-y-4">
@@ -304,7 +304,7 @@ export default function AuthPage() {
           
           <div className="mt-auto pt-10">
             <p className="text-sm text-white text-opacity-70">
-              {branding?.name || "Digital Wallet"} — <span className="font-semibold" style={{ color: branding?.globalBrandColor || '#7C3AED' }}>Powered by {branding?.globalBrandName || 'PaySage AI'}</span>
+              {branding?.name || "Digital Wallet"} — <span className="font-semibold" style={{ color: branding?.globalBrandColor || '#7C3AED' }}>Powered by {branding?.globalBrandName || 'Paysafe'}</span>
             </p>
             {tenantId && (
               <button 
@@ -322,7 +322,7 @@ export default function AuthPage() {
       </div>
       
       <p className="text-sm text-neutral-500 mt-8">
-        Paysafe GenAI Showcase — powered by {branding?.globalBrandName || 'PaySage AI'}
+        Paysafe GenAI Showcase — powered by {branding?.globalBrandName || 'Paysafe'}
       </p>
     </div>
   );

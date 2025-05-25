@@ -81,6 +81,34 @@ export default function SuperAdminDashboard() {
   const [globalBrandPosition, setGlobalBrandPosition] = useState("footer");
   const [isSavingBranding, setIsSavingBranding] = useState(false);
   
+  // Global branding mutation
+  const updateGlobalBrandingMutation = useMutation({
+    mutationFn: async (data: {
+      globalBrandName: string;
+      globalBrandColor: string;
+      globalBrandPosition: string;
+    }) => {
+      const res = await apiRequest("PATCH", "/api/brand", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Global branding updated",
+        description: "The co-branding settings have been updated successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/brand'] });
+      setIsSavingBranding(false);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update global branding",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsSavingBranding(false);
+    },
+  });
+  
   // Fetch all tenants
   const { data: tenants, isLoading: isLoadingTenants } = useQuery<Tenant[]>({
     queryKey: ['/api/superadmin/tenants'],

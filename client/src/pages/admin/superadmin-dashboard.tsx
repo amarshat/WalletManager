@@ -344,6 +344,30 @@ export default function SuperAdminDashboard() {
     }
   };
   
+  // Handle logo upload
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file size (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Logo image must be less than 2MB",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setGlobalBrandLogo(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  
   // Global branding save handler
   const handleSaveGlobalBranding = () => {
     setIsSavingBranding(true);
@@ -351,7 +375,8 @@ export default function SuperAdminDashboard() {
     updateGlobalBrandingMutation.mutate({
       globalBrandName,
       globalBrandColor,
-      globalBrandPosition
+      globalBrandPosition,
+      globalBrandLogo
     });
   };
   
@@ -734,16 +759,32 @@ export default function SuperAdminDashboard() {
                     </p>
                   </div>
                   <div>
-                    <Label htmlFor="globalBrandLogo">Brand Logo URL</Label>
-                    <Input 
-                      id="globalBrandLogo" 
-                      placeholder="https://example.com/logo.svg" 
-                      value={globalBrandLogo}
-                      onChange={(e) => setGlobalBrandLogo(e.target.value)}
-                      className="mt-1"
-                    />
+                    <Label htmlFor="globalBrandLogo">Brand Logo</Label>
+                    <div className="mt-1 flex items-center gap-4">
+                      {globalBrandLogo && (
+                        <div className="h-12 w-12 rounded border flex items-center justify-center bg-slate-50">
+                          <img 
+                            src={globalBrandLogo} 
+                            alt="Brand logo" 
+                            className="max-h-10 max-w-10 object-contain" 
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input 
+                          id="globalBrandLogoUpload" 
+                          type="file" 
+                          accept="image/*"
+                          onChange={handleLogoUpload}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Optional logo to appear with co-branding (SVG recommended)
+                      Optional logo to appear with co-branding (PNG, JPG, SVG)
                     </p>
                   </div>
                 </div>

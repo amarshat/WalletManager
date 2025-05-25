@@ -794,6 +794,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create user in our system
       const user = await storage.createUser(userData);
       
+      // Associate the user with the admin's tenant
+      if (req.user) {
+        // Get the admin's tenant associations
+        const userTenants = await storage.getUserTenants(req.user.id);
+        
+        // If admin has tenant associations, associate new user with the same tenant
+        if (userTenants.length > 0) {
+          // Use the default tenant if available, otherwise use the first one
+          const defaultTenant = userTenants.find(ut => ut.isDefault) || userTenants[0];
+          
+          // Associate the new user with this tenant
+          await storage.associateUserWithTenant(user.id, defaultTenant.tenantId, true);
+          console.log(`Associated new user ${user.username} with tenant ${defaultTenant.tenantId}`);
+        }
+      }
+      
       // Now create wallet
       const walletResponse = await walletClient.createWallet(user.id, {
         accounts: [{

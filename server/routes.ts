@@ -333,8 +333,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let settings;
       
       if (tenantId) {
-        // Get tenant by tenantId
-        const tenant = await storage.getTenantByIdentifier(tenantId);
+        // Get tenant by tenantId (using the existing getTenantBySlug method)
+        const tenant = await storage.getTenantBySlug(tenantId);
         if (tenant) {
           // Get tenant-specific brand settings
           settings = await storage.getBrandSettingsByTenantId(tenant.id);

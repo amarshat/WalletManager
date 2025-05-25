@@ -18,29 +18,23 @@ export const BrandContext = createContext<BrandContextType | null>(null);
 export function BrandProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   
-  // Get tenant ID from localStorage 
-  const tenantId = localStorage.getItem('selectedTenantId');
-  
   const {
     data: brand,
     error,
     isLoading,
     refetch
   } = useQuery<BrandSettings, Error>({
-    queryKey: ["/api/brand", tenantId],
-    queryFn: async () => {
-      const url = tenantId ? `/api/brand?tenantId=${tenantId}` : '/api/brand';
-      const res = await fetch(url);
-      if (!res.ok) {
-        throw new Error('Failed to fetch brand settings');
-      }
-      return res.json();
-    }
+    queryKey: ["/api/brand"],
   });
 
+  // Get tenant ID from localStorage to use in API calls
+  const storedTenantId = localStorage.getItem('selectedTenantId');
+  
   const mutation = useMutation({
     mutationFn: async (data: Partial<InsertBrandSettings>) => {
-      const res = await apiRequest("PUT", "/api/brand", data);
+      // If we have a tenant ID, we can pass it as a query param
+      const url = storedTenantId ? `/api/brand?tenantId=${storedTenantId}` : '/api/brand';
+      const res = await apiRequest("PUT", url, data);
       return await res.json();
     },
     onSuccess: () => {

@@ -514,20 +514,30 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getBrandSettingsByTenantId(tenantId: number): Promise<BrandSettings | undefined> {
+    // Check if tenant ID is provided
+    if (!tenantId) {
+      return this.getBrandSettings();
+    }
+    
     // Get brand settings for specific tenant
-    const [settings] = await db
-      .select()
-      .from(brandSettings)
-      .where(eq(brandSettings.tenantId, tenantId))
-      .limit(1);
-      
-    return settings;
+    try {
+      const [settings] = await db
+        .select()
+        .from(brandSettings)
+        .where(eq(brandSettings.tenantId, tenantId))
+        .limit(1);
+        
+      return settings;
+    } catch (error) {
+      console.error("Error getting brand settings by tenant ID:", error);
+      return this.getBrandSettings(); // Fallback to default settings
+    }
   }
   
   async updateBrandSettings(data: Partial<InsertBrandSettings>, tenantId?: number): Promise<BrandSettings> {
     if (tenantId) {
       // Update or create tenant-specific brand settings
-      const existingSettings = await this.getBrandSettings(tenantId);
+      const existingSettings = await this.getBrandSettingsByTenantId(tenantId);
       
       if (existingSettings) {
         const [updated] = await db

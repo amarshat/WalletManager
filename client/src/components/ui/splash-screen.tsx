@@ -36,7 +36,7 @@ export default function SplashScreen({ style, brandName }: SplashScreenProps) {
   
   // Use custom style if provided, otherwise use default styling
   const customStyle = style || { backgroundColor };
-  const displayBrandName = brandName || (appType ? branding.name : (brand?.name || "PaySage Wallet"));
+  const displayBrandName = brandName || (appType ? branding.name : (brand?.name || "Paysafe Embedded Wallet Platform"));
   
   return (
     <div 
@@ -84,8 +84,8 @@ export default function SplashScreen({ style, brandName }: SplashScreenProps) {
       
       <p className={`text-sm absolute bottom-6 ${subtextColor}`}>
         {appType 
-          ? `${branding.name} — powered by ${brand?.globalBrandName || 'PaySage AI'}` 
-          : `Paysafe GenAI Showcase — powered by ${brand?.globalBrandName || 'PaySage AI'}`}
+          ? `${branding.name} — powered by ${brand?.globalBrandName || 'Paysafe'}` 
+          : `Paysafe GenAI Showcase — powered by Paysafe`}
       </p>
     </div>
   );

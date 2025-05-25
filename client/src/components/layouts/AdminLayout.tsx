@@ -101,6 +101,9 @@ export default function AdminLayout({
     },
   ];
   
+  // Check if user is SuperAdmin
+  const isSuperAdmin = user?.username === 'superadmin';
+
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
@@ -113,10 +116,27 @@ export default function AdminLayout({
             >
               <Menu className="text-neutral-700" />
             </button>
-            <BrandLogo className="h-8" />
-            <span className="ml-2 text-lg font-semibold text-gray-800">
-              {brand?.name || "PaySage Wallet"} Admin
-            </span>
+            {isSuperAdmin ? (
+              <>
+                {/* Static Paysafe branding for SuperAdmin */}
+                <div className="h-8 w-8 bg-indigo-600 flex items-center justify-center rounded-md">
+                  <ExternalLink className="h-5 w-5 text-white" />
+                </div>
+                <span className="ml-2 text-lg font-semibold text-gray-800">
+                  Paysafe Embedded Wallet Platform
+                </span>
+                <span className="ml-2 bg-amber-100 text-amber-800 text-xs font-medium px-2 py-0.5 rounded">
+                  SuperAdmin
+                </span>
+              </>
+            ) : (
+              <>
+                <BrandLogo className="h-8" />
+                <span className="ml-2 text-lg font-semibold text-gray-800">
+                  {brand?.name || "Paysafe Embedded Wallet Platform"} Admin
+                </span>
+              </>
+            )}
           </div>
           <div className="flex items-center">
             <Button variant="ghost" size="icon" className="mr-4">
@@ -147,7 +167,11 @@ export default function AdminLayout({
           }`}
         >
           <div className="h-16 flex items-center justify-between px-6 border-b border-gray-700">
-            <span className="font-semibold text-white">{brand?.name || "Admin Dashboard"}</span>
+            <span className="font-semibold text-white">
+              {isSuperAdmin 
+                ? "Paysafe Embedded Wallet Platform" 
+                : (brand?.name || "Admin Dashboard")}
+            </span>
           </div>
           <nav className="py-4 overflow-y-auto h-[calc(100%-4rem)]">
             <ul>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -70,6 +71,7 @@ export default function SuperAdminDashboard() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("tenants");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isGlobalBrandDialogOpen, setIsGlobalBrandDialogOpen] = useState(false);
   const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
   
   // Fetch all tenants
@@ -295,9 +297,10 @@ export default function SuperAdminDashboard() {
   return (
     <AdminLayout title="SuperAdmin Dashboard" description="Manage all tenants and users across the system">
       <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="tenants">Tenants</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
+          <TabsTrigger value="branding">Co-Branding</TabsTrigger>
         </TabsList>
         
         <TabsContent value="tenants" className="mt-6">
@@ -641,6 +644,98 @@ export default function SuperAdminDashboard() {
                   </p>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="branding" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Global Co-Branding Settings</CardTitle>
+              <CardDescription>
+                Configure the system-wide "Powered by" branding that appears across all tenant interfaces
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="globalBrandName">Brand Name</Label>
+                    <Input 
+                      id="globalBrandName" 
+                      placeholder="PaySage AI" 
+                      defaultValue="PaySage AI"
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Appears in "Powered by [Brand Name]" text
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="globalBrandLogo">Brand Logo URL</Label>
+                    <Input 
+                      id="globalBrandLogo" 
+                      placeholder="https://example.com/logo.svg" 
+                      className="mt-1"
+                    />
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Optional logo to appear with co-branding (SVG recommended)
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <Label htmlFor="globalBrandColor">Brand Color</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div 
+                        className="h-9 w-9 rounded-md border"
+                        style={{ backgroundColor: "#7C3AED" }}
+                      />
+                      <Input 
+                        id="globalBrandColor" 
+                        placeholder="#7C3AED" 
+                        defaultValue="#7C3AED"
+                      />
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Used for "Powered by" text color (HEX format)
+                    </p>
+                  </div>
+                  <div>
+                    <Label htmlFor="globalBrandPosition">Branding Position</Label>
+                    <select 
+                      id="globalBrandPosition" 
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 mt-1"
+                      defaultValue="footer"
+                    >
+                      <option value="footer">Footer (recommended)</option>
+                      <option value="header">Header</option>
+                      <option value="both">Both Header & Footer</option>
+                    </select>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Where to display co-branding across the platform
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="bg-slate-50 dark:bg-slate-900 p-4 rounded-md mt-6">
+                  <h3 className="text-sm font-medium mb-2">Co-Branding Preview</h3>
+                  <div className="flex items-center justify-center h-20 border rounded-md bg-white dark:bg-slate-800 relative">
+                    <div className="absolute bottom-2 right-2 flex items-center text-xs text-slate-500">
+                      <span>Powered by</span>
+                      <span className="ml-1 font-semibold" style={{ color: "#7C3AED" }}>PaySage AI</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    This is how the co-branding will appear across tenant interfaces
+                  </p>
+                </div>
+                
+                <div className="flex justify-end">
+                  <Button>Save Global Branding</Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

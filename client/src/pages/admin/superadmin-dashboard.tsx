@@ -41,6 +41,12 @@ interface User {
   fullName: string;
   email: string;
   isAdmin: boolean;
+  tenants?: { 
+    tenantId: string;
+    tenantName: string;
+    role: string;
+    isDefault: boolean;
+  }[];
 }
 
 // Form schema for creating/editing tenants
@@ -660,7 +666,8 @@ export default function SuperAdminDashboard() {
                       <TableHead>Username</TableHead>
                       <TableHead>Full Name</TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead>Admin</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Organization</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -671,7 +678,33 @@ export default function SuperAdminDashboard() {
                         <TableCell>{user.username}</TableCell>
                         <TableCell>{user.fullName}</TableCell>
                         <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.isAdmin ? "Yes" : "No"}</TableCell>
+                        <TableCell>
+                          {user.isAdmin ? (
+                            user.username === "superadmin" ? (
+                              <Badge variant="default" className="bg-gradient-to-r from-purple-500 to-indigo-500">
+                                SuperAdmin
+                              </Badge>
+                            ) : (
+                              <Badge>Tenant Admin</Badge>
+                            )
+                          ) : (
+                            "User"
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {user.tenants && user.tenants.length > 0 ? (
+                            <div className="flex flex-col gap-1">
+                              {user.tenants.map((tenant, i) => (
+                                <Badge key={i} variant="outline" className={tenant.isDefault ? "border-primary" : ""}>
+                                  {tenant.tenantName || tenant.tenantId}
+                                  {tenant.isDefault && " (Default)"}
+                                </Badge>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">No organization</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"

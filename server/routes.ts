@@ -1,12 +1,15 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
+import { db } from "./db";
 import { setupAuth } from "./auth";
 import { z } from "zod";
 import { 
   insertBrandSettingsSchema, insertCardSchema, insertPrepaidCardSchema,
   insertCarbonImpactSchema, insertCarbonOffsetSchema, insertCarbonPreferenceSchema
 } from "@shared/schema";
+import { tenants, userTenants } from "@shared/schema-tenant";
+import { eq } from "drizzle-orm";
 import { walletClient } from "./wallet-client";
 import { errorHandler } from "./diagnostics/error-tracking";
 import path from "path";
@@ -254,7 +257,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // Get all users, regardless of tenant
       const users = await storage.listUsers();
-      res.json(users);
+      
+      // Get all tenants to build the lookup map
+      const allTenants = await storage.getTenants();
+      const tenantMap = new Map(allTenants.map(t => [t.id, t]));
+      
+      // For each user, get their tenant associations
+      const enhancedUsers = await Promise.all(users.map(async (user) => {
+        const userTenantRecords = await db
+          .select({
+            tenantId: tenants.id,
+            role: userTenants.role,
+            isDefault: userTenants.isDefault
+          })
+          .from(userTenants)
+          .innerJoin(tenants, eq(userTenants.tenantId, tenants.id))
+          .where(eq(userTenants.userId, user.id));
+        
+        const tenantInfo = userTenantRecords.map(record => ({
+          tenantId: tenantMap.get(record.tenantId)?.tenantId || '',
+          tenantName: tenantMap.get(record.tenantId)?.name || '',
+          role: record.role,
+          isDefault: record.isDefault
+        }));
+        
+        return {
+          ...user,
+          tenants: tenantInfo
+        };
+      }));
+      
+      res.json(enhancedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });

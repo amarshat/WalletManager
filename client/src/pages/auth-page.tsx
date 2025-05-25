@@ -282,7 +282,7 @@ export default function AuthPage() {
           
           <div className="mt-auto pt-10">
             <p className="text-sm text-white text-opacity-70">
-              {branding?.name || "Digital Wallet"} — <span className="font-semibold">Powered by PaySage AI</span>
+              {branding?.name || "Digital Wallet"} — <span className="font-semibold" style={{ color: '#7C3AED' }}>Powered by PaySage AI</span>
             </p>
           </div>
         </div>

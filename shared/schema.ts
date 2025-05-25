@@ -31,6 +31,10 @@ export const brandSettings = pgTable("brand_settings", {
   primaryColor: text("primary_color").default("#4F46E5"), // Primary brand color for UI
   secondaryColor: text("secondary_color").default("#7E57C2"), // Secondary brand color for gradients
   walletAuthKey: text("wallet_auth_key"),
+  // Global co-branding settings
+  globalBrandName: text("global_brand_name").default("PaySage AI"),
+  globalBrandColor: text("global_brand_color").default("#7C3AED"),
+  globalBrandPosition: text("global_brand_position").default("footer"),
   // Wallet feature configurations
   walletConfig: json("wallet_config").$defaultFn(() => ({
     transactionDisplayCount: 10,

@@ -310,7 +310,7 @@ export default function SuperAdminDashboard() {
                     Add Organization
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>
                       {editingTenant ? "Edit Organization" : "Add Organization"}

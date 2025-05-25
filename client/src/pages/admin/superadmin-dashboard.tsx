@@ -87,6 +87,7 @@ export default function SuperAdminDashboard() {
       globalBrandName: string;
       globalBrandColor: string;
       globalBrandPosition: string;
+      globalBrandLogo?: string;
     }) => {
       const res = await apiRequest("PATCH", "/api/brand", data);
       return await res.json();

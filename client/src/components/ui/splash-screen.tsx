@@ -67,8 +67,8 @@ export default function SplashScreen({ style, brandName }: SplashScreenProps) {
       
       <p className={`text-sm absolute bottom-6 ${subtextColor}`}>
         {appType 
-          ? `${branding.name} — powered by PaySage Wallet` 
-          : "Paysafe GenAI Showcase — powered by PaySage"}
+          ? `${branding.name} — powered by ${brand?.globalBrandName || 'PaySage AI'}` 
+          : `Paysafe GenAI Showcase — powered by ${brand?.globalBrandName || 'PaySage AI'}`}
       </p>
     </div>
   );

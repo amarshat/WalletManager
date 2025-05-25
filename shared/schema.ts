@@ -35,6 +35,7 @@ export const brandSettings = pgTable("brand_settings", {
   globalBrandName: text("global_brand_name").default("PaySage AI"),
   globalBrandColor: text("global_brand_color").default("#7C3AED"),
   globalBrandPosition: text("global_brand_position").default("footer"),
+  globalBrandLogo: text("global_brand_logo"),
   // Wallet feature configurations
   walletConfig: json("wallet_config").$defaultFn(() => ({
     transactionDisplayCount: 10,

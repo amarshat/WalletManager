@@ -116,12 +116,14 @@ export default function CardsScreen({ navigation }) {
 
   const getBrandLogo = (brand) => {
     if (brand === 'visa') {
-      return require('../assets/visa-logo.png'); // fallback to an icon if image not available
+      return <Ionicons name="card" size={24} color="#1a1f71" />;
     } else if (brand === 'mastercard') {
-      return require('../assets/mastercard-logo.png'); // fallback to an icon if image not available
+      return <Ionicons name="card" size={24} color="#eb001b" />;
+    } else if (brand === 'amex') {
+      return <Ionicons name="card" size={24} color="#006fcf" />;
     }
     
-    return null;
+    return <Ionicons name="card-outline" size={24} color="#6b7280" />;
   };
 
   const renderCardItem = ({ item }) => {
@@ -141,8 +143,7 @@ export default function CardsScreen({ navigation }) {
             <Ionicons name="card" size={24} color="#fff" />
           </View>
           <View style={styles.brandLogo}>
-            {/* Use actual brand logos in a real app */}
-            <Text style={styles.brandText}>{item.brand.toUpperCase()}</Text>
+            {getBrandLogo(item.brand)}
           </View>
         </View>
         

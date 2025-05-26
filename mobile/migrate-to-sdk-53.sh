@@ -379,8 +379,46 @@ if [ ! -f "./api/client.js" ]; then
   cat > ./api/client.js << 'EOL'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API base URL - change this to your server URL when deploying
-const API_URL = 'https://paysage-wallet.example.com/api';
+// Default API base URL - can be overridden in settings
+const DEFAULT_API_URL = 'https://your-replit-deployment.replit.app/api';
+
+// Get the configured API URL from storage or use default
+const getApiUrl = async () => {
+  try {
+    const savedUrl = await AsyncStorage.getItem('api_base_url');
+    return savedUrl || DEFAULT_API_URL;
+  } catch (error) {
+    return DEFAULT_API_URL;
+  }
+};
+
+// Set a custom API URL
+const setApiUrl = async (url) => {
+  try {
+    await AsyncStorage.setItem('api_base_url', url);
+  } catch (error) {
+    console.error('Failed to save API URL:', error);
+  }
+};
+
+// Get the selected tenant
+const getSelectedTenant = async () => {
+  try {
+    const tenant = await AsyncStorage.getItem('selected_tenant');
+    return tenant ? JSON.parse(tenant) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+// Set the selected tenant
+const setSelectedTenant = async (tenant) => {
+  try {
+    await AsyncStorage.setItem('selected_tenant', JSON.stringify(tenant));
+  } catch (error) {
+    console.error('Failed to save tenant:', error);
+  }
+};
 
 /**
  * API client for making requests to the server
@@ -393,7 +431,8 @@ export const apiClient = {
    * @returns {Promise<any>} Response data
    */
   async request(endpoint, options = {}) {
-    const url = `${API_URL}${endpoint}`;
+    const baseUrl = await getApiUrl();
+    const url = `${baseUrl}${endpoint}`;
     
     const headers = {
       'Content-Type': 'application/json',
@@ -493,6 +532,21 @@ export const apiClient = {
       body: cardData 
     }),
   },
+
+  // Tenant endpoints
+  tenants: {
+    getPublic: () => apiClient.request('/tenants/public'),
+    getById: (id) => apiClient.request(`/tenants/${id}`),
+  },
+
+  // Branding endpoints
+  branding: {
+    getByTenant: (tenantId) => apiClient.request(`/brand?tenantId=${tenantId}`),
+  },
+};
+
+// Export utility functions
+export { getApiUrl, setApiUrl, getSelectedTenant, setSelectedTenant };
 
   // Carbon impact endpoints
   carbon: {

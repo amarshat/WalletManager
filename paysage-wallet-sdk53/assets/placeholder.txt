@@ -1,0 +1,10 @@
+You will need to add these image files for your app to build properly:
+
+1. icon.png - App icon (1024x1024px recommended)
+2. splash.png - Splash screen image (centered logo, 1242x2436px recommended)
+3. adaptive-icon.png - Android adaptive icon (foreground layer, 1024x1024px recommended)
+4. favicon.png - Web favicon (96x96px recommended)
+5. visa-logo.png - Visa card logo
+6. mastercard-logo.png - Mastercard logo
+
+These images should be placed in this assets directory before building.

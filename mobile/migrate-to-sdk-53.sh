@@ -886,17 +886,17 @@ export default function CardsScreen({ navigation }) {
     fetchCards();
   }, []);
 
-  // Get card logo based on type
-  const getCardLogo = (type) => {
+  // Get card icon and color based on type
+  const getCardIcon = (type) => {
     switch (type.toLowerCase()) {
       case 'visa':
-        return require('../assets/visa-logo.png');
+        return { name: 'card', color: '#1a1f71' };
       case 'mastercard':
-        return require('../assets/mastercard-logo.png');
+        return { name: 'card', color: '#eb001b' };
       case 'amex':
-        return require('../assets/amex-logo.png');
+        return { name: 'card', color: '#006fcf' };
       default:
-        return null;
+        return { name: 'card', color: '#6b7280' };
     }
   };
 
@@ -957,13 +957,16 @@ export default function CardsScreen({ navigation }) {
           {cards.map((card) => (
             <View key={card.id} style={styles.cardItem}>
               <View style={styles.cardHeader}>
-                {getCardLogo(card.type) && (
-                  <Image
-                    source={getCardLogo(card.type)}
-                    style={styles.cardLogo}
-                    resizeMode="contain"
+                <View style={styles.cardIconContainer}>
+                  <Ionicons
+                    name={getCardIcon(card.type).name}
+                    size={24}
+                    color={getCardIcon(card.type).color}
                   />
-                )}
+                  <Text style={[styles.cardType, { color: getCardIcon(card.type).color }]}>
+                    {card.type.toUpperCase()}
+                  </Text>
+                </View>
                 <TouchableOpacity
                   onPress={() => handleCardOptions(card)}
                   style={styles.optionsButton}
@@ -1092,9 +1095,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  cardLogo: {
-    width: 50,
-    height: 30,
+  cardIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  cardType: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   optionsButton: {
     width: 28,

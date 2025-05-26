@@ -78,6 +78,10 @@ npm install @react-native-async-storage/async-storage \
   react-native-screens \
   react-native-svg
 
+# Install additional required packages for proper navigation
+npm install @react-navigation/elements \
+  @react-navigation/stack
+
 section "Creating directory structure"
 # Create necessary directories
 mkdir -p screens context api assets

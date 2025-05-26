@@ -1,12 +1,32 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// API base URL - change this to your server URL when deploying
-const API_URL = 'https://paysage-wallet.example.com/api';
+// Default API base URL - can be overridden by user settings
+const DEFAULT_API_URL = 'http://localhost:5000/api';
 
 /**
- * API client for making requests to the server
+ * API client for making requests to the server with configurable base URL
  */
 export const apiClient = {
+  // Get the current API URL from storage or use default
+  async getApiUrl() {
+    try {
+      const savedUrl = await AsyncStorage.getItem('api_base_url');
+      return savedUrl || DEFAULT_API_URL;
+    } catch (error) {
+      console.error('Error getting API URL:', error);
+      return DEFAULT_API_URL;
+    }
+  },
+
+  // Set a custom API URL
+  async setApiUrl(url) {
+    try {
+      await AsyncStorage.setItem('api_base_url', url);
+    } catch (error) {
+      console.error('Error setting API URL:', error);
+    }
+  },
+
   /**
    * Make a request to the API
    * @param {string} endpoint - The API endpoint to request
@@ -14,7 +34,8 @@ export const apiClient = {
    * @returns {Promise<any>} Response data
    */
   async request(endpoint, options = {}) {
-    const url = `${API_URL}${endpoint}`;
+    const baseUrl = await this.getApiUrl();
+    const url = `${baseUrl}${endpoint}`;
     
     const headers = {
       'Content-Type': 'application/json',
@@ -51,6 +72,12 @@ export const apiClient = {
     }
   },
 
+  // Tenant endpoints
+  tenants: {
+    getPublicTenants: () => apiClient.request('/tenants/public'),
+    getBrandSettings: (tenantId) => apiClient.request(`/brand?tenantId=${tenantId}`),
+  },
+
   // Auth endpoints
   auth: {
     login: (credentials) => apiClient.request('/login', { 
@@ -67,17 +94,16 @@ export const apiClient = {
 
   // Wallet endpoints
   wallet: {
-    getBalance: () => apiClient.request('/wallet/balance'),
-    getAccounts: () => apiClient.request('/wallet/accounts'),
-    addMoney: (data) => apiClient.request('/wallet/deposit', { 
+    getWallet: () => apiClient.request('/wallet'),
+    addMoney: (data) => apiClient.request('/transactions/deposit', { 
       method: 'POST', 
       body: data 
     }),
-    sendMoney: (data) => apiClient.request('/wallet/transfer', { 
+    sendMoney: (data) => apiClient.request('/transactions/transfer', { 
       method: 'POST', 
       body: data 
     }),
-    withdrawMoney: (data) => apiClient.request('/wallet/withdraw', { 
+    withdrawMoney: (data) => apiClient.request('/transactions/withdraw', { 
       method: 'POST', 
       body: data 
     }),
@@ -85,8 +111,7 @@ export const apiClient = {
 
   // Transaction endpoints
   transactions: {
-    getAll: (limit = 20) => apiClient.request(`/transactions?limit=${limit}`),
-    getById: (id) => apiClient.request(`/transactions/${id}`),
+    getAll: (customerId, limit = 20) => apiClient.request(`/transactions/${customerId}?limit=${limit}`),
   },
 
   // Card endpoints

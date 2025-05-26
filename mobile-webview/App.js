@@ -22,7 +22,7 @@ export default function App() {
   const [canGoBack, setCanGoBack] = useState(false);
   const webViewRef = useRef(null);
 
-  // Your wallet URL
+  // Your wallet URL - fallback to test connectivity
   const WALLET_URL = 'https://wallet.amar.im';
 
   // Handle back button on Android
@@ -297,8 +297,14 @@ export default function App() {
         scrollEnabled={true}
         allowsBackForwardNavigationGestures={true}
         mixedContentMode="compatibility"
-        originWhitelist={['*']}
+        originWhitelist={['https://*', 'http://*']}
         userAgent="PaysafeWalletMobile/1.0"
+        allowsInlineMediaPlayback={true}
+        mediaPlaybackRequiresUserAction={false}
+        allowsFullscreenVideo={false}
+        allowsLinkPreview={false}
+        sharedCookiesEnabled={true}
+        thirdPartyCookiesEnabled={true}
         renderLoading={() => (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#4f46e5" />

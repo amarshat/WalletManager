@@ -38,7 +38,11 @@
   },
   "private": true,
   "overrides": {
-    "metro": "0.80.0",
-    "metro-resolver": "0.80.0"
+    "metro": "0.80.12",
+    "metro-resolver": "0.80.12"
+  },
+  "resolutions": {
+    "metro": "0.80.12",
+    "metro-resolver": "0.80.12"
   }
 }

@@ -43,6 +43,13 @@ fi
 
 # Create new project with Expo SDK 53
 section "Creating new Expo SDK 53 project"
+
+# Clean up any existing project directory
+if [ -d "$NEW_PROJECT_PATH" ]; then
+  progress "Removing existing project directory..."
+  rm -rf "$NEW_PROJECT_PATH"
+fi
+
 progress "Initializing new project: $NEW_PROJECT_NAME"
 
 cd "$PARENT_DIR" || { error "Could not navigate to parent directory"; exit 1; }

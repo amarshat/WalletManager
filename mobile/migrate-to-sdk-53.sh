@@ -192,6 +192,8 @@ import { Ionicons } from '@expo/vector-icons';
 // Import screens - create placeholder imports for any missing screens
 import HomeScreen from './screens/HomeScreen';
 import WalletScreen from './screens/WalletScreen';
+import TenantSelectionScreen from './screens/TenantSelectionScreen';
+import SettingsScreen from './screens/SettingsScreen';
 // Import other screens based on what you've implemented
 let TransactionsScreen, ProfileScreen, LoginScreen, SendMoneyScreen, 
     AddMoneyScreen, CardsScreen, CarbonImpactScreen;
@@ -335,8 +337,20 @@ function AppNavigator() {
             />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="TenantSelection" component={TenantSelectionScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+          </>
         )}
+        <Stack.Screen 
+          name="Settings" 
+          component={SettingsScreen} 
+          options={{ 
+            headerShown: true, 
+            title: 'Settings',
+            presentation: 'modal'
+          }} 
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -683,6 +697,535 @@ export const useAuth = () => {
   }
   return context;
 };
+EOL
+fi
+
+# Create TenantSelection screen
+if [ ! -f "./screens/TenantSelectionScreen.js" ]; then
+  section "Creating TenantSelection Screen"
+  progress "Creating TenantSelectionScreen.js..."
+  
+  cat > ./screens/TenantSelectionScreen.js << 'EOL'
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  TextInput,
+  Alert,
+  SafeAreaView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { apiClient, setSelectedTenant } from '../api/client';
+
+export default function TenantSelectionScreen({ navigation }) {
+  const [tenants, setTenants] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [customTenantId, setCustomTenantId] = useState('');
+  const [showCustomInput, setShowCustomInput] = useState(false);
+
+  useEffect(() => {
+    fetchTenants();
+  }, []);
+
+  const fetchTenants = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.tenants.getPublic();
+      setTenants(response || []);
+    } catch (error) {
+      console.error('Error fetching tenants:', error);
+      // Show fallback tenants if API fails
+      setTenants([
+        { id: 1, tenantId: 'paysafe', name: 'Paysafe', description: 'Digital Payment Solutions' },
+        { id: 2, tenantId: 'justpark', name: 'JustPark', description: 'Smart Parking Solutions' },
+        { id: 3, tenantId: 'greenbank', name: 'GreenBank', description: 'Sustainable Banking' },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTenantSelect = async (tenant) => {
+    try {
+      await setSelectedTenant(tenant);
+      navigation.navigate('Login');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to select organization. Please try again.');
+    }
+  };
+
+  const handleCustomTenant = async () => {
+    if (!customTenantId.trim()) {
+      Alert.alert('Error', 'Please enter a valid organization ID.');
+      return;
+    }
+
+    const customTenant = {
+      id: 'custom',
+      tenantId: customTenantId.trim(),
+      name: customTenantId.trim(),
+      description: 'Custom Organization',
+    };
+
+    await handleTenantSelect(customTenant);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#4f46e5" />
+        <Text style={styles.loadingText}>Loading organizations...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={['#4f46e5', '#7c3aed']}
+        style={styles.header}
+      >
+        <Text style={styles.headerTitle}>Paysafe Wallet</Text>
+        <Text style={styles.headerSubtitle}>Choose Your Organization</Text>
+      </LinearGradient>
+
+      <ScrollView style={styles.content}>
+        <Text style={styles.sectionTitle}>Available Organizations</Text>
+        
+        {tenants.map((tenant) => (
+          <TouchableOpacity
+            key={tenant.id}
+            style={styles.tenantCard}
+            onPress={() => handleTenantSelect(tenant)}
+          >
+            <View style={styles.tenantInfo}>
+              <Text style={styles.tenantName}>{tenant.name}</Text>
+              <Text style={styles.tenantDescription}>{tenant.description}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+          </TouchableOpacity>
+        ))}
+
+        <TouchableOpacity
+          style={styles.customButton}
+          onPress={() => setShowCustomInput(!showCustomInput)}
+        >
+          <Ionicons name="add-circle-outline" size={20} color="#4f46e5" />
+          <Text style={styles.customButtonText}>Custom Organization</Text>
+        </TouchableOpacity>
+
+        {showCustomInput && (
+          <View style={styles.customInputContainer}>
+            <TextInput
+              style={styles.customInput}
+              placeholder="Enter organization ID"
+              value={customTenantId}
+              onChangeText={setCustomTenantId}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={styles.customSubmitButton}
+              onPress={handleCustomTenant}
+            >
+              <Text style={styles.customSubmitText}>Connect</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#4f46e5',
+  },
+  header: {
+    padding: 40,
+    paddingTop: 60,
+    alignItems: 'center',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: '#e0e7ff',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  tenantCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  tenantInfo: {
+    flex: 1,
+  },
+  tenantName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  tenantDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  customButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    borderWidth: 2,
+    borderColor: '#4f46e5',
+    borderStyle: 'dashed',
+  },
+  customButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4f46e5',
+    marginLeft: 8,
+  },
+  customInputContainer: {
+    marginTop: 16,
+  },
+  customInput: {
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    marginBottom: 12,
+  },
+  customSubmitButton: {
+    backgroundColor: '#4f46e5',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  customSubmitText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+});
+EOL
+fi
+
+# Create Settings screen
+if [ ! -f "./screens/SettingsScreen.js" ]; then
+  progress "Creating SettingsScreen.js..."
+  
+  cat > ./screens/SettingsScreen.js << 'EOL'
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  SafeAreaView,
+  ScrollView,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { getApiUrl, setApiUrl, getSelectedTenant, setSelectedTenant } from '../api/client';
+
+export default function SettingsScreen({ navigation }) {
+  const [apiUrl, setApiUrlState] = useState('');
+  const [selectedTenant, setSelectedTenantState] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const url = await getApiUrl();
+      const tenant = await getSelectedTenant();
+      setApiUrlState(url);
+      setSelectedTenantState(tenant);
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const handleSaveApiUrl = async () => {
+    if (!apiUrl.trim()) {
+      Alert.alert('Error', 'Please enter a valid API URL.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await setApiUrl(apiUrl.trim());
+      Alert.alert('Success', 'API URL updated successfully!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save API URL. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestConnection = async () => {
+    try {
+      setLoading(true);
+      // Simple test by making a request to the API
+      const response = await fetch(`${apiUrl}/tenants/public`);
+      if (response.ok) {
+        Alert.alert('Success', 'Connection test successful!');
+      } else {
+        Alert.alert('Warning', 'API responded but may not be fully configured.');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Connection test failed. Please check the URL.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetTenant = () => {
+    Alert.alert(
+      'Reset Organization',
+      'This will log you out and return you to organization selection.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await setSelectedTenant(null);
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'TenantSelection' }],
+              });
+            } catch (error) {
+              Alert.alert('Error', 'Failed to reset organization.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.content}>
+        <Text style={styles.sectionTitle}>API Configuration</Text>
+        
+        <View style={styles.section}>
+          <Text style={styles.label}>Deployment URL</Text>
+          <Text style={styles.description}>
+            Enter your Replit deployment URL to connect to your backend
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={apiUrl}
+            onChangeText={setApiUrlState}
+            placeholder="https://your-app.replit.app/api"
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="url"
+          />
+          
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.button, styles.primaryButton]}
+              onPress={handleSaveApiUrl}
+              disabled={loading}
+            >
+              <Text style={styles.primaryButtonText}>Save URL</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.button, styles.secondaryButton]}
+              onPress={handleTestConnection}
+              disabled={loading}
+            >
+              <Text style={styles.secondaryButtonText}>Test Connection</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Text style={styles.sectionTitle}>Organization</Text>
+        
+        <View style={styles.section}>
+          {selectedTenant && (
+            <View style={styles.tenantInfo}>
+              <Text style={styles.tenantName}>{selectedTenant.name}</Text>
+              <Text style={styles.tenantId}>ID: {selectedTenant.tenantId}</Text>
+            </View>
+          )}
+          
+          <TouchableOpacity
+            style={[styles.button, styles.resetButton]}
+            onPress={handleResetTenant}
+          >
+            <Ionicons name="refresh" size={16} color="#ef4444" />
+            <Text style={styles.resetButtonText}>Change Organization</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionTitle}>About</Text>
+        
+        <View style={styles.section}>
+          <Text style={styles.appInfo}>
+            Paysafe Embedded Wallet Platform{'\n'}
+            Version 1.0.0{'\n\n'}
+            A comprehensive digital wallet solution with multi-tenant support.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  content: {
+    flex: 1,
+    padding: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 16,
+    marginTop: 24,
+  },
+  section: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  description: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 12,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  button: {
+    flex: 1,
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  primaryButton: {
+    backgroundColor: '#4f46e5',
+  },
+  primaryButtonText: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  secondaryButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  secondaryButtonText: {
+    color: '#1f2937',
+    fontWeight: '600',
+  },
+  tenantInfo: {
+    marginBottom: 16,
+  },
+  tenantName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  tenantId: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  resetButton: {
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    gap: 8,
+  },
+  resetButtonText: {
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  appInfo: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+});
 EOL
 fi
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -12,16 +12,44 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
 
-export default function LoginScreen() {
+export default function LoginScreen({ route, navigation }) {
   const [isLogin, setIsLogin] = useState(true);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
+  const [tenant, setTenant] = useState(null);
+  const [brandSettings, setBrandSettings] = useState(null);
   const { login, register, isLoading } = useAuth();
+
+  useEffect(() => {
+    loadTenantSettings();
+  }, []);
+
+  const loadTenantSettings = async () => {
+    try {
+      const tenantData = await AsyncStorage.getItem('selected_tenant');
+      const brandData = await AsyncStorage.getItem('brand_settings');
+      
+      if (tenantData) {
+        setTenant(JSON.parse(tenantData));
+      }
+      
+      if (brandData) {
+        setBrandSettings(JSON.parse(brandData));
+      }
+    } catch (error) {
+      console.error('Error loading tenant settings:', error);
+    }
+  };
+
+  const changeTenant = () => {
+    navigation.navigate('TenantSelection');
+  };
 
   const handleSubmit = async () => {
     if (!username || !password) {
@@ -59,8 +87,32 @@ export default function LoginScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContainer}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>PaySage Wallet</Text>
-          <Text style={styles.tagline}>Manage your money with ease</Text>
+          {tenant && brandSettings ? (
+            <>
+              {brandSettings.logo && (
+                <Image
+                  source={{ uri: brandSettings.logo }}
+                  style={styles.tenantLogo}
+                  resizeMode="contain"
+                />
+              )}
+              <Text style={[styles.logoText, { color: brandSettings.primaryColor || '#4f46e5' }]}>
+                {brandSettings.name}
+              </Text>
+              <Text style={styles.tagline}>{brandSettings.tagline}</Text>
+              <TouchableOpacity style={styles.changeTenantButton} onPress={changeTenant}>
+                <Text style={styles.changeTenantText}>Change Organization</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={styles.logoText}>Paysafe Embedded Wallet Platform</Text>
+              <Text style={styles.tagline}>Your Digital Wallet Solution</Text>
+              <TouchableOpacity style={styles.changeTenantButton} onPress={changeTenant}>
+                <Text style={styles.changeTenantText}>Select Organization</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
 
         <View style={styles.formContainer}>
@@ -165,15 +217,35 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 40,
   },
+  tenantLogo: {
+    width: 80,
+    height: 80,
+    marginBottom: 16,
+  },
   logoText: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#4f46e5',
     marginBottom: 8,
+    textAlign: 'center',
   },
   tagline: {
     fontSize: 16,
     color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  changeTenantButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 6,
+    marginTop: 8,
+  },
+  changeTenantText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   formContainer: {
     backgroundColor: 'white',

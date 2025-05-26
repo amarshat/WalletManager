@@ -213,6 +213,17 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
         </TouchableOpacity>
         
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Settings')}>
+          <View style={styles.menuIconContainer}>
+            <Ionicons name="settings-outline" size={20} color="#4f46e5" />
+          </View>
+          <View style={styles.menuContent}>
+            <Text style={styles.menuTitle}>App Settings</Text>
+            <Text style={styles.menuDescription}>Configure deployment URL and organization</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+        </TouchableOpacity>
+        
         <TouchableOpacity style={styles.menuItem} onPress={() => {
           // In a real app, navigate to security settings
           Alert.alert('Security Settings', 'This feature is coming soon!');

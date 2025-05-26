@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Import screens - we'll create these next
+// Import screens
 import HomeScreen from './screens/HomeScreen';
 import WalletScreen from './screens/WalletScreen';
 import TransactionsScreen from './screens/TransactionsScreen';
@@ -16,6 +16,8 @@ import SendMoneyScreen from './screens/SendMoneyScreen';
 import AddMoneyScreen from './screens/AddMoneyScreen';
 import CardsScreen from './screens/CardsScreen';
 import CarbonImpactScreen from './screens/CarbonImpactScreen';
+import TenantSelectionScreen from './screens/TenantSelectionScreen';
+import SettingsScreen from './screens/SettingsScreen';
 
 // Auth context - we'll create this next
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -67,7 +69,7 @@ function AppNavigator() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#4f46e5" />
-        <Text style={styles.loadingText}>Loading PaySage Wallet...</Text>
+        <Text style={styles.loadingText}>Loading Paysafe Embedded Wallet Platform...</Text>
       </View>
     );
   }
@@ -112,9 +114,20 @@ function AppNavigator() {
                 title: 'Carbon Impact' 
               }} 
             />
+            <Stack.Screen 
+              name="Settings" 
+              component={SettingsScreen} 
+              options={{ 
+                headerShown: true, 
+                title: 'Settings' 
+              }} 
+            />
           </>
         ) : (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="TenantSelection" component={TenantSelectionScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

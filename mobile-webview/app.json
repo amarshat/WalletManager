@@ -4,13 +4,9 @@
     "slug": "paysafe-wallet",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#4F46E5"
-    },
+    "backgroundColor": "#4F46E5",
     "assetBundlePatterns": [
       "**/*"
     ],

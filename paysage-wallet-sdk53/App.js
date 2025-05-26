@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -6,65 +6,27 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Import screens - create placeholder imports for any missing screens
+// Import all screens
 import HomeScreen from './screens/HomeScreen';
 import WalletScreen from './screens/WalletScreen';
 import TenantSelectionScreen from './screens/TenantSelectionScreen';
 import SettingsScreen from './screens/SettingsScreen';
-// Import other screens based on what you've implemented
-let TransactionsScreen, ProfileScreen, LoginScreen, SendMoneyScreen, 
-    AddMoneyScreen, CardsScreen, CarbonImpactScreen;
+import TransactionsScreen from './screens/TransactionsScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import LoginScreen from './screens/LoginScreen';
+import SendMoneyScreen from './screens/SendMoneyScreen';
+import AddMoneyScreen from './screens/AddMoneyScreen';
+import CardsScreen from './screens/CardsScreen';
+import CarbonImpactScreen from './screens/CarbonImpactScreen';
 
-try {
-  TransactionsScreen = require('./screens/TransactionsScreen').default;
-} catch (e) {
-  TransactionsScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Transactions Screen</Text></View>;
-}
-
-try {
-  ProfileScreen = require('./screens/ProfileScreen').default;
-} catch (e) {
-  ProfileScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Profile Screen</Text></View>;
-}
-
-try {
-  LoginScreen = require('./screens/LoginScreen').default;
-} catch (e) {
-  LoginScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Login Screen</Text></View>;
-}
-
-try {
-  SendMoneyScreen = require('./screens/SendMoneyScreen').default;
-} catch (e) {
-  SendMoneyScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Send Money Screen</Text></View>;
-}
-
-try {
-  AddMoneyScreen = require('./screens/AddMoneyScreen').default;
-} catch (e) {
-  AddMoneyScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Add Money Screen</Text></View>;
-}
-
-try {
-  CardsScreen = require('./screens/CardsScreen').default;
-} catch (e) {
-  CardsScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Cards Screen</Text></View>;
-}
-
-try {
-  CarbonImpactScreen = require('./screens/CarbonImpactScreen').default;
-} catch (e) {
-  CarbonImpactScreen = () => <View style={{flex:1, justifyContent:'center', alignItems:'center'}}><Text>Carbon Impact Screen</Text></View>;
-}
-
-// Auth context - create placeholder if missing
+// Auth context
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 // Main app navigation when logged in
-function MainTabs() {
+const MainTabs = () => {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -97,10 +59,10 @@ function MainTabs() {
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
   );
-}
+};
 
 // Main navigation container
-function AppNavigator() {
+const AppNavigator = () => {
   const { user, isLoading } = useAuth();
   
   if (isLoading) {
@@ -171,9 +133,10 @@ function AppNavigator() {
       </Stack.Navigator>
     </NavigationContainer>
   );
-}
+};
 
-export default function App() {
+// Root app component
+const App = () => {
   return (
     <AuthProvider>
       <SafeAreaView style={styles.container}>
@@ -182,7 +145,7 @@ export default function App() {
       </SafeAreaView>
     </AuthProvider>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -200,3 +163,5 @@ const styles = StyleSheet.create({
     color: '#4f46e5',
   },
 });
+
+export default App;

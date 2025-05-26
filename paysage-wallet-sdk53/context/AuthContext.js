@@ -2,8 +2,16 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 
-// Create the auth context
-const AuthContext = createContext();
+// Create the auth context with a default value
+const AuthContext = createContext({
+  user: null,
+  isLoading: true,
+  error: null,
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  updateProfile: async () => {},
+});
 
 // Provider component that wraps the app and provides auth context
 export const AuthProvider = ({ children }) => {
@@ -15,12 +23,20 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
+        const token = await AsyncStorage.getItem('auth_token');
+        if (!token) {
+          setUser(null);
+          return;
+        }
+        
         // Attempt to get the user data
         const userData = await apiClient.auth.getCurrentUser();
         setUser(userData);
       } catch (error) {
-        console.log('Not authenticated');
+        console.log('Not authenticated:', error.message);
         setUser(null);
+        // Clear invalid token
+        await AsyncStorage.removeItem('auth_token');
       } finally {
         setIsLoading(false);
       }
@@ -39,8 +55,9 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       return userData;
     } catch (error) {
-      setError(error.message || 'Failed to login');
-      throw error;
+      const errorMessage = error.message || 'Failed to login';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +73,9 @@ export const AuthProvider = ({ children }) => {
       setUser(newUser);
       return newUser;
     } catch (error) {
-      setError(error.message || 'Failed to register');
-      throw error;
+      const errorMessage = error.message || 'Failed to register';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -69,8 +87,30 @@ export const AuthProvider = ({ children }) => {
       setIsLoading(true);
       await apiClient.auth.logout();
       setUser(null);
+      await AsyncStorage.removeItem('auth_token');
     } catch (error) {
       console.error('Logout error:', error);
+      // Still clear local state even if server logout fails
+      setUser(null);
+      await AsyncStorage.removeItem('auth_token');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Update profile function
+  const updateProfile = async (profileData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const updatedUser = await apiClient.auth.updateProfile(profileData);
+      setUser(updatedUser);
+      return updatedUser;
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to update profile';
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +123,8 @@ export const AuthProvider = ({ children }) => {
     error,
     login,
     register,
-    logout
+    logout,
+    updateProfile
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

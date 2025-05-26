@@ -14,7 +14,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiClient } from '../api/client';
 
-const TenantSelectionScreen = ({ navigation }) => {
+export default function TenantSelectionScreen({ navigation }) {
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedTenant, setSelectedTenant] = useState(null);
@@ -178,7 +178,7 @@ const TenantSelectionScreen = ({ navigation }) => {
       </Modal>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -199,20 +199,17 @@ const styles = StyleSheet.create({
     color: '#64748b',
   },
   header: {
-    alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1e293b',
-    textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
     color: '#64748b',
-    textAlign: 'center',
   },
   tenantList: {
     paddingBottom: 20,
@@ -221,8 +218,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
-    borderWidth: 2,
+    marginBottom: 12,
+    borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -246,7 +243,7 @@ const styles = StyleSheet.create({
   },
   tenantName: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#1e293b',
     marginBottom: 4,
   },
@@ -260,16 +257,15 @@ const styles = StyleSheet.create({
     color: '#94a3b8',
   },
   customButton: {
-    backgroundColor: '#e2e8f0',
-    paddingVertical: 16,
-    paddingHorizontal: 24,
+    backgroundColor: '#f1f5f9',
+    padding: 16,
     borderRadius: 12,
-    marginBottom: 32,
     alignItems: 'center',
+    marginBottom: 20,
   },
   customButtonText: {
+    color: '#4F46E5',
     fontSize: 16,
-    color: '#475569',
     fontWeight: '600',
   },
   modalOverlay: {
@@ -282,35 +278,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 12,
     padding: 24,
-    margin: 20,
-    width: '80%',
+    width: '90%',
+    maxWidth: 400,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#1e293b',
     marginBottom: 16,
-    textAlign: 'center',
   },
   textInput: {
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    padding: 12,
     fontSize: 16,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
   },
   modalButton: {
-    flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: 8,
-    marginHorizontal: 4,
-    alignItems: 'center',
+    marginLeft: 8,
   },
   cancelButton: {
     backgroundColor: '#f1f5f9',
@@ -327,5 +320,3 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 });
-
-export default TenantSelectionScreen;

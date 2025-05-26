@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Default API base URL - can be overridden by user settings
-const DEFAULT_API_URL = 'http://localhost:5000/api';
+const DEFAULT_API_URL = 'https://wallet.amar.im/api';
 
 /**
  * API client for making requests to the server with configurable base URL
@@ -42,6 +42,12 @@ export const apiClient = {
       ...options.headers,
     };
 
+    // Add auth token if available
+    const token = await AsyncStorage.getItem('auth_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const config = {
       method: options.method || 'GET',
       headers,
@@ -64,11 +70,11 @@ export const apiClient = {
       if (response.ok) {
         return data;
       } else {
-        return Promise.reject(data);
+        throw new Error(data.message || 'API request failed');
       }
     } catch (error) {
       console.error(`API Error: ${endpoint}`, error);
-      return Promise.reject(error);
+      throw error;
     }
   },
 
@@ -80,16 +86,29 @@ export const apiClient = {
 
   // Auth endpoints
   auth: {
-    login: (credentials) => apiClient.request('/login', { 
-      method: 'POST', 
-      body: credentials 
-    }),
-    register: (userData) => apiClient.request('/register', { 
+    login: async (credentials) => {
+      const response = await apiClient.request('/auth/login', { 
+        method: 'POST', 
+        body: credentials 
+      });
+      if (response.token) {
+        await AsyncStorage.setItem('auth_token', response.token);
+      }
+      return response;
+    },
+    register: (userData) => apiClient.request('/auth/register', { 
       method: 'POST', 
       body: userData 
     }),
-    logout: () => apiClient.request('/logout', { method: 'POST' }),
-    getCurrentUser: () => apiClient.request('/user'),
+    logout: async () => {
+      await AsyncStorage.removeItem('auth_token');
+      return apiClient.request('/auth/logout', { method: 'POST' });
+    },
+    getCurrentUser: () => apiClient.request('/auth/user'),
+    updateProfile: (profileData) => apiClient.request('/auth/profile', {
+      method: 'PATCH',
+      body: profileData
+    }),
   },
 
   // Wallet endpoints

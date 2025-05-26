@@ -1,0 +1,19 @@
+{
+  "name": "Paysafe Embedded Wallet Platform",
+  "short_name": "Paysafe Wallet",
+  "description": "Digital wallet with multi-tenant support",
+  "start_url": "https://wallet.amar.im",
+  "display": "standalone",
+  "background_color": "#4F46E5",
+  "theme_color": "#4F46E5",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://wallet.amar.im/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "business"],
+  "screenshots": []
+}

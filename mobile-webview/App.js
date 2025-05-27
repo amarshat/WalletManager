@@ -71,7 +71,7 @@ export default function App() {
 
   // Inject JavaScript to enhance mobile experience
   const injectedJavaScript = `
-    // Hide desktop-only elements and add mobile bottom panel
+    // Clean mobile styling
     const style = document.createElement('style');
     style.innerHTML = \`
       /* Optimize for mobile */
@@ -79,7 +79,7 @@ export default function App() {
         -webkit-user-select: none;
         user-select: none;
         -webkit-touch-callout: none;
-        padding-bottom: 80px !important; /* Space for bottom panel */
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       }
       
       /* Hide scrollbars */
@@ -93,160 +93,39 @@ export default function App() {
         min-height: 44px;
       }
       
-      /* Mobile Bottom Panel */
-      #mobile-bottom-panel {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 80px;
-        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        z-index: 9999;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-        backdrop-filter: blur(10px);
+      /* Mobile optimizations */
+      .container {
+        padding: 20px !important;
+        max-width: 100% !important;
       }
       
-      .bottom-action {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 8px 12px;
-        color: white;
-        text-decoration: none;
-        border-radius: 12px;
-        min-width: 60px;
-        transition: all 0.2s ease;
-        cursor: pointer;
+      .card {
+        margin-bottom: 20px !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
       }
       
-      .bottom-action:hover {
-        background: rgba(255,255,255,0.1);
-        transform: translateY(-2px);
-      }
-      
-      .bottom-action-icon {
-        font-size: 20px;
-        margin-bottom: 4px;
-      }
-      
-      .bottom-action-text {
-        font-size: 10px;
-        font-weight: 500;
-        color: rgba(255,255,255,0.9);
+      @media (max-width: 768px) {
+        .grid {
+          grid-template-columns: 1fr !important;
+          gap: 20px !important;
+        }
+        
+        .card-header h3 {
+          font-size: 20px !important;
+          font-weight: 600 !important;
+        }
+        
+        button {
+          width: 100% !important;
+          padding: 12px !important;
+          font-size: 16px !important;
+          border-radius: 12px !important;
+          margin-bottom: 12px !important;
+        }
       }
     \`;
     document.head.appendChild(style);
-    
-    // Create the bottom panel
-    const createBottomPanel = () => {
-      // Remove existing panel if any
-      const existingPanel = document.getElementById('mobile-bottom-panel');
-      if (existingPanel) {
-        existingPanel.remove();
-      }
-      
-      const panel = document.createElement('div');
-      panel.id = 'mobile-bottom-panel';
-      panel.innerHTML = \`
-        <div class="bottom-action" onclick="navigateToBalance()">
-          <div class="bottom-action-icon">💳</div>
-          <div class="bottom-action-text">Balance</div>
-        </div>
-        <div class="bottom-action" onclick="navigateToCards()">
-          <div class="bottom-action-icon">🪪</div>
-          <div class="bottom-action-text">Cards</div>
-        </div>
-        <div class="bottom-action" onclick="navigateToSend()">
-          <div class="bottom-action-icon">⬆️</div>
-          <div class="bottom-action-text">Send</div>
-        </div>
-        <div class="bottom-action" onclick="navigateToReceive()">
-          <div class="bottom-action-icon">⬇️</div>
-          <div class="bottom-action-text">Receive</div>
-        </div>
-        <div class="bottom-action" onclick="navigateToTransactions()">
-          <div class="bottom-action-icon">📋</div>
-          <div class="bottom-action-text">History</div>
-        </div>
-      \`;
-      
-      document.body.appendChild(panel);
-    };
-    
-    // Navigation functions
-    window.navigateToBalance = () => {
-      // Check if we're on the main dashboard, if not navigate there
-      if (!window.location.pathname.includes('/') || window.location.pathname === '/') {
-        // We're on the main page, scroll to balance section or trigger balance view
-        const balanceElement = document.querySelector('[data-testid="balance"], .balance, #balance');
-        if (balanceElement) {
-          balanceElement.scrollIntoView({ behavior: 'smooth' });
-        }
-      } else {
-        window.location.href = '/';
-      }
-      window.ReactNativeWebView?.postMessage(JSON.stringify({type: 'QUICK_ACTION', action: 'balance'}));
-    };
-    
-    window.navigateToCards = () => {
-      // Look for cards navigation or section
-      const cardsLink = document.querySelector('a[href*="cards"], a[href*="card"], .cards-nav');
-      if (cardsLink) {
-        cardsLink.click();
-      } else {
-        window.location.hash = '#cards';
-      }
-      window.ReactNativeWebView?.postMessage(JSON.stringify({type: 'QUICK_ACTION', action: 'cards'}));
-    };
-    
-    window.navigateToSend = () => {
-      // Look for send money button or link
-      const sendButton = document.querySelector('button[data-testid="send"], .send-money, [aria-label*="send"], button:contains("Send")');
-      if (sendButton) {
-        sendButton.click();
-      } else {
-        window.location.hash = '#send';
-      }
-      window.ReactNativeWebView?.postMessage(JSON.stringify({type: 'QUICK_ACTION', action: 'send'}));
-    };
-    
-    window.navigateToReceive = () => {
-      // Look for receive money button or link
-      const receiveButton = document.querySelector('button[data-testid="receive"], .receive-money, [aria-label*="receive"], button:contains("Add Money")');
-      if (receiveButton) {
-        receiveButton.click();
-      } else {
-        window.location.hash = '#receive';
-      }
-      window.ReactNativeWebView?.postMessage(JSON.stringify({type: 'QUICK_ACTION', action: 'receive'}));
-    };
-    
-    window.navigateToTransactions = () => {
-      // Look for transactions link
-      const transactionsLink = document.querySelector('a[href*="transaction"], .transactions-nav, [data-testid="transactions"]');
-      if (transactionsLink) {
-        transactionsLink.click();
-      } else {
-        window.location.hash = '#transactions';
-      }
-      window.ReactNativeWebView?.postMessage(JSON.stringify({type: 'QUICK_ACTION', action: 'transactions'}));
-    };
-    
-    // Create panel when page loads
-    setTimeout(createBottomPanel, 1000);
-    
-    // Recreate panel on navigation changes
-    let lastUrl = location.href;
-    new MutationObserver(() => {
-      const url = location.href;
-      if (url !== lastUrl) {
-        lastUrl = url;
-        setTimeout(createBottomPanel, 500);
-      }
-    }).observe(document, {subtree: true, childList: true});
     
     // Notify React Native when the page is ready
     window.ReactNativeWebView?.postMessage(JSON.stringify({

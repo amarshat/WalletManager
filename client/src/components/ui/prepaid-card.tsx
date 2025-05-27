@@ -71,15 +71,29 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
             </div>
             
             {/* Tenant Logo */}
-            {brand?.logo && (
+            {brand?.logo ? (
               <div className="flex items-center">
                 <img 
                   src={brand.logo} 
                   alt={brand.name} 
                   className="h-6 max-w-[80px] object-contain filter brightness-0 invert"
+                  onError={(e) => {
+                    // Fallback to brand name if image fails to load
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.nextSibling.style.display = 'block';
+                  }}
                 />
+                <div className="bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-800 hidden">
+                  {brand.name}
+                </div>
               </div>
-            )}
+            ) : brand?.name ? (
+              <div className="flex items-center">
+                <div className="bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-800">
+                  {brand.name}
+                </div>
+              </div>
+            ) : null}
           </div>
           
           {/* Bottom Row: Cardholder Info (left) + Mastercard Logo (right) */}

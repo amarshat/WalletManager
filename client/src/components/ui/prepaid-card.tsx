@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, CreditCard, MoreVertical, Trash, Eye, Plus, Send, ArrowRightLeft } from "lucide-react";
+import { CheckCircle, CreditCard, MoreVertical, Trash, Eye, Plus, Send, ArrowRightLeft, Copy } from "lucide-react";
 import { supportedCurrencies } from "@shared/schema";
 import ViewPrepaidCardModal from "@/components/modals/ViewPrepaidCardModal";
 import { useBrand } from "@/hooks/use-brand";
@@ -36,8 +36,8 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
   const expiry = `${card.expiryMonth}/${card.expiryYear.slice(-2)}`;
   
   // Use wallet balance instead of card balance (since prepaid card balance = wallet balance)
-  const walletBalance = balances?.find((b: any) => b.currencyCode === card.currencyCode)?.balance || 0;
-  const actualBalance = walletBalance || card.balance;
+  const walletBalance = balances?.find((b: any) => b.currencyCode === card.currencyCode);
+  const actualBalance = walletBalance?.availableBalance || walletBalance?.balance || card.balance || 0;
   const formattedBalance = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -86,8 +86,18 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
             {/* Cardholder Details */}
             <div className="text-white">
-              <div className="text-sm font-semibold tracking-wider mb-2">
-                {card.cardholderName || 'WALLET HOLDER'}
+              <div className="flex items-center gap-2 mb-2">
+                <div className="text-sm font-semibold tracking-wider">
+                  {card.cardholderName || 'WALLET HOLDER'}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 text-white/70 hover:text-white hover:bg-white/10"
+                  onClick={() => setShowDetails(true)}
+                >
+                  <Eye className="h-3 w-3" />
+                </Button>
               </div>
               <div className="text-lg font-mono tracking-[0.2em] mb-2">
                 {maskedCardNumber}
@@ -148,11 +158,37 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
         {/* Balance Panel */}
         <div className="bg-white rounded-2xl shadow-lg mt-4 p-6">
           <div className="text-center">
-            <div className="text-sm text-muted-foreground mb-2">Available Balance</div>
-            <div className="text-3xl font-bold text-primary">
+            <div className="text-sm text-muted-foreground mb-3">Available Balance</div>
+            
+            {/* Primary Currency Balance */}
+            <div className="text-3xl font-bold text-primary mb-3">
               {symbol}{formattedBalance}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">{card.currencyCode}</div>
+            <div className="text-sm text-muted-foreground mb-4">{card.currencyCode}</div>
+            
+            {/* Other Currency Balances */}
+            {balances && balances.length > 1 && (
+              <div className="border-t pt-3">
+                <div className="text-xs text-muted-foreground mb-2">Other Currencies</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {balances
+                    .filter((b: any) => b.currencyCode !== card.currencyCode)
+                    .slice(0, 3)
+                    .map((balance: any, index: number) => {
+                      const currencySymbol = supportedCurrencies.find(c => c.code === balance.currencyCode)?.symbol || '';
+                      const balanceAmount = balance.availableBalance || balance.balance || 0;
+                      return (
+                        <div key={index} className="text-center">
+                          <div className="text-xs text-muted-foreground">{balance.currencyCode}</div>
+                          <div className="text-sm font-semibold">
+                            {currencySymbol}{balanceAmount.toLocaleString()}
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         
@@ -189,7 +225,7 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
                           {transaction.description || (isCredit ? 'Money Added' : 'Payment Sent')}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {new Date(transaction.createdAt || transaction.date).toLocaleDateString()}
+                          {transaction.createdAt ? new Date(transaction.createdAt).toLocaleDateString() : 'Recent'}
                         </div>
                       </div>
                     </div>

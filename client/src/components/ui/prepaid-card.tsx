@@ -26,7 +26,7 @@ interface PrepaidCardProps {
 export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCardProps) {
   const [showDetails, setShowDetails] = useState(false);
   const { brand } = useBrand();
-  const { balances } = usePaysafe();
+  const { balances, transactions } = usePaysafe();
   
   // Find currency symbol
   const currency = supportedCurrencies.find(c => c.code === card.currencyCode);
@@ -36,7 +36,7 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
   const expiry = `${card.expiryMonth}/${card.expiryYear.slice(-2)}`;
   
   // Use wallet balance instead of card balance (since prepaid card balance = wallet balance)
-  const walletBalance = balances?.find(b => b.currencyCode === card.currencyCode)?.balance || 0;
+  const walletBalance = balances?.find((b: any) => b.currencyCode === card.currencyCode)?.balance || 0;
   const actualBalance = walletBalance || card.balance;
   const formattedBalance = new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 2,
@@ -61,12 +61,12 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
           <div className="absolute inset-0 bg-gradient-to-br from-transparent via-slate-600/20 to-transparent"></div>
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent_50%)]"></div>
           
-          {/* Top Row: Global Brand Logo (left) + Tenant Logo (right) */}
+          {/* Top Row: Paysafe Logo (left) + Tenant Logo (right) */}
           <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-            {/* Global Brand Logo (Paysafe) */}
+            {/* Paysafe Global Brand */}
             <div className="flex items-center">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white text-xs font-bold">P</span>
+              <div className="bg-white/90 backdrop-blur px-2 py-1 rounded text-xs font-bold text-slate-800">
+                Paysafe
               </div>
             </div>
             
@@ -86,11 +86,10 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-end">
             {/* Cardholder Details */}
             <div className="text-white">
-              <div className="text-xs opacity-75 mb-1">CARDHOLDER</div>
-              <div className="text-sm font-semibold tracking-wider">
+              <div className="text-sm font-semibold tracking-wider mb-2">
                 {card.cardholderName || 'WALLET HOLDER'}
               </div>
-              <div className="text-lg font-mono tracking-[0.2em] mt-2 mb-2">
+              <div className="text-lg font-mono tracking-[0.2em] mb-2">
                 {maskedCardNumber}
               </div>
               <div className="flex gap-4 text-xs">
@@ -116,32 +115,32 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
           </div>
         </div>
         
-        {/* Quick Actions Panel */}
+        {/* Quick Actions Panel - Horizontal Layout */}
         <div className="bg-white rounded-2xl shadow-lg mt-6 p-4">
-          <div className="grid grid-cols-3 gap-3">
+          <div className="flex gap-3">
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex flex-col items-center gap-2 h-16"
+              className="flex-1 flex items-center justify-center gap-2 h-12"
             >
-              <Plus className="h-5 w-5" />
-              <span className="text-xs">Add Money</span>
+              <Plus className="h-4 w-4" />
+              <span className="text-sm">Add Money</span>
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex flex-col items-center gap-2 h-16"
+              className="flex-1 flex items-center justify-center gap-2 h-12"
             >
-              <Send className="h-5 w-5" />
-              <span className="text-xs">Send</span>
+              <Send className="h-4 w-4" />
+              <span className="text-sm">Send</span>
             </Button>
             <Button 
               variant="outline" 
               size="sm" 
-              className="flex flex-col items-center gap-2 h-16"
+              className="flex-1 flex items-center justify-center gap-2 h-12"
             >
-              <ArrowRightLeft className="h-5 w-5" />
-              <span className="text-xs">Transfer</span>
+              <ArrowRightLeft className="h-4 w-4" />
+              <span className="text-sm">Transfer</span>
             </Button>
           </div>
         </div>
@@ -164,30 +163,50 @@ export default function PrepaidCard({ card, onSetDefault, onDelete }: PrepaidCar
             <Button variant="ghost" size="sm">View All</Button>
           </div>
           <div className="space-y-3">
-            <div className="flex justify-between items-center py-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Plus className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Money Added</div>
-                  <div className="text-xs text-muted-foreground">Today</div>
-                </div>
+            {transactions && transactions.length > 0 ? (
+              transactions.slice(0, 3).map((transaction: any, index: number) => {
+                const isCredit = transaction.type === 'CREDIT' || transaction.amount > 0;
+                const amount = Math.abs(transaction.amount);
+                const formattedAmount = new Intl.NumberFormat('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2
+                }).format(amount);
+                
+                return (
+                  <div key={index} className="flex justify-between items-center py-2">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        isCredit ? 'bg-green-100' : 'bg-red-100'
+                      }`}>
+                        {isCredit ? (
+                          <Plus className={`h-4 w-4 ${isCredit ? 'text-green-600' : 'text-red-600'}`} />
+                        ) : (
+                          <Send className={`h-4 w-4 ${isCredit ? 'text-green-600' : 'text-red-600'}`} />
+                        )}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">
+                          {transaction.description || (isCredit ? 'Money Added' : 'Payment Sent')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {new Date(transaction.createdAt || transaction.date).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                    <div className={`text-sm font-semibold ${
+                      isCredit ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {isCredit ? '+' : '-'}{symbol}{formattedAmount}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <div className="text-sm">No recent transactions</div>
+                <div className="text-xs mt-1">Your transactions will appear here</div>
               </div>
-              <div className="text-sm font-semibold text-green-600">+{symbol}100.00</div>
-            </div>
-            <div className="flex justify-between items-center py-2">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <Send className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">Transfer Sent</div>
-                  <div className="text-xs text-muted-foreground">Yesterday</div>
-                </div>
-              </div>
-              <div className="text-sm font-semibold text-red-600">-{symbol}25.50</div>
-            </div>
+            )}
           </div>
         </div>
       </div>
